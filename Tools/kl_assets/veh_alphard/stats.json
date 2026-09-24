@@ -1,8 +1,8 @@
 {
  "asset": "veh_alphard",
- "triangles": 19629,
+ "triangles": 20488,
  "lod1_body_triangles": null,
- "lod0_body_triangles": 7993,
+ "lod0_body_triangles": 8368,
  "materials": 1,
  "parts": [
   "Body",
@@ -31,9 +31,9 @@
   "COL_veh_alphard"
  ],
  "dimensions_m": {
-  "length": 4.981,
-  "width": 2.192,
-  "height": 2.029
+  "length": 5.081,
+  "width": 2.129,
+  "height": 1.979
  },
  "blender": "5.2.1 LTS"
 }

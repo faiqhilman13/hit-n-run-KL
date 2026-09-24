@@ -1,8 +1,8 @@
 {
  "asset": "veh_polis",
- "triangles": 22664,
+ "triangles": 24630,
  "lod1_body_triangles": null,
- "lod0_body_triangles": 8436,
+ "lod0_body_triangles": 10390,
  "materials": 1,
  "parts": [
   "Body",
@@ -31,9 +31,9 @@
   "COL_veh_polis"
  ],
  "dimensions_m": {
-  "length": 3.661,
-  "width": 1.943,
-  "height": 1.961
+  "length": 3.775,
+  "width": 1.92,
+  "height": 1.884
  },
  "blender": "5.2.1 LTS"
 }

@@ -355,11 +355,15 @@ def clip_defs():
     C["dismount"] = (18, False, [(0, ride_key(0)), (10, m1), (18, m0)])
 
     def sit_key(f):
+        """Driving: sat back in a low car seat, thighs level, shins reaching forward to the pedals
+        (feet stay above the floor), hands on the wheel, a little bob to the engine."""
         ph = f / 24 * TAU
         p = ride_pose(0)
         p["LeftUpperArm"] = reach_rot("Left", 75, 25); p["RightUpperArm"] = reach_rot("Right", 75, 25)
-        p["Chest"] = R(z=5 * math.sin(ph))
-        p["Head"] = R(x=-6, z=6 * math.sin(ph - 0.4))
+        legs(p, 92, 92, 32, 32, -22, -22)
+        p["Spine"] = R(x=-6)                                       # leaning back into the seat
+        p["Chest"] = R(x=4, z=5 * math.sin(ph))
+        p["Head"] = R(x=-2, z=6 * math.sin(ph - 0.4))
         return p
     C["sit"] = (24, True, sample(24, sit_key, 4))
 

@@ -75,6 +75,10 @@ namespace KampungRun
             if (costume != null) ModelFactory.Recolor(_model, costume.swaps);
             foreach (var t in _model.GetComponentsInChildren<Transform>()) t.gameObject.layer = Layers.Character;
             _rig = _model.AddComponent<CharacterRig>();
+            // the hero is always posed, even for a frame the camera misses (tucked in a car, swinging
+            // round) - otherwise the body pops back to whatever pose it last had on screen
+            var anim = _model.GetComponentInChildren<Animator>();
+            if (anim) anim.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             float h = ModelFactory.LocalBounds(_model).size.y;
             _cc.height = Mathf.Max(1.0f, h * 0.95f);
             _cc.center = new Vector3(0, _cc.height * 0.5f + 0.02f, 0);
@@ -453,6 +457,7 @@ namespace KampungRun
             _transVehicle = null;
             vehicle = v;
             v.role = VehicleRole.Player;
+            _knockTime = 0f;                      // a knockdown still playing out ends once seated
             v.driver = new PlayerDriver();
             _cc.enabled = false;
             transform.SetParent(v.transform, true);
@@ -462,7 +467,7 @@ namespace KampungRun
                 transform.SetParent(v.Visuals.Seat, true);
                 transform.SetPositionAndRotation(SeatPoint(v), v.transform.rotation);
                 if (_model) _model.SetActive(true);
-                if (_rig) { _rig.riding = false; _rig.sitting = true; _rig.speed = 0; }
+                if (_rig) { _rig.riding = false; _rig.sitting = true; _rig.speed = 0; _rig.SettleInSeat(false); }
                 Fit(v, 1f);
                 v.Visuals.CloseDoor(_doorSide, true, 0.2f);
             }
@@ -476,7 +481,7 @@ namespace KampungRun
                     transform.SetPositionAndRotation(SeatPoint(v), v.transform.rotation);
                 if (lean) transform.SetParent(lean, true);
                 if (_model) _model.SetActive(true);
-                if (_rig) { _rig.riding = true; _rig.sitting = true; _rig.speed = 0; }
+                if (_rig) { _rig.riding = true; _rig.sitting = true; _rig.speed = 0; _rig.SettleInSeat(true); }
             }
             else
             {

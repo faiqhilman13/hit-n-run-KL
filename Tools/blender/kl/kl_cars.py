@@ -398,19 +398,27 @@ def wheel(m, c, r, w, side, style="alloy", rim_frac=0.64, spokes=5, knobbly=Fals
                 p = c + Vector((off * side, (r + 0.012) * math.cos(a), (r + 0.012) * math.sin(a)))
                 m.box(p, (w * 0.34, 0.07, 0.035), "tyre", rot=(a + math.pi / 2, 0, 0))
     face_x = w / 2 - 0.02
-    if style == "steel":
+    if style in ("steel", "steel_paint"):
+        cap = "car_paint" if style == "steel_paint" else "chrome"
         # painted steel wheel with a big chrome hubcap and vent slots
         revolve(m, c, [(ri, face_x - 0.03), (ri * 0.97, face_x), (ri * 0.8, face_x + 0.006)],
                 lambda i: "rim_silver", seg=20, side=side, closed=False)
-        revolve(m, c, [(ri * 0.8, face_x + 0.006), (ri * 0.72, face_x + 0.03), (ri * 0.45, face_x + 0.045),
-                       (ri * 0.18, face_x + 0.05)], lambda i: "chrome", seg=20, side=side, closed=False)
-        disc(m, c, ri * 0.18, "chrome", side, axial=face_x + 0.05)
+        if cap == "chrome":
+            revolve(m, c, [(ri * 0.8, face_x + 0.006), (ri * 0.72, face_x + 0.03), (ri * 0.45, face_x + 0.045),
+                           (ri * 0.18, face_x + 0.05)], lambda i: "chrome", seg=20, side=side, closed=False)
+            disc(m, c, ri * 0.18, "chrome", side, axial=face_x + 0.05)
+        else:   # plain steel wheel with vent holes and a small painted centre cap
+            revolve(m, c, [(ri * 0.8, face_x + 0.006), (ri * 0.5, face_x + 0.02), (ri * 0.36, face_x + 0.03)],
+                    lambda i: "rim_silver", seg=20, side=side, closed=False)
+            revolve(m, c, [(ri * 0.36, face_x + 0.03), (ri * 0.3, face_x + 0.06), (ri * 0.12, face_x + 0.07)],
+                    lambda i: cap, seg=16, side=side, closed=False)
+            disc(m, c, ri * 0.12, cap, side, axial=face_x + 0.07)
         for k in range(6):
             a = k / 6 * math.tau
             m.box(c + Vector(((face_x + 0.038) * side, ri * 0.6 * math.cos(a), ri * 0.6 * math.sin(a))),
                   (0.006, 0.026, 0.012), "rim_dark", rot=(a, 0, 0))
     else:
-        rim_col = "rim_dark" if style == "offroad" else "rim_silver"
+        rim_col = "rim_dark" if style in ("offroad", "alloy_dark") else "rim_silver"
         # barrel + lip
         revolve(m, c, [(ri, -w * 0.4), (ri, face_x - 0.01), (ri * 1.04, face_x), (ri * 0.96, face_x + 0.008)],
                 lambda i: ["rim_dark", rim_col, rim_col][min(i, 2)], seg=20, side=side, closed=False, double=True)
@@ -532,6 +540,7 @@ def build_car(spec, body_fn):
 
     # details first: doors and windows register the openings the shells need
     ctx = dict(parts=parts, body=body, shell=shell, cab=cab, spec=s)
+    _BUILD["belt_color"] = "car_paint" if s.__dict__.get("belt_s") is not None else None
     col_extra = body_fn(ctx)
 
     def in_cab_footprint(c):
@@ -561,7 +570,10 @@ def build_car(spec, body_fn):
 
     # ---- greenhouse (cabin): bottom half removed (it sat inside the body), windows cut out
     cm = K.Mesher(2.0)
-    shell_mesh(cm, cab, ny=26, ns=10, color_fn=s.cab_color, y_breaks=s.cab_breaks)
+    cab_fn = s.cab_color
+    if s.__dict__.get("belt_s") is not None:      # body colour on the cabin band below the window line
+        cab_fn = lambda c, f=s.cab_color, b=s.belt_s: "car_paint" if shell_s(cab, c.y, c.z) < b else f(c)
+    shell_mesh(cm, cab, ny=26, ns=10, color_fn=cab_fn, y_breaks=s.cab_breaks)
 
     def keep_cab(c, n):
         if c.z < cab.params(c.y)[2] + 0.004:
@@ -647,14 +659,20 @@ def door(ctx, name, side, y0, y1, zsill_s, zbelt_s, win_top_s, frame=True, glass
     if name.startswith("Door_F") and s.__dict__.get("b_pillar", True):
         b = ctx["body"]
         patch(b, sh, y1 - 0.03, y1 + 0.06, zsill_s, 1.0, color, side, off=0.004, ny=1, ns=4, thick=0.05, inner="interior")
-        patch(b, cab, y1 - 0.03, y1 + 0.06, -0.05, 1.0, s.cab_color(Vector((0, 0, 2))), side, off=0.004, ny=1, ns=6,
+        patch(b, cab, y1 - 0.03, y1 + 0.06, -0.05, 1.0, s.__dict__.get("pillar_color") or s.cab_color(Vector((0, 0, 2))), side, off=0.004, ny=1, ns=6,
               thick=0.05, inner="interior")
     return d
 
 
 def frame_ring(m, sh, f0, f1, s0, s1, side, fw=0.03, color="trim_black"):
     """A rubber window surround: four strips round the opening (open in the middle)."""
-    patch(m, sh, lambda q: f0(q) - fw, lambda q: f1(q) + fw, s0 - 0.04, s0, color, side, off=0.007, ny=4, ns=1)
+    # the bottom rail is ~2.5 cm tall in real height (s is far from linear near the waist)
+    ym = (f0(0.3) + f1(0.3)) / 2
+    s_lo = shell_s(sh, ym, sh.point(ym, s0, 1).z - 0.025)
+    s_lo = min(s_lo, s0 - 0.005)
+    belt = _BUILD.get("belt_color") or color      # the panel under the rubber: paint on cars with a body-colour waist
+    patch(m, sh, lambda q: f0(q) - fw, lambda q: f1(q) + fw, s0 - 0.04, s_lo, belt, side, off=0.007, ny=4, ns=1)
+    patch(m, sh, lambda q: f0(q) - fw, lambda q: f1(q) + fw, s_lo, s0, color, side, off=0.009, ny=4, ns=1)
     if s1 < 0.999:
         patch(m, sh, lambda q: f0(q) - fw, lambda q: f1(q) + fw, s1, min(1.0, s1 + 0.04), color, side, off=0.007, ny=4, ns=1)
     patch(m, sh, lambda q: f0(q) - fw, f0, s0, s1, color, side, off=0.007, ny=1, ns=4)
@@ -685,190 +703,200 @@ def lights_part(ctx, name, fn):
 
 # ============================================================================== MYVI
 def myvi():
-    """veh_myvi: the Malaysian people's hatchback (2nd-gen shape): tall rounded roof, huge
-    swept-back headlamps, tall tail lamps up the D-pillar, roof spoiler, 5-spoke alloys.
-    Cartoonified: shorter overhangs, a slightly bigger cabin and wheels."""
+    """veh_myvi: 2nd-gen Myvi (the orange SE). Short, tall 5-door hatch with wheels pushed to the
+    corners: flat upright nose with a small grille slot, huge swept headlamps climbing the bonnet
+    edges toward the A-pillars, a big trapezoid lower intake with round fog lamps, a wedge window
+    line, blacked-out pillars, a roof spoiler, gunmetal 5-spoke alloys.
+    Dimensions follow the real car (3.69 x 1.67 x 1.55 m, 2.44 m wheelbase), lightly cartooned."""
     W = 1.68
-    s = CarSpec(id="veh_myvi", width=W, track=1.44, wr=0.33, ww=0.22, fy=-1.18, ry=1.18, arch_lift=0.02, arch_gap=0.06,
-                wheel_style="alloy", spokes=5, floor_z=0.32, roof_z=1.58, seat_x=0.36, seat_y=-0.05, dash_y=-0.72, dash_z=0.86)
-    #            y     half-w   zb    zm    zt   n_side n_top n_bot
-    s.stations = [(-1.78, 0.62, 0.30, 0.50, 0.66, 2.6, 2.2, 2.0),
-                  (-1.70, 0.78, 0.24, 0.52, 0.78, 3.0, 2.4, 2.4),
-                  (-1.45, 0.83, 0.22, 0.56, 0.90, 3.4, 2.6, 2.6),
-                  (-1.00, 0.84, 0.22, 0.60, 0.98, 3.6, 2.8, 2.8),
-                  (-0.60, 0.845, 0.22, 0.62, 1.00, 3.8, 3.0, 3.0),
-                  (0.40, 0.845, 0.22, 0.64, 1.00, 3.8, 3.0, 3.0),
-                  (1.30, 0.84, 0.23, 0.66, 1.00, 3.6, 3.0, 2.8),
-                  (1.66, 0.80, 0.26, 0.66, 0.98, 3.2, 2.6, 2.4),
-                  (1.80, 0.68, 0.34, 0.66, 0.92, 2.6, 2.2, 2.0)]
-    s.cab_stations = [(-1.02, 0.62, 0.86, 0.90, 0.94, 2.4, 2.2, 2.0),
-                      (-0.70, 0.74, 0.86, 0.94, 1.32, 2.8, 2.6, 2.0),
-                      (-0.30, 0.76, 0.86, 0.95, 1.56, 3.0, 3.2, 2.0),
-                      (0.60, 0.76, 0.86, 0.95, 1.58, 3.0, 3.4, 2.0),
-                      (1.30, 0.75, 0.86, 0.94, 1.55, 2.9, 3.2, 2.0),
-                      (1.58, 0.72, 0.86, 0.93, 1.46, 2.8, 3.0, 2.0),
-                      (1.72, 0.6, 0.86, 0.92, 1.12, 2.4, 2.2, 2.0)]
-    s.y_breaks, s.s_breaks, s.cab_breaks = (-1.62, 1.6), (-0.55,), ()
+    s = CarSpec(id="veh_myvi", width=W, track=1.44, wr=0.31, ww=0.21, fy=-1.2, ry=1.24, arch_lift=0.02, arch_gap=0.05,
+                wheel_style="alloy_dark", spokes=5, floor_z=0.3, roof_z=1.56, seat_x=0.36, seat_y=0.02, dash_y=-0.66,
+                dash_z=0.86, b_pillar=True)
+    s.pillar_color = "trim_black"
+    #            y      half-w  zb    zm    zt    n_side n_top n_bot
+    s.stations = [(-1.845, 0.70, 0.26, 0.48, 0.62, 3.2, 2.6, 2.4),
+                  (-1.815, 0.79, 0.22, 0.50, 0.70, 4.2, 3.2, 3.4),
+                  (-1.70, 0.82, 0.21, 0.54, 0.78, 5.0, 3.4, 4.0),
+                  (-1.30, 0.835, 0.21, 0.58, 0.88, 5.4, 3.4, 4.2),
+                  (-1.00, 0.835, 0.21, 0.60, 0.95, 5.4, 3.6, 4.2),
+                  (0.40, 0.835, 0.21, 0.62, 1.00, 5.4, 3.8, 4.2),
+                  (1.45, 0.83, 0.22, 0.64, 1.04, 5.2, 3.6, 4.0),
+                  (1.76, 0.81, 0.24, 0.64, 1.04, 4.4, 3.2, 3.4),
+                  (1.855, 0.72, 0.30, 0.64, 1.00, 3.2, 2.6, 2.4)]
+    # greenhouse: fast windscreen from the A-pillar base, long flat roof, near-upright hatch
+    s.cab_stations = [(-1.06, 0.70, 0.88, 0.94, 0.97, 3.0, 2.4, 2.0),
+                      (-0.80, 0.77, 0.88, 0.97, 1.22, 3.4, 3.4, 2.0),
+                      (-0.34, 0.775, 0.88, 0.99, 1.53, 3.6, 4.6, 2.0),
+                      (1.36, 0.765, 0.88, 1.03, 1.54, 3.6, 4.6, 2.0),
+                      (1.58, 0.74, 0.88, 1.04, 1.49, 3.4, 4.0, 2.0),
+                      (1.80, 0.64, 0.88, 1.04, 1.12, 3.0, 2.6, 2.0)]
+    s.y_breaks, s.s_breaks, s.cab_breaks = (-1.7, 1.7), (-0.55,), ()
 
     def body_color(c):
-        if c.z < 0.34:
+        if c.z < 0.3:
             return "trim_black"                                   # sills / under-bumper
         return "car_paint"
     s.body_color = body_color
-    s.cab_color = lambda c: "car_paint"
+    # blacked-out pillars between the window line and a body-colour roof
+    s.cab_color = lambda c: "car_paint" if c.z > 1.46 else "trim_black"
+    s.belt_s = 0.04
 
     def details(ctx):
         b, sh, cab, parts = ctx["body"], ctx["shell"], ctx["cab"], ctx["parts"]
+        ws_edge = lambda q: -0.94 + q * 0.58          # the A-pillar: where the windscreen ends at height q
         for side in (1, -1):
-            # front / rear doors: a Myvi is a 5-door
-            door(ctx, "Door_FL" if side > 0 else "Door_FR", side, -0.66, 0.36, -0.5, 0.18, 0.62,
-                 glass_front=lambda q: -0.6 + q * 0.28)
-            door(ctx, "Door_RL" if side > 0 else "Door_RR", side, 0.38, 1.12, -0.5, 0.18, 0.55)
-            # quarter glass behind the rear door + dark D-pillar
-            glass(b, cab, 1.16, 1.42, 0.04, 0.5, side, ny=3, ns=3)
-            mirror_arm(b, sh.point(-0.66, 0.35, side) + Vector((0, 0, 0.03)), side)
-            # side indicator repeater + rubbing strip
-            patch(b, sh, -1.2, -1.1, 0.12, 0.2, "lamp_amber", side, off=0.006, ny=1, ns=1)
-        # windscreen, rear window, sunroof-free roof
-        glass(b, cab, lambda q: -0.98 + (1 - q) * 0.02, lambda q: -0.66 - q * 0.02, 0.02, 1.0, 1, ny=4, ns=3)
-        glass(b, cab, lambda q: -0.98 + (1 - q) * 0.02, lambda q: -0.66 - q * 0.02, 0.02, 1.0, -1, ny=4, ns=3)
+            door(ctx, "Door_FL" if side > 0 else "Door_FR", side, -0.86, 0.3, -0.5, 0.2, 0.52,
+                 glass_front=lambda q: ws_edge(q) + 0.09, glass_rear=lambda q: 0.24)
+            door(ctx, "Door_RL" if side > 0 else "Door_RR", side, 0.32, 1.14, -0.5, 0.2, 0.52,
+                 glass_front=lambda q: 0.38, glass_rear=lambda q: 1.06 - q * 0.08)
+            glass(b, cab, 1.16, lambda q: 1.46 - q * 0.1, 0.05, 0.46, side, ny=3, ns=3)            # rear quarter
+            mirror_arm(b, sh.point(-0.94, 0.42, side) + Vector((0, 0.02, 0.05)), side)
+            patch(b, sh, -1.28, -1.2, 0.2, 0.28, "lamp_amber", side, off=0.006, ny=1, ns=1)       # side repeater
+            patch(b, sh, -1.25, 1.55, -0.5, -0.38, "car_paint", side, off=0.012, ny=10, ns=1, thick=0.03)  # SE side skirt
+        # windscreen + hatch glass
         for side in (1, -1):
-            glass(b, cab, 1.46, 1.7, 0.02, 1.0, side, ny=3, ns=3)
-        # roof spoiler over the tailgate
-        rz = cab.point(1.52, 1.0, 1).z
-        rbox(b, (0, 1.56, rz + 0.02), (1.2, 0.2, 0.045), "car_paint", rot=(0.18, 0, 0), r=0.8)
-        rbox(b, (0, 1.64, rz - 0.01), (0.2, 0.03, 0.03), "lamp_red", r=0.5)                 # high brake light
-        # grille bar, bonnet lip, plates, fog lamps
-        rbox(b, (0, -1.74, 0.62), (0.7, 0.06, 0.08), "grille_black", r=0.6)
-        rbox(b, (0, -1.76, 0.63), (0.18, 0.03, 0.06), "chrome", r=0.6)                     # badge-less chrome bar
-        plate(b, (0, -1.79, 0.42))
-        plate(b, (0, 1.815, 0.56), facing=1)
-        for x in (0.58, -0.58):
-            ellip(b, (x, -1.72, 0.36), (0.06, 0.03, 0.04), "lens_clear", seg=10, rings=6)
-        # wiper + tailgate handle + exhaust
-        for x in (0.25, -0.3):
-            b.box((x, -0.88, 0.99), (0.5, 0.02, 0.015), "trim_black", rot=(0, 0.06, 0.2))
-        b.box((0, 1.79, 0.72), (0.2, 0.02, 0.03), "chrome")
-        b.cyl((0.45, 1.8, 0.3), 0.035, 0.035, 0.12, "chrome", seg=10, rot=(math.pi / 2, 0, 0))
-        parts.append(("FX_Exhaust", None, (0.45, 1.88, 0.3), "Body"))
-
+            glass(b, cab, lambda q: -1.02 + (1 - q) * 0.02, ws_edge, 0.02, 1.0, side, ny=4, ns=4)
+            glass(b, cab, lambda q: 1.77 - q * 0.2, 1.82, 0.46, 1.0, side, ny=2, ns=3)
+        # roof spoiler over the hatch + high brake light
+        rz = cab.point(1.5, 1.0, 1).z
         for side in (1, -1):
-            # swept headlamp housings (dark) that the lit lenses sit in
-            patch(b, sh, -1.745, lambda q: -1.4 - q * 0.14, 0.04, 0.78, "trim_black", side, off=0.006, ny=4, ns=3)
-        # grille: dark trapezoid mouth with a body-colour bar across it
+            patch(b, cab, 1.3, 1.62, 0.9, 1.0, "car_paint", side, off=0.02, ny=3, ns=2, thick=0.03)
+        rbox(b, (0, 1.63, rz), (0.22, 0.03, 0.03), "lamp_red", r=0.5)
+        # front: small grille slot + chrome badge oval, big trapezoid lower intake with mesh bars,
+        # round fog lamps in black pods at the bumper corners, plate on the bumper
+        fz = -1.84
+        rbox(b, (0, fz, 0.63), (0.5, 0.05, 0.075), "grille_black", r=0.6)
+        ellip(b, (0, fz - 0.03, 0.635), (0.07, 0.015, 0.035), "chrome", seg=12, rings=6)
+        tr = lambda z: 0.36 + (0.5 - z) * 0.5                   # intake widens toward the bottom
+        for k, z in enumerate((0.32, 0.37, 0.42, 0.47)):
+            b.box((0, fz + 0.005, z), (tr(z) * 2, 0.03, 0.035), "grille_black")
+        rbox(b, (0, fz - 0.01, 0.395), (0.95, 0.03, 0.2), "grille_black", r=0.25)
+        for k in range(3):
+            b.box((0, fz - 0.025, 0.33 + k * 0.05), (0.88, 0.01, 0.012), "trim_black")
+        for x in (0.62, -0.62):
+            rbox(b, (x, fz + 0.02, 0.4), (0.2, 0.05, 0.14), "grille_black", r=0.5)
+            ellip(b, (x, fz - 0.015, 0.4), (0.05, 0.015, 0.05), "lens_clear", seg=12, rings=6)
+        plate(b, (0, fz - 0.025, 0.54), w=0.42, h=0.1)
+        plate(b, (0, 1.87, 0.58), facing=1)
+        for x in (0.25, -0.3):                                    # wipers at the windscreen base
+            b.box((x, -0.98, 0.99), (0.52, 0.02, 0.015), "trim_black", rot=(0, 0.05, 0.18))
+        b.box((0, 1.845, 0.76), (0.22, 0.02, 0.03), "chrome")       # hatch handle
+        b.cyl((0.45, 1.83, 0.28), 0.035, 0.035, 0.12, "chrome", seg=10, rot=(math.pi / 2, 0, 0))
+        parts.append(("FX_Exhaust", None, (0.45, 1.9, 0.28), "Body"))
         for side in (1, -1):
-            patch(b, sh, -1.785, -1.7, -0.62, -0.12, "grille_black", side, off=0.006, ny=1, ns=3)
+            # swept headlamp housings: from the front corner up the bonnet edge toward the A-pillar
+            patch(b, sh, -1.83, lambda q: -1.62 + max(0.0, q - 0.2) * 0.62, 0.08, 0.82, "trim_black", side, off=0.006,
+                  ny=5, ns=4)
 
         def heads(lm):
             for side in (1, -1):
-                # big swept teardrop headlamps running back along the wings
-                patch(lm, sh, -1.735, lambda q: -1.43 - q * 0.12, 0.1, 0.72, "lens_clear", side, off=0.014, ny=4, ns=3)
-                for k, y in enumerate((-1.7, -1.61)):   # twin projector bowls
-                    p = sh.point(y, 0.36, side) + sh.normal(y, 0.36, side) * 0.012
-                    ellip(lm, p, (0.05, 0.035, 0.05), "chrome", seg=12, rings=8)
-                    ellip(lm, p + sh.normal(y, 0.36, side) * 0.02, (0.028, 0.02, 0.028), "lamp_white", seg=10, rings=6)
-                patch(lm, sh, -1.52, -1.46, 0.22, 0.44, "lamp_amber", side, off=0.018, ny=1, ns=1)
+                patch(lm, sh, -1.825, lambda q: -1.64 + max(0.0, q - 0.22) * 0.58, 0.12, 0.8, "lens_clear", side,
+                      off=0.014, ny=5, ns=4)
+                for k, (y, q) in enumerate(((-1.76, 0.42), (-1.64, 0.58))):   # twin projector bowls
+                    p = sh.point(y, q, side) + sh.normal(y, q, side) * 0.012
+                    ellip(lm, p, (0.05, 0.012, 0.045), "chrome", seg=12, rings=6)
+                    ellip(lm, p + sh.normal(y, q, side) * 0.006, (0.028, 0.008, 0.028), "lamp_white", seg=10, rings=6)
+                patch(lm, sh, -1.8, -1.72, 0.14, 0.26, "lamp_amber", side, off=0.018, ny=1, ns=1)
         lights_part(ctx, "HeadLights", heads)
 
         def tails(lm):
             for side in (1, -1):
-                # tall tail lamps climbing the D-pillar (on the cabin shell), plus a lower bar on the bumper
-                patch(lm, cab, 1.56, 1.73, 0.0, 0.42, "lamp_red", side, off=0.02, ny=2, ns=3)
-                patch(lm, sh, 1.7, 1.79, -0.32, -0.2, "lamp_red", side, off=0.012, ny=1, ns=1)
+                # tall tail lamps standing up the rear corners beside the hatch
+                rbox(lm, (side * 0.64, 1.82, 0.93), (0.15, 0.1, 0.36), "lamp_red", r=0.5)
+                rbox(lm, (side * 0.66, 1.845, 0.33), (0.14, 0.03, 0.04), "lamp_red", r=0.5)   # bumper reflector
         lights_part(ctx, "BrakeLights", tails)
 
         def rev(lm):
             for side in (1, -1):
-                patch(lm, cab, 1.64, 1.73, 0.0, 0.1, "lamp_white", side, off=0.024, ny=1, ns=1)
+                rbox(lm, (side * 0.64, 1.835, 0.83), (0.1, 0.1, 0.08), "lamp_white", r=0.5)
         lights_part(ctx, "ReverseLights", rev)
-        ornament(parts, (0, -0.62, 1.42), kind="freshener")
-        antenna(parts, (0, 0.9, 1.58), length=0.4)
+        ornament(parts, (0, -0.62, 1.4), kind="freshener")
+        antenna(parts, (0, 1.2, 1.54), length=0.36)
     return build_car(s, details)
 
 
 # ============================================================================== SAGA (classic)
 def saga():
-    """veh_saga: the classic 1980s 3-box Saga everyone's ayah drove - square quad
-    headlamps in a slatted grille, chrome bumpers, a proper boot, steel wheels + hubcaps."""
-    W = 1.66
-    s = CarSpec(id="veh_saga", width=W, track=1.42, wr=0.31, ww=0.19, fy=-1.24, ry=1.2, arch_lift=0.01, arch_gap=0.06,
-                wheel_style="steel", floor_z=0.3, roof_z=1.42, seat_x=0.36, seat_y=0.0, dash_y=-0.66, dash_z=0.84,
-                chrome_handles=True, seat_color="interior")
-    s.stations = [(-2.02, 0.70, 0.30, 0.56, 0.72, 5.0, 3.0, 3.0),
-                  (-1.96, 0.81, 0.27, 0.56, 0.78, 6.0, 3.5, 3.5),
-                  (-1.50, 0.83, 0.26, 0.58, 0.84, 6.0, 4.0, 4.0),
-                  (-0.80, 0.83, 0.26, 0.60, 0.88, 6.0, 4.0, 4.0),
-                  (1.00, 0.83, 0.26, 0.60, 0.90, 6.0, 4.0, 4.0),
-                  (1.70, 0.83, 0.27, 0.60, 0.90, 6.0, 4.0, 3.5),
-                  (2.02, 0.80, 0.30, 0.60, 0.88, 5.0, 3.5, 3.0),
-                  (2.08, 0.70, 0.34, 0.60, 0.82, 4.0, 3.0, 2.6)]
-    s.cab_stations = [(-0.92, 0.66, 0.80, 0.86, 0.90, 3.0, 2.2, 2.0),
-                      (-0.64, 0.74, 0.80, 0.88, 1.28, 3.6, 3.0, 2.0),
-                      (-0.30, 0.75, 0.80, 0.88, 1.42, 4.0, 4.0, 2.0),
-                      (0.70, 0.75, 0.80, 0.88, 1.42, 4.0, 4.0, 2.0),
-                      (1.06, 0.73, 0.80, 0.88, 1.24, 3.6, 3.0, 2.0),
-                      (1.30, 0.62, 0.80, 0.86, 0.92, 3.0, 2.2, 2.0)]
-    s.y_breaks, s.s_breaks, s.cab_breaks = (-1.9, 1.95), (-0.5, 0.25), ()
-
-    def body_color(c):
-        if c.z < 0.33:
-            return "trim_black"
-        return "car_paint"
-    s.body_color = body_color
+    """veh_saga: the 1985 Saga 1.3 (Lancer Fiore-based): a crisp 80s wedge - low flat bonnet,
+    flush rectangular headlamps either side of a black slatted grille with a small badge,
+    black wrap-round bumpers, flat creased flanks, thin pillars round a big glasshouse, a
+    long flat boot, steel wheels with body-colour centre caps. 4.08 x 1.62 x 1.36 m."""
+    W = 1.64
+    s = CarSpec(id="veh_saga", width=W, track=1.4, wr=0.29, ww=0.18, fy=-1.22, ry=1.16, arch_lift=0.0, arch_gap=0.05,
+                wheel_style="steel_paint", floor_z=0.28, roof_z=1.38, seat_x=0.36, seat_y=-0.02, dash_y=-0.62, dash_z=0.8,
+                seat_color="interior")
+    s.stations = [(-2.05, 0.74, 0.28, 0.46, 0.58, 5.0, 3.6, 3.6),
+                  (-2.03, 0.80, 0.26, 0.50, 0.64, 8.0, 5.0, 5.0),
+                  (-1.96, 0.815, 0.25, 0.54, 0.68, 9.0, 6.0, 6.0),
+                  (-1.30, 0.82, 0.25, 0.58, 0.76, 9.0, 6.0, 6.0),
+                  (-0.64, 0.82, 0.25, 0.60, 0.82, 9.0, 6.0, 6.0),
+                  (1.30, 0.82, 0.25, 0.62, 0.86, 9.0, 6.0, 6.0),
+                  (1.98, 0.815, 0.26, 0.62, 0.86, 9.0, 6.0, 5.0),
+                  (2.05, 0.78, 0.30, 0.62, 0.84, 6.0, 4.0, 3.6)]
+    s.cab_stations = [(-0.68, 0.72, 0.78, 0.83, 0.86, 4.0, 2.4, 2.0),
+                      (-0.52, 0.76, 0.78, 0.84, 1.02, 4.4, 4.0, 2.0),
+                      (-0.12, 0.745, 0.78, 0.85, 1.35, 4.6, 8.0, 2.0),
+                      (0.86, 0.745, 0.78, 0.86, 1.36, 4.6, 8.0, 2.0),
+                      (1.12, 0.74, 0.78, 0.86, 1.14, 4.4, 5.0, 2.0),
+                      (1.36, 0.70, 0.78, 0.86, 0.9, 4.0, 2.4, 2.0)]
+    s.y_breaks, s.s_breaks, s.cab_breaks = (-1.96, 1.98), (-0.45, 0.2), ()
+    s.body_color = lambda c: "trim_black" if c.z < 0.3 else "car_paint"
     s.cab_color = lambda c: "car_paint"
 
     def details(ctx):
         b, sh, cab, parts = ctx["body"], ctx["shell"], ctx["cab"], ctx["parts"]
+        ws_edge = lambda q: -0.56 + q * 0.42
         for side in (1, -1):
-            door(ctx, "Door_FL" if side > 0 else "Door_FR", side, -0.64, 0.34, -0.45, 0.18, 0.7,
-                 glass_front=lambda q: -0.58 + q * 0.18)
-            door(ctx, "Door_RL" if side > 0 else "Door_RR", side, 0.36, 1.1, -0.45, 0.18, 0.7,
-                 glass_rear=lambda q: 1.0 - q * 0.14)
-            mirror_arm(b, sh.point(-0.62, 0.3, side) + Vector((0, 0, 0.02)), side, color="chrome", size=0.85)
-            # chrome waist strip along the side
-            patch(b, sh, -1.9, 1.95, 0.05, 0.1, "chrome", side, off=0.01, ny=10, ns=1)
-        glass(b, cab, lambda q: -0.9 + (1 - q) * 0.03, lambda q: -0.62, 0.02, 1.0, 1, ny=4, ns=3)
-        glass(b, cab, lambda q: -0.9 + (1 - q) * 0.03, lambda q: -0.62, 0.02, 1.0, -1, ny=4, ns=3)
+            door(ctx, "Door_FL" if side > 0 else "Door_FR", side, -0.66, 0.3, -0.42, 0.2, 0.62,
+                 glass_front=lambda q: ws_edge(q) + 0.06, glass_rear=lambda q: 0.24)
+            door(ctx, "Door_RL" if side > 0 else "Door_RR", side, 0.32, 1.1, -0.42, 0.2, 0.62,
+                 glass_front=lambda q: 0.38, glass_rear=lambda q: 1.06 - q * 0.16)
+            mirror_arm(b, sh.point(-0.62, 0.5, side) + Vector((0, 0.02, 0.03)), side, color="trim_black", size=0.9)
+            # the flank crease + black lower moulding that wraps into the bumpers
+            patch(b, sh, -1.96, 1.98, 0.14, 0.17, "trim_black", side, off=0.008, ny=12, ns=1)
+            patch(b, sh, -1.96, 1.98, -0.3, -0.18, "trim_black", side, off=0.012, ny=12, ns=1, thick=0.02)
         for side in (1, -1):
-            glass(b, cab, 0.95, lambda q: 1.26 - (1 - q) * 0.02, 0.02, 1.0, side, ny=3, ns=3)
-        # grille with slats between the quad lamps, chrome bumpers with black rubbing strip
-        rbox(b, (0, -2.0, 0.62), (0.76, 0.08, 0.2), "grille_black", r=0.3)
-        for k in range(5):
-            b.box((0, -2.045, 0.54 + k * 0.04), (0.72, 0.01, 0.012), "chrome")
-        for y, f in ((-2.08, -1), (2.12, 1)):
-            rbox(b, (0, y, 0.42), (W + 0.04, 0.12, 0.13), "chrome", r=0.6)
-            rbox(b, (0, y + f * 0.05, 0.42), (W + 0.02, 0.04, 0.04), "trim_black", r=0.5)
-            for x in (0.6, -0.6):
-                rbox(b, (x, y - f * 0.02, 0.33), (0.05, 0.1, 0.1), "trim_black", r=0.5)
-        plate(b, (0, -2.15, 0.42))
-        plate(b, (0, 2.11, 0.62), facing=1)
-        b.box((0, 2.07, 0.78), (1.2, 0.02, 0.02), "chrome")                                  # boot lid trim
+            glass(b, cab, lambda q: -0.66 + (1 - q) * 0.02, ws_edge, 0.02, 1.0, side, ny=4, ns=4)
+            glass(b, cab, lambda q: 1.3 - q * 0.42, 1.34, 0.02, 1.0, side, ny=3, ns=4)
+        # front: flat slanted panel, black slatted grille between the lamps, small shield badge
+        fz = -2.0
+        rbox(b, (0, fz, 0.56), (0.72, 0.06, 0.14), "grille_black", r=0.2)
+        for k in range(3):
+            b.box((0, fz - 0.035, 0.515 + k * 0.045), (0.68, 0.012, 0.016), "trim_black")
+        b.prism((0, fz - 0.045, 0.6), (0.09, 0.02, 0.1), "chrome", rot=(math.pi / 2, 0, math.pi))    # badge
+        # black bumpers wrapping round, with amber corners at the front and the plate
+        for y, f in ((-2.08, -1), (2.08, 1)):
+            rbox(b, (0, y, 0.38), (W + 0.04, 0.14, 0.15), "trim_black", r=0.45)
+        plate(b, (0, -2.16, 0.38), w=0.44, h=0.11)
+        plate(b, (0, 2.06, 0.6), facing=1)
+        b.box((0, 2.055, 0.84), (1.3, 0.02, 0.02), "trim_black")                             # boot lid edge
         for x in (0.28, -0.28):
-            b.box((x, -0.84, 0.95), (0.46, 0.02, 0.015), "trim_black", rot=(0, 0.04, 0.12))
-        b.cyl((0.5, 2.1, 0.28), 0.032, 0.032, 0.14, "chrome", seg=10, rot=(math.pi / 2, 0, 0))
-        parts.append(("FX_Exhaust", None, (0.5, 2.18, 0.28), "Body"))
+            b.box((x, -0.62, 0.84), (0.46, 0.02, 0.015), "trim_black", rot=(0, 0.04, 0.12))
+        b.cyl((0.5, 2.1, 0.26), 0.032, 0.032, 0.14, "chrome", seg=10, rot=(math.pi / 2, 0, 0))
+        parts.append(("FX_Exhaust", None, (0.5, 2.18, 0.26), "Body"))
 
         def heads(lm):
-            for x in (0.6, -0.6):   # big rectangular headlamps with a chrome bezel
-                rbox(lm, (x, -2.0, 0.64), (0.34, 0.08, 0.2), "chrome", r=0.3)
-                rbox(lm, (x, -2.045, 0.64), (0.3, 0.02, 0.16), "lens_clear", r=0.4)
-                ellip(lm, (x, -2.06, 0.64), (0.06, 0.012, 0.05), "lamp_white", seg=10, rings=6)
-            for x in (0.74, -0.74):
-                rbox(lm, (x, -2.02, 0.47), (0.16, 0.03, 0.06), "lamp_amber", r=0.4)
+            for x in (0.56, -0.56):   # big flush rectangular headlamps, ribbed lens
+                rbox(lm, (x, fz + 0.005, 0.57), (0.36, 0.05, 0.16), "trim_black", r=0.15)
+                rbox(lm, (x, fz - 0.02, 0.57), (0.33, 0.02, 0.13), "lens_clear", r=0.2)
+                for k in range(4):
+                    lm.box((x - 0.12 + k * 0.08, fz - 0.032, 0.57), (0.012, 0.006, 0.11), "rim_silver")
+            for x in (0.72, -0.72):
+                rbox(lm, (x, -2.13, 0.38), (0.16, 0.03, 0.06), "lamp_amber", r=0.4)
         lights_part(ctx, "HeadLights", heads)
 
         def tails(lm):
-            for x in (0.6, -0.6):
-                rbox(lm, (x, 2.06, 0.66), (0.46, 0.12, 0.17), "lamp_red", r=0.3)
-                rbox(lm, (x * 1.18, 2.08, 0.66), (0.1, 0.1, 0.15), "lamp_amber", r=0.3)
+            for x in (0.56, -0.56):
+                rbox(lm, (x, 2.04, 0.66), (0.44, 0.06, 0.16), "lamp_red", r=0.2)
+                rbox(lm, (x * 1.26, 2.05, 0.66), (0.1, 0.05, 0.15), "lamp_amber", r=0.2)
         lights_part(ctx, "BrakeLights", tails)
 
         def rev(lm):
             for x in (0.3, -0.3):
-                rbox(lm, (x, 2.07, 0.66), (0.1, 0.1, 0.13), "lamp_white", r=0.3)
+                rbox(lm, (x, 2.05, 0.66), (0.1, 0.05, 0.13), "lamp_white", r=0.2)
         lights_part(ctx, "ReverseLights", rev)
-        ornament(parts, (0, -0.56, 1.3), kind="tasbih")
-        antenna(parts, (0.72, -1.3, 0.86), length=0.7, lean=0.25)
+        ornament(parts, (0, -0.5, 1.28), kind="tasbih")
+        antenna(parts, (0.74, -1.25, 0.78), length=0.7, lean=0.25)
     return build_car(s, details)
 
 
@@ -939,82 +967,96 @@ def kancil():
 
 # ============================================================================== ALPHARD
 def alphard():
-    """veh_alphard: the Datuk's big luxury MPV - tall slab sides, a huge chrome grille,
-    stacked LED headlamps, sliding rear doors, big chrome-rimmed alloys."""
-    W = 1.9
-    s = CarSpec(id="veh_alphard", width=W, track=1.62, wr=0.38, ww=0.24, fy=-1.46, ry=1.5, arch_lift=0.02, arch_gap=0.06,
-                wheel_style="alloy", spokes=10, floor_z=0.4, roof_z=1.98, seat_x=0.42, seat_y=-0.35, dash_y=-1.02, dash_z=0.96,
-                chrome_handles=True, seat_color="seat_black")
-    s.stations = [(-2.36, 0.72, 0.36, 0.62, 0.86, 3.0, 2.4, 2.4),
-                  (-2.28, 0.9, 0.3, 0.64, 0.98, 4.0, 3.0, 3.0),
-                  (-1.9, 0.95, 0.28, 0.68, 1.1, 5.0, 3.4, 3.4),
-                  (-1.2, 0.955, 0.28, 0.72, 1.14, 6.0, 4.0, 4.0),
-                  (1.9, 0.955, 0.28, 0.72, 1.14, 6.0, 4.0, 4.0),
-                  (2.32, 0.93, 0.3, 0.72, 1.12, 5.0, 3.4, 3.0),
-                  (2.42, 0.82, 0.36, 0.72, 1.08, 4.0, 3.0, 2.6)]
-    s.cab_stations = [(-1.8, 0.66, 1.06, 1.1, 1.14, 3.0, 2.2, 2.0),
-                      (-1.4, 0.86, 1.06, 1.14, 1.76, 4.0, 3.0, 2.0),
-                      (-0.9, 0.88, 1.06, 1.14, 1.98, 5.0, 5.0, 2.0),
-                      (2.1, 0.88, 1.06, 1.14, 1.98, 5.0, 5.0, 2.0),
-                      (2.36, 0.86, 1.06, 1.14, 1.9, 4.6, 4.0, 2.0),
-                      (2.44, 0.76, 1.06, 1.12, 1.6, 3.6, 3.0, 2.0)]
-    s.y_breaks, s.s_breaks, s.cab_breaks = (-2.2, 2.3), (-0.55,), ()
-    s.body_color = lambda c: "trim_black" if c.z < 0.4 else "car_paint"
-    s.cab_color = lambda c: "car_paint"
+    """veh_alphard: the latest (4th-gen) Alphard - a huge, tall slab MPV: short sloping bonnet,
+    enormous glasshouse on blacked-out pillars under a body-colour 'floating' roof, a chrome line
+    along the window base that kicks up at the rear, sliding side door, slim sharp headlamps over
+    a big grille of vertical chrome fins, tail lamps across the tailgate, multi-spoke 18s.
+    4.99 x 1.85 x 1.94 m, 3.0 m wheelbase."""
+    W = 1.86
+    s = CarSpec(id="veh_alphard", width=W, track=1.6, wr=0.37, ww=0.24, fy=-1.5, ry=1.5, arch_lift=0.02, arch_gap=0.05,
+                wheel_style="alloy", spokes=12, floor_z=0.4, roof_z=1.94, seat_x=0.42, seat_y=-0.38, dash_y=-1.08,
+                dash_z=0.98, chrome_handles=True, seat_color="seat_black")
+    s.stations = [(-2.5, 0.86, 0.30, 0.62, 1.02, 6.0, 4.0, 4.0),
+                  (-2.47, 0.90, 0.26, 0.64, 1.08, 7.0, 4.5, 5.0),
+                  (-2.25, 0.925, 0.25, 0.66, 1.13, 8.0, 5.0, 5.0),
+                  (-1.75, 0.925, 0.25, 0.68, 1.18, 8.0, 5.0, 5.0),
+                  (1.9, 0.925, 0.25, 0.72, 1.22, 8.0, 5.0, 5.0),
+                  (2.4, 0.91, 0.27, 0.72, 1.22, 7.0, 4.4, 4.4),
+                  (2.5, 0.84, 0.32, 0.72, 1.18, 4.0, 3.0, 3.0)]
+    s.cab_stations = [(-1.8, 0.84, 1.1, 1.17, 1.21, 5.0, 2.4, 2.0),
+                      (-1.5, 0.89, 1.1, 1.19, 1.52, 7.0, 4.0, 2.0),
+                      (-0.95, 0.90, 1.1, 1.2, 1.9, 7.0, 8.0, 2.0),
+                      (2.25, 0.90, 1.1, 1.22, 1.93, 7.0, 8.0, 2.0),
+                      (2.44, 0.87, 1.1, 1.22, 1.86, 6.0, 5.0, 2.0),
+                      (2.5, 0.80, 1.1, 1.22, 1.3, 4.0, 3.0, 2.0)]
+    s.y_breaks, s.s_breaks, s.cab_breaks = (-2.25, 2.4), (-0.55,), ()
+    s.body_color = lambda c: "trim_black" if c.z < 0.34 else "car_paint"
+    s.cab_color = lambda c: "car_paint" if c.z > 1.82 else "trim_black"   # floating roof, black pillars
+    s.belt_s = 0.04
+    s.pillar_color = "trim_black"
 
     def details(ctx):
         b, sh, cab, parts = ctx["body"], ctx["shell"], ctx["cab"], ctx["parts"]
+        ws_edge = lambda q: -1.62 + q * 0.64
         for side in (1, -1):
-            door(ctx, "Door_FL" if side > 0 else "Door_FR", side, -1.02, -0.02, -0.5, 0.3, 0.7,
-                 glass_front=lambda q: -0.96 + q * 0.28)
-            # big sliding side door (slides back along its rail in the game)
-            door(ctx, "SlideDoor_L" if side > 0 else "SlideDoor_R", side, 0.0, 1.14, -0.5, 0.3, 0.7)
-            glass(b, cab, 1.18, 2.2, 0.04, 0.66, side, ny=4, ns=3)
-            patch(b, sh, 0.1, 1.5, 0.33, 0.36, "chrome", side, off=0.01, ny=4, ns=1)      # slide rail trim
-            mirror_arm(b, sh.point(-1.0, 0.45, side) + Vector((0, 0, 0.05)), side, size=1.15)
-            patch(b, sh, -2.1, 2.3, -0.42, -0.36, "chrome", side, off=0.01, ny=10, ns=1)   # chrome rocker strip
-        glass(b, cab, lambda q: -1.72 + (1 - q) * 0.1, lambda q: -1.02 - q * 0.08, 0.02, 1.0, 1, ny=4, ns=3)
-        glass(b, cab, lambda q: -1.72 + (1 - q) * 0.1, lambda q: -1.02 - q * 0.08, 0.02, 1.0, -1, ny=4, ns=3)
+            door(ctx, "Door_FL" if side > 0 else "Door_FR", side, -1.1, -0.3, -0.5, 0.3, 0.62,
+                 glass_front=lambda q: max(-1.06, ws_edge(q) + 0.12), glass_rear=lambda q: -0.4)
+            glass(b, cab, lambda q: ws_edge(q) + 0.12, -1.12, 0.04, 0.5, side, ny=2, ns=2)          # front quarter light
+            # the big power sliding door (it slides back along the rail in the game)
+            door(ctx, "SlideDoor_L" if side > 0 else "SlideDoor_R", side, -0.28, 1.0, -0.5, 0.3, 0.62,
+                 glass_front=lambda q: -0.2, glass_rear=lambda q: 0.92)
+            glass(b, cab, 1.06, lambda q: 2.3 - q * 0.08, 0.04, 0.6, side, ny=4, ns=3)            # rear quarter
+            # chrome beltline: along the window base, kicking up at the D-pillar
+            patch(b, cab, -1.6, 2.2, 0.026, 0.04, "chrome", side, off=0.02, ny=12, ns=1)
+            patch(b, cab, 2.0, 2.34, 0.03, 0.2, "chrome", side, off=0.02, ny=2, ns=1)
+            patch(b, sh, 1.0, 2.3, 0.12, 0.15, "trim_black", side, off=0.01, ny=4, ns=1)          # slide rail groove
+            mirror_arm(b, sh.point(-1.62, 0.55, side) + Vector((0, 0.02, 0.06)), side, color="chrome", size=1.2)
+            patch(b, sh, -2.1, 2.35, -0.44, -0.38, "chrome", side, off=0.012, ny=10, ns=1)        # rocker chrome
         for side in (1, -1):
-            glass(b, cab, 2.2, 2.42, 0.02, 1.0, side, ny=2, ns=3)
-        # the famous wall of chrome: a tall grille of stacked bars
-        rbox(b, (0, -2.34, 0.66), (1.24, 0.08, 0.62), "chrome", r=0.25)
-        rbox(b, (0, -2.37, 0.66), (1.1, 0.04, 0.54), "grille_black", r=0.3)
-        for k in range(6):
-            rbox(b, (0, -2.4, 0.43 + k * 0.09), (1.1, 0.03, 0.03), "chrome", r=0.5)
-        rbox(b, (0, -2.42, 0.34), (W - 0.02, 0.12, 0.12), "car_paint", r=0.6)
-        plate(b, (0, -2.47, 0.3))
-        rbox(b, (0, 2.46, 1.0), (1.3, 0.04, 0.06), "chrome", r=0.5)                          # tailgate chrome bar
-        plate(b, (0, 2.46, 0.78), facing=1)
-        rbox(b, (0, 2.44, 0.38), (W - 0.04, 0.12, 0.14), "car_paint", r=0.6)
+            glass(b, cab, lambda q: -1.78 + (1 - q) * 0.02, ws_edge, 0.02, 1.0, side, ny=4, ns=4)
+            glass(b, cab, 2.36, 2.52, 0.3, 1.0, side, ny=2, ns=3)
+        # front: slim bonnet, big grille of vertical chrome fins under a chrome brow, bumper vents
+        fz = -2.5                                            # the flat front face
+        rbox(b, (0, fz + 0.01, 0.6), (1.2, 0.04, 0.48), "grille_black", r=0.2)
+        for k in range(15):
+            x = -0.56 + k * 0.08
+            b.box((x, fz - 0.008, 0.6), (0.016, 0.02, 0.42), "chrome")
+        rbox(b, (0, fz - 0.01, 0.855), (1.26, 0.03, 0.03), "chrome", r=0.4)
+        for x in (0.74, -0.74):
+            rbox(b, (x, fz, 0.5), (0.05, 0.03, 0.24), "lamp_white", r=0.5)                    # vertical LED slots
+        plate(b, (0, fz - 0.02, 0.3))
+        rbox(b, (0, 2.5, 1.06), (1.4, 0.04, 0.05), "chrome", r=0.5)                          # tailgate chrome bar
+        plate(b, (0, 2.52, 0.8), facing=1)
         for x in (0.3, -0.34):
-            b.box((x, -1.62, 1.18), (0.6, 0.02, 0.015), "trim_black", rot=(0, 0.04, 0.12))
+            b.box((x, -1.7, 1.21), (0.6, 0.02, 0.015), "trim_black", rot=(0, 0.04, 0.12))
         for x in (0.62, -0.62):
-            b.cyl((x, 2.44, 0.32), 0.04, 0.04, 0.12, "chrome", seg=10, rot=(math.pi / 2, 0, 0))
-        parts.append(("FX_Exhaust", None, (0.62, 2.52, 0.32), "Body"))
+            b.cyl((x, 2.48, 0.32), 0.04, 0.04, 0.12, "chrome", seg=10, rot=(math.pi / 2, 0, 0))
+        parts.append(("FX_Exhaust", None, (0.62, 2.56, 0.32), "Body"))
 
         def heads(lm):
             for side in (1, -1):
-                x = side * 0.78
-                rbox(lm, (x, -2.3, 0.96), (0.3, 0.06, 0.12), "lens_clear", rot=(0, 0, side * 0.12), r=0.4)
+                # slim, sharp headlamps set at the top corners, three LED dots + an eyebrow
+                x = side * 0.6
+                rbox(lm, (x, fz, 0.93), (0.4, 0.03, 0.1), "trim_black", r=0.4)                  # slim lamp housing
                 for k in range(3):
-                    rbox(lm, (x - side * 0.1 + side * k * 0.09, -2.33, 0.96), (0.06, 0.02, 0.05), "lamp_white", r=0.5)
-                rbox(lm, (x, -2.33, 0.86), (0.28, 0.02, 0.02), "lamp_white", r=0.5)       # LED eyebrow
-                rbox(lm, (x * 0.98, -2.38, 0.5), (0.16, 0.04, 0.05), "lamp_amber", r=0.5)
+                    rbox(lm, (x - side * 0.1 + side * k * 0.08, fz - 0.012, 0.92), (0.05, 0.015, 0.04), "lamp_white", r=0.5)
+                rbox(lm, (x, fz - 0.012, 0.97), (0.36, 0.015, 0.015), "lamp_white", r=0.5)          # LED eyebrow
+                rbox(lm, (side * 0.8, fz + 0.01, 0.9), (0.06, 0.03, 0.05), "lamp_amber", r=0.5)
         lights_part(ctx, "HeadLights", heads)
 
         def tails(lm):
+            rbox(lm, (0, 2.51, 1.16), (1.5, 0.03, 0.05), "lamp_red", r=0.5)                  # full-width light bar
             for side in (1, -1):
-                patch(lm, sh, 2.3, 2.42, 0.05, 0.62, "lamp_red", side, off=0.012, ny=1, ns=3)
-            rbox(lm, (0, 2.42, 1.96), (0.5, 0.04, 0.03), "lamp_red", r=0.5)
+                patch(lm, sh, 2.36, 2.49, 0.3, 0.8, "lamp_red", side, off=0.012, ny=1, ns=3)
+            rbox(lm, (0, 2.46, 1.92), (0.5, 0.04, 0.03), "lamp_red", r=0.5)
         lights_part(ctx, "BrakeLights", tails)
 
         def rev(lm):
             for side in (1, -1):
-                patch(lm, sh, 2.36, 2.42, -0.25, -0.05, "lamp_white", side, off=0.012, ny=1, ns=1)
+                patch(lm, sh, 2.42, 2.49, -0.25, -0.05, "lamp_white", side, off=0.012, ny=1, ns=1)
         lights_part(ctx, "ReverseLights", rev)
-        ornament(parts, (0, -0.92, 1.8), kind="tasbih")
-        antenna(parts, (0, 1.9, 1.98), length=0.12, lean=1.2)   # shark-fin stub
+        ornament(parts, (0, -0.98, 1.78), kind="tasbih")
+        antenna(parts, (0, 1.9, 1.93), length=0.12, lean=1.2)   # shark-fin stub
     return build_car(s, details)
 
 
@@ -1131,10 +1173,10 @@ def teksi():
     parts = saga()
     for name, m, origin, parent in parts:
         if name == "Body":
-            rbox(m, (0, 0.2, 1.5), (0.56, 0.22, 0.16), "plate_white", r=0.5)
-            rbox(m, (0, 0.2, 1.43), (0.6, 0.26, 0.03), "trim_black", r=0.5)
-            m.box((0, 0.085, 1.5), (0.42, 0.01, 0.07), "lamp_red")
-            m.box((0, 0.315, 1.5), (0.42, 0.01, 0.07), "lamp_red")
+            rbox(m, (0, 0.2, 1.46), (0.56, 0.22, 0.16), "plate_white", r=0.5)
+            rbox(m, (0, 0.2, 1.37), (0.6, 0.26, 0.03), "trim_black", r=0.5)
+            m.box((0, 0.085, 1.46), (0.42, 0.01, 0.07), "lamp_red")
+            m.box((0, 0.315, 1.46), (0.42, 0.01, 0.07), "lamp_red")
     for i, (name, m, origin, parent) in enumerate(parts):
         if name == "COL_veh_saga":
             parts[i] = ("COL_veh_teksi", m, origin, parent)
@@ -1146,9 +1188,9 @@ def polis():
     parts = myvi()
     for name, m, origin, parent in parts:
         if name == "Body":
-            rbox(m, (0, 0.1, 1.62), (1.1, 0.26, 0.08), "trim_black", r=0.5)
-            rbox(m, (0.3, 0.1, 1.67), (0.44, 0.22, 0.1), "siren_red", r=0.5)
-            rbox(m, (-0.3, 0.1, 1.67), (0.44, 0.22, 0.1), "siren_blue", r=0.5)
+            rbox(m, (0, 0.1, 1.575), (1.1, 0.26, 0.07), "trim_black", r=0.5)
+            rbox(m, (0.3, 0.1, 1.63), (0.44, 0.22, 0.1), "siren_red", r=0.5)
+            rbox(m, (-0.3, 0.1, 1.63), (0.44, 0.22, 0.1), "siren_blue", r=0.5)
     for i, (name, m, origin, parent) in enumerate(parts):
         if name == "COL_veh_myvi":
             parts[i] = ("COL_veh_polis", m, origin, parent)

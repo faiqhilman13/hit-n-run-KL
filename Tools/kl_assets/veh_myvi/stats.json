@@ -1,8 +1,8 @@
 {
  "asset": "veh_myvi",
- "triangles": 22340,
+ "triangles": 24306,
  "lod1_body_triangles": null,
- "lod0_body_triangles": 8112,
+ "lod0_body_triangles": 10066,
  "materials": 1,
  "parts": [
   "Body",
@@ -31,9 +31,9 @@
   "COL_veh_myvi"
  ],
  "dimensions_m": {
-  "length": 3.661,
-  "width": 1.943,
-  "height": 1.961
+  "length": 3.775,
+  "width": 1.92,
+  "height": 1.884
  },
  "blender": "5.2.1 LTS"
 }

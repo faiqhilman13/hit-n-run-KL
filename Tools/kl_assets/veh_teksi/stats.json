@@ -1,8 +1,8 @@
 {
  "asset": "veh_teksi",
- "triangles": 18044,
+ "triangles": 17896,
  "lod1_body_triangles": null,
- "lod0_body_triangles": 7604,
+ "lod0_body_triangles": 7872,
  "materials": 1,
  "parts": [
   "Body",
@@ -31,9 +31,9 @@
   "COL_veh_teksi"
  ],
  "dimensions_m": {
-  "length": 4.351,
-  "width": 1.929,
-  "height": 1.577
+  "length": 4.341,
+  "width": 1.869,
+  "height": 1.537
  },
  "blender": "5.2.1 LTS"
 }

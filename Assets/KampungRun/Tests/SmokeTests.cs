@@ -49,6 +49,19 @@ namespace KampungRun.Tests
 
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
 
+        static Transform FindDeep(Transform t, string name)
+        {
+            foreach (var c in t.GetComponentsInChildren<Transform>(true)) if (c.name == name) return c;
+            return null;
+        }
+
+        static string StateName(Animator a)
+        {
+            var st = a.GetCurrentAnimatorStateInfo(0);
+            foreach (var n in new[] { "Loco", "Ride", "Sit", "Mount", "Dismount", "Hit", "Knock" }) if (st.IsName(n)) return n;
+            return st.shortNameHash.ToString();
+        }
+
         static IEnumerator Seconds(float s)
         {
             float end = Time.time + s;
@@ -593,7 +606,7 @@ namespace KampungRun.Tests
             cc.yaw = 250f; cc.distance = 6f; cc.pitch = 10f;
             yield return Seconds(0.2f);
             Shot("72_myvi_door_open");
-            yield return Seconds(1.2f);
+            for (float t = 0; t < 4f && !(p.Driving && !p.Transitioning); t += Time.deltaTime) yield return null;
             Assert.IsTrue(p.Driving, "player should be in the Myvi");
             Shot("73_myvi_driver_seated");
             p.ExitVehicle(false, true);
@@ -609,6 +622,22 @@ namespace KampungRun.Tests
                 var drv = new TurnDriver { steer = 0f };
                 v.driver = drv;
                 yield return Seconds(1.6f);
+                // driving pose: feet rest on the floor pan, never poke out underneath. Measured in the
+                // body's own frame (the seat rides the sprung body), so a crash nose-dive doesn't count.
+                // The seat marker sits ~0.27 m above the cabin floor.
+                var anim = p.GetComponentInChildren<Animator>();
+                var seat = FindDeep(v.transform, "Seat_Driver");
+                if (anim && anim.isHuman && seat && !v.TwoWheeler)
+                    foreach (var foot in new[] { HumanBodyBones.LeftFoot, HumanBodyBones.RightFoot })
+                    {
+                        // the seat's axes carry the importer's Z-up correction: use whichever one points up
+                        var bodyUp = seat.up;
+                        foreach (var ax in new[] { seat.forward, -seat.forward, seat.right, -seat.right, -seat.up })
+                            if (Vector3.Dot(ax, v.transform.up) > Vector3.Dot(bodyUp, v.transform.up)) bodyUp = ax;
+                        float above = Vector3.Dot(anim.GetBoneTransform(foot).position - seat.position, bodyUp) + 0.27f;
+                        Debug.Log($"[HR] {id}: {foot} {above:F2} m above the cabin floor, state={StateName(anim)}");
+                        Assert.Greater(above, -0.02f, $"{id}: {foot} through the floor");
+                    }
                 drv.steer = 0.9f;                      // hard corner: body roll
                 yield return Seconds(0.45f);
                 Shot($"74_roll_{id}");

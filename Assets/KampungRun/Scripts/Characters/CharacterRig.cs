@@ -131,6 +131,18 @@ namespace KampungRun
         /// <summary>Knocked over: whole body tips back, then gets up.</summary>
         public void Tumble(float time) { _tumble = time; Trigger("Knock"); }
 
+        /// <summary>Dropped into a seat: cancel any pending punch / knockdown so the body doesn't play it
+        /// out at the wheel (legs flailing through the floor), and blend straight into the seated pose.</summary>
+        public void SettleInSeat(bool ride)
+        {
+            _tumble = 0; _punchT = 0; _kickT = 0;
+            if (!_anim) return;
+            foreach (var t in new[] { "Punch", "Kick", "Knock", "Hit", "Mount", "Dismount" }) _anim.ResetTrigger(t);
+            _anim.SetBool("Riding", ride);
+            _anim.SetBool("Sitting", !ride);
+            _anim.CrossFadeInFixedTime(ride ? "Ride" : "Sit", 0.2f);
+        }
+
         void Pose(Transform t, Quaternion rest, float pitch, float roll = 0f, float yaw = 0f)
         {
             if (!t) return;

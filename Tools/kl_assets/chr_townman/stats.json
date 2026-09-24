@@ -23,6 +23,7 @@
   "dismount",
   "sit",
   "knockdown",
+  "hit",
   "wave"
  ],
  "dimensions_m": [

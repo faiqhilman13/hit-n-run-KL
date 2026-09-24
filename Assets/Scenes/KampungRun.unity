@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &343250388
+--- !u!1 &272719770
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,10 +127,10 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 343250392}
-  - component: {fileID: 343250391}
-  - component: {fileID: 343250390}
-  - component: {fileID: 343250389}
+  - component: {fileID: 272719774}
+  - component: {fileID: 272719773}
+  - component: {fileID: 272719772}
+  - component: {fileID: 272719771}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -138,13 +138,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &343250389
+--- !u!114 &272719771
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 343250388}
+  m_GameObject: {fileID: 272719770}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ff2224cc31ef388409fdb85fac994391, type: 3}
@@ -156,21 +156,21 @@ MonoBehaviour:
   height: 1.6
   yaw: 0
   pitch: 14
---- !u!81 &343250390
+--- !u!81 &272719772
 AudioListener:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 343250388}
+  m_GameObject: {fileID: 272719770}
   m_Enabled: 1
---- !u!20 &343250391
+--- !u!20 &272719773
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 343250388}
+  m_GameObject: {fileID: 272719770}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
@@ -215,13 +215,13 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!4 &343250392
+--- !u!4 &272719774
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 343250388}
+  m_GameObject: {fileID: 272719770}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 40, z: -120}
@@ -230,7 +230,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &695581035
+--- !u!1 &1505566378
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -238,8 +238,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 695581037}
-  - component: {fileID: 695581036}
+  - component: {fileID: 1505566380}
+  - component: {fileID: 1505566379}
   m_Layer: 0
   m_Name: Matahari
   m_TagString: Untagged
@@ -247,13 +247,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!108 &695581036
+--- !u!108 &1505566379
 Light:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 695581035}
+  m_GameObject: {fileID: 1505566378}
   m_Enabled: 1
   serializedVersion: 13
   m_Type: 1
@@ -312,13 +312,13 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!4 &695581037
+--- !u!4 &1505566380
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 695581035}
+  m_GameObject: {fileID: 1505566378}
   serializedVersion: 2
   m_LocalRotation: {x: 0.38791165, y: 0.27470842, z: -0.12230807, w: 0.8712638}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -327,7 +327,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1551980459
+--- !u!1 &1943450911
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -335,8 +335,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1551980461}
-  - component: {fileID: 1551980460}
+  - component: {fileID: 1943450913}
+  - component: {fileID: 1943450912}
   m_Layer: 0
   m_Name: KampungRun
   m_TagString: Untagged
@@ -344,13 +344,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1551980460
+--- !u!114 &1943450912
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1551980459}
+  m_GameObject: {fileID: 1943450911}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 478eae02bfda9aa44b327edc056cba7e, type: 3}
@@ -359,13 +359,13 @@ MonoBehaviour:
   autoStartLevel: 0
   trafficCount: 22
   pedestrianCount: 60
---- !u!4 &1551980461
+--- !u!4 &1943450913
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1551980459}
+  m_GameObject: {fileID: 1943450911}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -378,6 +378,6 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 343250392}
-  - {fileID: 695581037}
-  - {fileID: 1551980461}
+  - {fileID: 272719774}
+  - {fileID: 1505566380}
+  - {fileID: 1943450913}
