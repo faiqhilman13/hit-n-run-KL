@@ -587,7 +587,7 @@ def build_car(spec, body_fn):
     iz = s.floor_z
     # front seats sit low (cartoon heads are big: keep them clear of the roof)
     for x in (-s.seat_x, s.seat_x):
-        seat(body, x, s.seat_y, iz + 0.2, color=s.__dict__.get("seat_color", "seat_grey"))
+        seat(body, x, s.seat_y, iz + 0.14, color=s.__dict__.get("seat_color", "seat_grey"))
     if s.__dict__.get("rear_seat", True):
         rbox(body, (0, s.seat_y + 0.85, iz + 0.28), (s.width - 0.3, 0.46, 0.14), s.__dict__.get("seat_color", "seat_grey"),
              r=0.5)
@@ -595,11 +595,11 @@ def build_car(spec, body_fn):
              rot=(-0.2, 0, 0), r=0.5)
     rbox(body, (0, s.dash_y, s.dash_z), (s.width - 0.22, 0.34, 0.2), "dash_grey", r=0.6)
     rbox(body, (-s.seat_x, s.dash_y + 0.1, s.dash_z + 0.12), (0.3, 0.1, 0.1), "trim_black", r=0.5)   # binnacle
-    body.box((0, s.seat_y - 0.2, iz + 0.12), (s.width - 0.2, 1.6, 0.04), "carpet")
+    body.box((0, s.seat_y - 0.2, iz + 0.06), (s.width - 0.2, 1.6, 0.04), "carpet")
     hub = Vector((-s.seat_x, s.dash_y + 0.2, s.dash_z + 0.16))
     colm = steering_wheel(parts, hub, 0.17, 0.42)
     merge_bm(body, _bm_of(colm))
-    parts.append(("Seat_Driver", None, (-s.seat_x, s.seat_y - 0.02, iz + 0.27), "Body"))
+    parts.append(("Seat_Driver", None, (-s.seat_x, s.seat_y - 0.02, iz + 0.21), "Body"))
 
     # ---- wheels
     for name, x, y in (("Wheel_FL", s.track / 2, s.fy), ("Wheel_FR", -s.track / 2, s.fy),
@@ -710,7 +710,7 @@ def myvi():
     Dimensions follow the real car (3.69 x 1.67 x 1.55 m, 2.44 m wheelbase), lightly cartooned."""
     W = 1.68
     s = CarSpec(id="veh_myvi", width=W, track=1.44, wr=0.31, ww=0.21, fy=-1.2, ry=1.24, arch_lift=0.02, arch_gap=0.05,
-                wheel_style="alloy_dark", spokes=5, floor_z=0.3, roof_z=1.56, seat_x=0.36, seat_y=0.02, dash_y=-0.66,
+                wheel_style="alloy_dark", spokes=5, floor_z=0.3, roof_z=1.59, seat_x=0.36, seat_y=0.02, dash_y=-0.66,
                 dash_z=0.86, b_pillar=True)
     s.pillar_color = "trim_black"
     #            y      half-w  zb    zm    zt    n_side n_top n_bot
@@ -726,9 +726,9 @@ def myvi():
     # greenhouse: fast windscreen from the A-pillar base, long flat roof, near-upright hatch
     s.cab_stations = [(-1.06, 0.70, 0.88, 0.94, 0.97, 3.0, 2.4, 2.0),
                       (-0.80, 0.77, 0.88, 0.97, 1.22, 3.4, 3.4, 2.0),
-                      (-0.34, 0.775, 0.88, 0.99, 1.53, 3.6, 4.6, 2.0),
-                      (1.36, 0.765, 0.88, 1.03, 1.54, 3.6, 4.6, 2.0),
-                      (1.58, 0.74, 0.88, 1.04, 1.49, 3.4, 4.0, 2.0),
+                      (-0.34, 0.775, 0.88, 0.99, 1.56, 3.6, 4.6, 2.0),
+                      (1.36, 0.765, 0.88, 1.03, 1.57, 3.6, 4.6, 2.0),
+                      (1.58, 0.74, 0.88, 1.04, 1.52, 3.4, 4.0, 2.0),
                       (1.80, 0.64, 0.88, 1.04, 1.12, 3.0, 2.6, 2.0)]
     s.y_breaks, s.s_breaks, s.cab_breaks = (-1.7, 1.7), (-0.55,), ()
 
@@ -738,7 +738,7 @@ def myvi():
         return "car_paint"
     s.body_color = body_color
     # blacked-out pillars between the window line and a body-colour roof
-    s.cab_color = lambda c: "car_paint" if c.z > 1.46 else "trim_black"
+    s.cab_color = lambda c: "car_paint" if c.z > 1.49 else "trim_black"
     s.belt_s = 0.04
 
     def details(ctx):
@@ -823,7 +823,7 @@ def saga():
     long flat boot, steel wheels with body-colour centre caps. 4.08 x 1.62 x 1.36 m."""
     W = 1.64
     s = CarSpec(id="veh_saga", width=W, track=1.4, wr=0.29, ww=0.18, fy=-1.22, ry=1.16, arch_lift=0.0, arch_gap=0.05,
-                wheel_style="steel_paint", floor_z=0.28, roof_z=1.38, seat_x=0.36, seat_y=-0.02, dash_y=-0.62, dash_z=0.8,
+                wheel_style="steel_paint", floor_z=0.24, roof_z=1.48, seat_x=0.36, seat_y=-0.02, dash_y=-0.62, dash_z=0.8,
                 seat_color="interior")
     s.stations = [(-2.05, 0.74, 0.28, 0.46, 0.58, 5.0, 3.6, 3.6),
                   (-2.03, 0.80, 0.26, 0.50, 0.64, 8.0, 5.0, 5.0),
@@ -834,10 +834,10 @@ def saga():
                   (1.98, 0.815, 0.26, 0.62, 0.86, 9.0, 6.0, 5.0),
                   (2.05, 0.78, 0.30, 0.62, 0.84, 6.0, 4.0, 3.6)]
     s.cab_stations = [(-0.68, 0.72, 0.78, 0.83, 0.86, 4.0, 2.4, 2.0),
-                      (-0.52, 0.76, 0.78, 0.84, 1.02, 4.4, 4.0, 2.0),
-                      (-0.12, 0.745, 0.78, 0.85, 1.35, 4.6, 8.0, 2.0),
-                      (0.86, 0.745, 0.78, 0.86, 1.36, 4.6, 8.0, 2.0),
-                      (1.12, 0.74, 0.78, 0.86, 1.14, 4.4, 5.0, 2.0),
+                      (-0.52, 0.76, 0.78, 0.84, 1.08, 4.4, 4.0, 2.0),
+                      (-0.12, 0.745, 0.78, 0.85, 1.48, 4.6, 8.0, 2.0),
+                      (0.86, 0.745, 0.78, 0.86, 1.49, 4.6, 8.0, 2.0),
+                      (1.12, 0.74, 0.78, 0.86, 1.2, 4.4, 5.0, 2.0),
                       (1.36, 0.70, 0.78, 0.86, 0.9, 4.0, 2.4, 2.0)]
     s.y_breaks, s.s_breaks, s.cab_breaks = (-1.96, 1.98), (-0.45, 0.2), ()
     s.body_color = lambda c: "trim_black" if c.z < 0.3 else "car_paint"
@@ -906,7 +906,7 @@ def kancil():
     wheels, round headlamps in a flat face, a stubby little tail."""
     W = 1.5
     s = CarSpec(id="veh_kancil", width=W, track=1.3, wr=0.28, ww=0.16, fy=-0.98, ry=1.0, arch_lift=0.01, arch_gap=0.05,
-                wheel_style="steel", floor_z=0.28, roof_z=1.5, seat_x=0.32, seat_y=0.05, dash_y=-0.55, dash_z=0.8)
+                wheel_style="steel", floor_z=0.28, roof_z=1.56, seat_x=0.32, seat_y=0.05, dash_y=-0.55, dash_z=0.8)
     s.stations = [(-1.54, 0.6, 0.28, 0.50, 0.66, 3.0, 2.4, 2.4),
                   (-1.48, 0.72, 0.24, 0.52, 0.76, 3.6, 3.0, 3.0),
                   (-1.2, 0.75, 0.23, 0.56, 0.86, 4.0, 3.0, 3.0),
@@ -914,10 +914,10 @@ def kancil():
                   (1.4, 0.74, 0.24, 0.6, 0.92, 3.6, 3.0, 2.8),
                   (1.56, 0.62, 0.3, 0.6, 0.86, 3.0, 2.4, 2.4)]
     s.cab_stations = [(-0.9, 0.56, 0.8, 0.85, 0.9, 2.6, 2.0, 2.0),
-                      (-0.6, 0.66, 0.8, 0.88, 1.36, 3.2, 3.0, 2.0),
-                      (-0.2, 0.68, 0.8, 0.88, 1.5, 3.6, 3.6, 2.0),
-                      (1.2, 0.68, 0.8, 0.88, 1.5, 3.6, 3.6, 2.0),
-                      (1.46, 0.62, 0.8, 0.86, 1.3, 3.0, 3.0, 2.0),
+                      (-0.6, 0.66, 0.8, 0.88, 1.4, 3.2, 3.0, 2.0),
+                      (-0.2, 0.68, 0.8, 0.88, 1.56, 3.6, 3.6, 2.0),
+                      (1.2, 0.68, 0.8, 0.88, 1.56, 3.6, 3.6, 2.0),
+                      (1.46, 0.62, 0.8, 0.86, 1.34, 3.0, 3.0, 2.0),
                       (1.52, 0.5, 0.8, 0.84, 0.94, 2.4, 2.0, 2.0)]
     s.y_breaks, s.s_breaks, s.cab_breaks = (-1.4, 1.45), (-0.5,), ()
     s.body_color = lambda c: "trim_black" if c.z < 0.31 else "car_paint"
@@ -1173,10 +1173,10 @@ def teksi():
     parts = saga()
     for name, m, origin, parent in parts:
         if name == "Body":
-            rbox(m, (0, 0.2, 1.46), (0.56, 0.22, 0.16), "plate_white", r=0.5)
-            rbox(m, (0, 0.2, 1.37), (0.6, 0.26, 0.03), "trim_black", r=0.5)
-            m.box((0, 0.085, 1.46), (0.42, 0.01, 0.07), "lamp_red")
-            m.box((0, 0.315, 1.46), (0.42, 0.01, 0.07), "lamp_red")
+            rbox(m, (0, 0.2, 1.59), (0.56, 0.22, 0.16), "plate_white", r=0.5)
+            rbox(m, (0, 0.2, 1.5), (0.6, 0.26, 0.03), "trim_black", r=0.5)
+            m.box((0, 0.085, 1.59), (0.42, 0.01, 0.07), "lamp_red")
+            m.box((0, 0.315, 1.59), (0.42, 0.01, 0.07), "lamp_red")
     for i, (name, m, origin, parent) in enumerate(parts):
         if name == "COL_veh_saga":
             parts[i] = ("COL_veh_teksi", m, origin, parent)
@@ -1188,9 +1188,9 @@ def polis():
     parts = myvi()
     for name, m, origin, parent in parts:
         if name == "Body":
-            rbox(m, (0, 0.1, 1.575), (1.1, 0.26, 0.07), "trim_black", r=0.5)
-            rbox(m, (0.3, 0.1, 1.63), (0.44, 0.22, 0.1), "siren_red", r=0.5)
-            rbox(m, (-0.3, 0.1, 1.63), (0.44, 0.22, 0.1), "siren_blue", r=0.5)
+            rbox(m, (0, 0.1, 1.605), (1.1, 0.26, 0.07), "trim_black", r=0.5)
+            rbox(m, (0.3, 0.1, 1.66), (0.44, 0.22, 0.1), "siren_red", r=0.5)
+            rbox(m, (-0.3, 0.1, 1.66), (0.44, 0.22, 0.1), "siren_blue", r=0.5)
     for i, (name, m, origin, parent) in enumerate(parts):
         if name == "COL_veh_myvi":
             parts[i] = ("COL_veh_polis", m, origin, parent)

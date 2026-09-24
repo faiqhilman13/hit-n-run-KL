@@ -18,6 +18,9 @@ namespace KampungRun
         public static int ForceLevel; // set by tests before the scene loads
         public int trafficCount = 22;
         public int pedestrianCount = 60;
+        public float cityCrowd = 3f;                    // map-wide spread: city blocks get this many times the kampung crowd
+        public float cityNear = 12f;                    // ...and the city blocks around the player are topped up to this
+        public int crowdCap = 260;                      // most pedestrians alive at once
 
         public CityBuilder.City City { get; private set; }
         public MissionManager Missions { get; private set; }
@@ -56,6 +59,9 @@ namespace KampungRun
             Application.targetFrameRate = -1;                       // browsers pace frames themselves
             trafficCount = phone ? 9 : 14;
             pedestrianCount = phone ? 16 : 30;
+            cityCrowd = phone ? 2f : 3f;
+            cityNear = phone ? 10f : 20f;
+            crowdCap = phone ? 60 : 180;
             if (UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urp)
             {
                 urp.shadowDistance = phone ? 45f : 70f;
@@ -322,6 +328,7 @@ namespace KampungRun
                 UnityEngine.InputSystem.Mouse.current.leftButton.wasPressedThisFrame)
                 LockCursor();
             ManageTraffic();
+            ManageCrowd();
         }
 
         // ------------------------------------------------------------ levels
@@ -476,26 +483,103 @@ namespace KampungRun
             foreach (var c in City.coinSpots) Pickup.SpawnCoin(c, false, coinRoot);
         }
 
+        Transform _pedRoot;
+        float _crowdTimer;
+
+        static Vector3 SidewalkPoint(Rect z)
+        {
+            float t = Random.value;
+            var inset = new Rect(z.x + 1.5f, z.y + 1.5f, z.width - 3f, z.height - 3f);
+            Vector2 p = Random.Range(0, 4) switch
+            {
+                0 => new Vector2(Mathf.Lerp(inset.xMin, inset.xMax, t), inset.yMin),
+                1 => new Vector2(Mathf.Lerp(inset.xMin, inset.xMax, t), inset.yMax),
+                2 => new Vector2(inset.xMin, Mathf.Lerp(inset.yMin, inset.yMax, t)),
+                _ => new Vector2(inset.xMax, Mathf.Lerp(inset.yMin, inset.yMax, t)),
+            };
+            return new Vector3(p.x, 0.2f, p.y);
+        }
+
+        static bool Kampung(Rect z) => CityBuilder.District(new Vector3(z.center.x, 0f, z.center.y)).StartsWith("Kampung");
+
         void SpawnPedestrians()
         {
             var root = new GameObject("Orang").transform;
             root.SetParent(_levelRoot, false);
+            _pedRoot = root;
             var zones = City.walkZones;
-            for (int i = 0; i < pedestrianCount; i++)
+            // pedestrianCount sets the kampung's per-block crowd; the KL city blocks east of the
+            // river are busier streets and get cityCrowd times as many people per block
+            var weights = new float[zones.Count];
+            float sum = 0f;
+            for (int i = 0; i < zones.Count; i++)
             {
-                var z = zones[Random.Range(0, zones.Count)];
-                float t = Random.value;
-                int side = Random.Range(0, 4);
-                var inset = new Rect(z.x + 1.5f, z.y + 1.5f, z.width - 3f, z.height - 3f);
-                Vector2 p = side switch
-                {
-                    0 => new Vector2(Mathf.Lerp(inset.xMin, inset.xMax, t), inset.yMin),
-                    1 => new Vector2(Mathf.Lerp(inset.xMin, inset.xMax, t), inset.yMax),
-                    2 => new Vector2(inset.xMin, Mathf.Lerp(inset.yMin, inset.yMax, t)),
-                    _ => new Vector2(inset.xMax, Mathf.Lerp(inset.yMin, inset.yMax, t)),
-                };
-                PedestrianSpawner.Spawn(new Vector3(p.x, 0.2f, p.y), z, root);
+                weights[i] = Kampung(zones[i]) ? 1f : cityCrowd;
+                sum += weights[i];
             }
+            int total = Mathf.RoundToInt(pedestrianCount * sum / Mathf.Max(1, zones.Count));
+            for (int i = 0; i < total; i++)
+            {
+                float pick = Random.value * sum;
+                int zi = 0;
+                while (zi < zones.Count - 1 && pick > weights[zi]) { pick -= weights[zi]; zi++; }
+                var z = zones[zi];
+                PedestrianSpawner.Spawn(SidewalkPoint(z), z, root);
+            }
+        }
+
+        /// <summary>H&amp;R-busy streets without thousands of people: the city blocks around the player
+        /// are topped up to cityNear x the kampung crowd, using townsfolk left far behind (or new ones,
+        /// up to crowdCap). People only ever appear out of the camera's view.</summary>
+        void ManageCrowd()
+        {
+            if (_pedRoot == null || Player == null || (_crowdTimer -= Time.deltaTime) > 0f) return;
+            _crowdTimer = 0.5f;
+            const float Near = 110f, Far = 140f;
+            var focus = Player.Focus;
+            var zones = City.walkZones;
+            float baseD = pedestrianCount / (float)Mathf.Max(1, zones.Count);
+            var counts = new Dictionary<Rect, int>();
+            var spare = new List<Pedestrian>();
+            foreach (var ped in Pedestrian.All)
+            {
+                if (ped == null) continue;
+                counts.TryGetValue(ped.zone, out int n);
+                counts[ped.zone] = n + 1;
+                // only city folk get moved about - the kampung keeps its own people
+                if (ped.Idle && !Kampung(ped.zone) && Flat(ped.transform.position - focus) > Far && !OnScreen(ped.transform.position)) spare.Add(ped);
+            }
+            spare.Sort((a, b) => Flat(b.transform.position - focus).CompareTo(Flat(a.transform.position - focus)));
+            int moves = 0, si = 0;
+            foreach (var z in zones)
+            {
+                if (moves >= 14) break;
+                if (Flat(new Vector3(z.center.x, 0f, z.center.y) - focus) > Near) continue;
+                counts.TryGetValue(z, out int have);
+                int want = Mathf.RoundToInt(Kampung(z) ? baseD : baseD * cityNear);
+                for (; have < want && moves < 14; have++)
+                {
+                    // a sidewalk spot the camera can't see
+                    Vector3 pos = Vector3.zero;
+                    bool found = false;
+                    for (int tries = 0; tries < 6 && !found; tries++) { pos = SidewalkPoint(z); found = !OnScreen(pos); }
+                    if (!found) break;
+                    if (si < spare.Count) { counts[spare[si].zone]--; spare[si++].Relocate(pos, z); }
+                    else if (Pedestrian.All.Count < crowdCap) PedestrianSpawner.Spawn(pos, z, _pedRoot);
+                    else break;
+                    moves++;
+                }
+                counts[z] = have;
+            }
+        }
+
+        static float Flat(Vector3 v) { v.y = 0f; return v.magnitude; }
+
+        bool OnScreen(Vector3 p)
+        {
+            if (_cam == null) return false;
+            var vp = _cam.WorldToViewportPoint(p + Vector3.up);
+            return vp.z > 0f && vp.z < 160f && vp.x > -0.15f && vp.x < 1.15f && vp.y > -0.15f && vp.y < 1.15f;
         }
 
         void SpawnTrafficCar(bool anywhere)

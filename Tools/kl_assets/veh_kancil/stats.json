@@ -1,8 +1,8 @@
 {
  "asset": "veh_kancil",
- "triangles": 18506,
+ "triangles": 18794,
  "lod1_body_triangles": null,
- "lod0_body_triangles": 7278,
+ "lod0_body_triangles": 7494,
  "materials": 1,
  "parts": [
   "Body",
@@ -29,7 +29,7 @@
  "dimensions_m": {
   "length": 3.261,
   "width": 1.723,
-  "height": 1.514
+  "height": 1.561
  },
  "blender": "5.2.1 LTS"
 }

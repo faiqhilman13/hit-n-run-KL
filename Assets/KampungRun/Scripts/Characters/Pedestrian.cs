@@ -28,6 +28,13 @@ namespace KampungRun
         float _hitCooldown;
         int _combo, _coinsGiven;        // staggers in a row (the third one floors them), coins shaken loose
         float _comboT;
+        // far away (a few pixels in the haze) we keep walking but stop drawing and animating,
+        // so a busy downtown crowd stays cheap
+        const float DrawDist = 170f;
+        Renderer[] _renderers;
+        Animator _anim;
+        bool _hidden;
+        float _drawCheck, _farDt;
         static readonly string[] Shouts = { "WOI!", "ADUH!", "APA NI?!", "HOI!", "MAK AI!", "ALAMAK!" };
 
         void Awake()
@@ -38,6 +45,39 @@ namespace KampungRun
         }
 
         void OnDestroy() => All.Remove(this);
+
+        /// <summary>Just strolling (not fleeing, knocked about or grumbling) - free to be recycled.</summary>
+        public bool Idle => _state == State.Walk || _state == State.Idle;
+
+        /// <summary>Crowd recycling: pop onto another block's sidewalk and carry on walking.</summary>
+        public void Relocate(Vector3 pos, Rect newZone)
+        {
+            zone = newZone;
+            transform.position = pos;
+            _vel = Vector3.zero;
+            _state = State.Walk;
+            if (_rig) { _rig.panicking = false; _rig.waving = false; }
+            PickTarget();
+            _drawCheck = 0f;
+        }
+
+        void UpdateDraw()
+        {
+            _drawCheck = Random.Range(0.4f, 0.6f);
+            var cam = Camera.main;
+            if (!cam) return;
+            bool hide = (cam.transform.position - transform.position).sqrMagnitude > DrawDist * DrawDist;
+            if (hide == _hidden) return;
+            _hidden = hide;
+            if (_renderers == null)
+            {
+                // only the parts that are showing now (costume bits switched off stay off)
+                _renderers = System.Array.FindAll(GetComponentsInChildren<Renderer>(), r => r.enabled);
+                _anim = GetComponentInChildren<Animator>();
+            }
+            foreach (var r in _renderers) if (r) r.enabled = !hide;
+            if (_anim) _anim.enabled = !hide;
+        }
 
         void Start()
         {
@@ -77,6 +117,15 @@ namespace KampungRun
         void Update()
         {
             float dt = Time.deltaTime;
+            if ((_drawCheck -= dt) <= 0f) UpdateDraw();
+            if (_hidden)
+            {
+                // out of sight: walk on in coarse steps, four times a second
+                _farDt += dt;
+                if (_farDt < 0.25f) return;
+                dt = _farDt;
+                _farDt = 0f;
+            }
             if (_hitCooldown > 0) _hitCooldown -= dt;
             if (_comboT > 0) _comboT -= dt; else _combo = 0;
             switch (_state)

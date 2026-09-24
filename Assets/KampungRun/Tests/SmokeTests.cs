@@ -55,6 +55,42 @@ namespace KampungRun.Tests
             return null;
         }
 
+        /// <summary>Headroom above point p: how far the topmost body surface on the vertical through
+        /// p (the roof skin) sits above it, less the skin thickness. Negative = the roof cuts the head.
+        /// If the topmost surface is far below p the vertical passes through a window, not the roof:
+        /// that point is skipped (returns 9).</summary>
+        static float RoofGap(Vehicle v, Vector3 p, Vector3 up, float floorH)
+        {
+            float topT = -99f;
+            foreach (var mf in v.GetComponentsInChildren<MeshFilter>())
+            {
+                // the roof is part of the body shell
+                var n = mf.name;
+                if (!mf.sharedMesh || n != "Body") continue;
+                var m = mf.transform.localToWorldMatrix;
+                var vs = mf.sharedMesh.vertices;
+                var tris = mf.sharedMesh.triangles;
+                for (int i = 0; i < tris.Length; i += 3)
+                {
+                    Vector3 a = m.MultiplyPoint3x4(vs[tris[i]]), b = m.MultiplyPoint3x4(vs[tris[i + 1]]), c = m.MultiplyPoint3x4(vs[tris[i + 2]]);
+                    // Moller-Trumbore on the whole vertical line (t signed along up)
+                    Vector3 e1 = b - a, e2 = c - a, pv = Vector3.Cross(up, e2);
+                    float det = Vector3.Dot(e1, pv);
+                    if (Mathf.Abs(det) < 1e-9f) continue;
+                    Vector3 tv = p - a;
+                    float u = Vector3.Dot(tv, pv) / det;
+                    if (u < 0 || u > 1) continue;
+                    Vector3 qv = Vector3.Cross(tv, e1);
+                    float w = Vector3.Dot(up, qv) / det;
+                    if (w < 0 || u + w > 1) continue;
+                    topT = Mathf.Max(topT, Vector3.Dot(e2, qv) / det);
+                }
+            }
+            // the roof can only cut the head above the head bone; a surface lower than that is a sill
+            // seen past the side glass
+            return topT < -0.15f || Vector3.Dot(p, up) + topT < floorH ? 9f : topT - 0.03f;
+        }
+
         static string StateName(Animator a)
         {
             var st = a.GetCurrentAnimatorStateInfo(0);
@@ -653,6 +689,130 @@ namespace KampungRun.Tests
                 Object.Destroy(v.gameObject);
                 yield return Frames(3);
             }
+        }
+
+        /// <summary>Downtown KL is busy (the crowd follows the player around the city blocks) while the
+        /// kampung keeps its quieter crowd. Runs with the browser build's numbers.</summary>
+        [UnityTest]
+        public IEnumerator CityCrowd()
+        {
+            GameState.Ephemeral = true;
+            GameState.Data = new SaveData();
+            GameManager.ForceLevel = 1;
+            SceneManager.LoadScene("KampungRun");
+            yield return Frames(30);
+            var gm = GameManager.I;
+            Skip();
+            gm.pedestrianCount = 30; gm.cityNear = 20f; gm.crowdCap = 180;      // WebGL desktop settings
+            var p = gm.Player;
+            var cc = ChaseCamera.I;
+            int Near(Vector3 at)
+            {
+                int n = 0;
+                foreach (var ped in Pedestrian.All) if (ped && Vector3.Distance(ped.transform.position, at) < 60f) n++;
+                return n;
+            }
+            var spots = new[]
+            {
+                ("brickfields", new Vector3(CityBuilder.RoadX(5), 0.3f, CityBuilder.RoadZ(1)), true),
+                ("chowkit", new Vector3(CityBuilder.RoadX(4), 0.3f, CityBuilder.RoadZ(4)), true),
+                ("kampung", new Vector3(CityBuilder.RoadX(1), 0.3f, CityBuilder.RoadZ(3)), false),
+            };
+            int city = 99, kampung = 0;
+            foreach (var (name, at, isCity) in spots)
+            {
+                p.Teleport(at, Quaternion.identity);
+                cc.target = p.transform; cc.targetBody = null; cc.yaw = 30f; cc.pitch = 14f; cc.distance = 9f;
+                yield return Seconds(10f);
+                int n = Near(at);
+                Debug.Log($"[Crowd] {name}: {n} people within 60 m ({Pedestrian.All.Count} alive)");
+                Shot($"90_crowd_{name}");
+                if (isCity) city = Mathf.Min(city, n); else kampung = n;
+            }
+            Assert.Greater(city, 25, "downtown KL should be busy");
+            Assert.Greater(kampung, 0, "the kampung keeps its own people");
+            Assert.Less(kampung, city / 2, "the kampung stays quieter than downtown");
+        }
+
+        /// <summary>Every playable character fits under every car's roof: the top of the head (from the
+        /// skinned mesh itself) stays below the roof skin straight above it.</summary>
+        [UnityTest]
+        public IEnumerator DriversFitUnderRoof()
+        {
+            GameState.Ephemeral = true;
+            GameState.Data = new SaveData();
+            GameManager.ForceLevel = 1;
+            SceneManager.LoadScene("KampungRun");
+            yield return Frames(30);
+            var gm = GameManager.I;
+            Skip();
+            var p = gm.Player;
+            // no traffic: a car ramming the test car mid-measurement throws the reading
+            gm.trafficCount = 0;
+            foreach (var t in Object.FindObjectsByType<Vehicle>(FindObjectsSortMode.None)) Object.Destroy(t.gameObject);
+            var worst = "";
+            float worstGap = 9f;
+            foreach (var cid in GameData.Characters.Keys)
+            {
+                p.SetCharacter(cid);
+                yield return Frames(2);
+                foreach (var id in new[] { "myvi", "saga", "kancil", "van", "hilux", "teksi", "polis" })
+                {
+                    var start = new Vector3(CityBuilder.RoadX(1) + 2.5f, 0.6f, CityBuilder.RoadZ(1) + 8f);
+                    p.Teleport(start + Vector3.right * 9f, Quaternion.identity);   // stand clear of where the car lands
+                    yield return Frames(2);
+                    var v = gm.SummonCar(id, start, Quaternion.identity);
+                    yield return Seconds(0.4f);
+                    p.EnterVehicle(v, true);
+                    v.driver = new TurnDriver { throttle = 0f, steer = 0f };
+                    Assert.IsTrue(p.Driving, $"{cid} never got into the {id}");
+                    yield return Seconds(0.8f);
+                    var up = v.transform.up;
+                    // the crown of the head: every skinned vertex within 15 cm of the highest one
+                    var verts = new System.Collections.Generic.List<Vector3>();
+                    float best = -99f;
+                    var baked = new Mesh();
+                    foreach (var smr in p.GetComponentsInChildren<SkinnedMeshRenderer>())
+                    {
+                        if (!smr.enabled || !smr.gameObject.activeInHierarchy || smr.name.Contains("LOD1")) continue;
+                        smr.BakeMesh(baked, true);
+                        var m = smr.transform.localToWorldMatrix;
+                        foreach (var vert in baked.vertices)
+                        {
+                            var w = m.MultiplyPoint3x4(vert);
+                            verts.Add(w);
+                            best = Mathf.Max(best, Vector3.Dot(w, up));
+                        }
+                    }
+                    Object.Destroy(baked);
+                    var headBone = p.GetComponentInChildren<Animator>().GetBoneTransform(HumanBodyBones.Head).position;
+                    var crown = verts.FindAll(w => Vector3.ProjectOnPlane(w - headBone, up).magnitude < 0.08f && Vector3.Dot(w - headBone, up) > 0f);
+                    int step = Mathf.Max(1, crown.Count / 80);
+                    float gap = 9f; Vector3 at = Vector3.zero;
+                    for (int k = 0; k < crown.Count; k += step)
+                    {
+                        float g = RoofGap(v, crown[k], up, Vector3.Dot(headBone, up));
+                        if (g < gap) { gap = g; at = crown[k]; }
+                    }
+                    Debug.Log($"[ROOF] {cid} in {id}: {gap * 100f:F0} cm headroom at={v.transform.InverseTransformPoint(at)}");
+                    // close-up of the roofline from the driver's side, level with the head
+                    var cc = ChaseCamera.I;
+                    cc.enabled = false;
+                    var head = p.GetComponentInChildren<Animator>().GetBoneTransform(HumanBodyBones.Head).position;
+                    var cam = Camera.main.transform;
+                    cam.position = head + v.transform.right * 2.6f + up * 0.35f - v.transform.forward * 0.4f;
+                    cam.LookAt(head + up * 0.1f);
+                    Shot($"roof_{id}_{cid}");
+                    cc.enabled = true;
+                    if (gap < worstGap) { worstGap = gap; worst = $"{cid} in {id}"; }
+                    p.ExitVehicle(false, true);
+                    Object.Destroy(v.gameObject);
+                    yield return Frames(3);
+                }
+            }
+            Debug.Log($"[ROOF] tightest: {worst} {worstGap * 100f:F0} cm");
+            Assert.Greater(worstGap, 0.03f, $"{worst}: head pokes through the roof");
+            Assert.Less(worstGap, 3f, $"{worst}: no roof found above the head");
         }
 
         /// <summary>H&amp;R bopping: punch the same townsperson a dozen times - they stagger and fall

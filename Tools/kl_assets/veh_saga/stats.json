@@ -1,8 +1,8 @@
 {
  "asset": "veh_saga",
- "triangles": 17656,
+ "triangles": 17910,
  "lod1_body_triangles": null,
- "lod0_body_triangles": 7632,
+ "lod0_body_triangles": 7886,
  "materials": 1,
  "parts": [
   "Body",
@@ -33,7 +33,7 @@
  "dimensions_m": {
   "length": 4.341,
   "width": 1.869,
-  "height": 1.464
+  "height": 1.497
  },
  "blender": "5.2.1 LTS"
 }

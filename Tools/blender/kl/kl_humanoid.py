@@ -360,8 +360,8 @@ def clip_defs():
         ph = f / 24 * TAU
         p = ride_pose(0)
         p["LeftUpperArm"] = reach_rot("Left", 75, 25); p["RightUpperArm"] = reach_rot("Right", 75, 25)
-        legs(p, 92, 92, 32, 32, -22, -22)
-        p["Spine"] = R(x=-6)                                       # leaning back into the seat
+        legs(p, 100, 100, 34, 34, -22, -22)
+        p["Spine"] = R(x=-14)                                      # leaning back into the seat
         p["Chest"] = R(x=4, z=5 * math.sin(ph))
         p["Head"] = R(x=-2, z=6 * math.sin(ph - 0.4))
         return p
