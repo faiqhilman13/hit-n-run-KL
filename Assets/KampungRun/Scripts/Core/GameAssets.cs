@@ -11,7 +11,8 @@ namespace KampungRun
     public class GameAssets : ScriptableObject
     {
         public Shader latInk;
-        public Texture2DArray surfaces;   // painted surface detail (Tools/gen_surfaces.py)
+        public Texture2DArray surfaces;
+        public Shader glass;              // see-through car windows   // painted surface detail (Tools/gen_surfaces.py)
         public Shader beam;
         public Shader sky;
         public Shader text3d;

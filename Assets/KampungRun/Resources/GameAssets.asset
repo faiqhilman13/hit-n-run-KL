@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: KampungRun::KampungRun.GameAssets
   latInk: {fileID: 4800000, guid: 737ce5334214613458495f31348e3b40, type: 3}
   surfaces: {fileID: 18700000, guid: 9479fe7b498fcd6429ffc7a89033f37d, type: 2}
+  glass: {fileID: 4800000, guid: 6d70132c2efd25741808b9ae2a861157, type: 3}
   beam: {fileID: 4800000, guid: d219ed3d125779d4b9658dda848dfe11, type: 3}
   sky: {fileID: 4800000, guid: 968757c227d51264390fb89abe0b790a, type: 3}
   text3d: {fileID: 4800000, guid: f959c3d88d249ad4e8871ce3b6cfe9cc, type: 3}

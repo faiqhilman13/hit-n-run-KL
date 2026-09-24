@@ -152,7 +152,7 @@ def shell_mesh(m, sh, ny=36, ns=12, color_fn=None, color="car_paint", smooth=Tru
     return ys, ss
 
 
-def patch(m, sh, y0, y1, s0, s1, color, side, off=0.006, ny=6, ns=4, thick=0.0, smooth=True):
+def patch(m, sh, y0, y1, s0, s1, color, side, off=0.006, ny=6, ns=4, thick=0.0, smooth=True, inner=None):
     """Conformal patch on shell sh. y0 / y1 may be functions of s (slanted pillars).
     thick > 0 closes it into a slab (door skins)."""
     D = K.LOD_DETAIL
@@ -193,7 +193,7 @@ def patch(m, sh, y0, y1, s0, s1, color, side, off=0.006, ny=6, ns=4, thick=0.0, 
             _face(m, quad(q), color, smooth)
             if thick > 0:
                 qi = [grid_i[i][j], grid_i[i + 1][j], grid_i[i + 1][j + 1], grid_i[i][j + 1]]
-                _face(m, quad(qi), color, smooth)
+                _face(m, quad(qi), inner or color, smooth)
     if thick > 0:   # rim around the slab
         border = ([(0, j) for j in range(ny + 1)] + [(i, ny) for i in range(1, ns + 1)] +
                   [(ns, j) for j in range(ny - 1, -1, -1)] + [(i, 0) for i in range(ns - 1, 0, -1)])
@@ -324,6 +324,56 @@ def cut_arches(sm, arches):
         bpy.data.objects.remove(o, do_unlink=True)
         bpy.data.meshes.remove(d)
     bpy.data.meshes.remove(me)
+    return bm
+
+
+# ============================================================================== hollow cabin
+# While a car is being built, doors and windows register the openings they need: build_car then
+# deletes those faces from the body / cabin shells (so you can see - and climb - inside), lines
+# the inside with interior-coloured faces, and puts all the glass into a separate "Glass" part
+# the game draws see-through.
+_BUILD = {"body_holes": [], "cab_holes": [], "glass": None}
+
+
+def shell_s(sh, y, z):
+    """Inverse of Shell.point for the height: the s parameter at height z on station y."""
+    w, zb, zm, zt, ns, nt, nb = sh.params(y)
+    if z >= zm:
+        v = min(1.0, max(0.0, (z - zm) / max(1e-6, zt - zm)))
+        return math.asin(v ** (nt / 2.0)) * 2 / math.pi
+    v = min(1.0, max(0.0, (zm - z) / max(1e-6, zm - zb)))
+    return -math.asin(v ** (nb / 2.0)) * 2 / math.pi
+
+
+def in_hole(sh, c, hole, margin=0.0):
+    f0, f1, s0, s1, side = hole
+    if c.x * side < -0.02:
+        return False
+    q = shell_s(sh, c.y, c.z)
+    if not (s0 - margin <= q <= s1 + margin):
+        return False
+    return f0(q) - margin <= c.y <= f1(q) + margin
+
+
+def open_up(bm, keep, interior=None, interior_fn=None):
+    """Delete faces where keep(centre, normal) is False; then (optionally) add a flipped,
+    interior-coloured copy of the remaining faces that interior_fn(centre) selects - the inside
+    of the sheet metal, seen through the openings."""
+    import bmesh as bm_
+    bm.faces.ensure_lookup_table()
+    dead = [f for f in bm.faces if not keep(f.calc_center_median(), f.normal)]
+    bm_.ops.delete(bm, geom=dead, context='FACES')
+    if interior:
+        uv = bm.loops.layers.uv.active or bm.loops.layers.uv[0]
+        u = K.pal_uv(interior)
+        for f in list(bm.faces):
+            if interior_fn and not interior_fn(f.calc_center_median()):
+                continue
+            # its own vertices (a face over the same verts would be the same face to bmesh)
+            nf = bm.faces.new([bm.verts.new(v.co) for v in reversed(f.verts)])
+            nf.smooth = f.smooth
+            for lp in nf.loops:
+                lp[uv].uv = u
     return bm
 
 
@@ -477,26 +527,55 @@ def build_car(spec, body_fn):
     body = K.Mesher(2.0)
     shell = Shell(s.stations)
     cab = Shell(s.cab_stations)
+    _BUILD["body_holes"], _BUILD["cab_holes"] = [], []
+    _BUILD["glass"] = K.Mesher(2.0)
 
-    # ---- body shell with arches cut out
+    # details first: doors and windows register the openings the shells need
+    ctx = dict(parts=parts, body=body, shell=shell, cab=cab, spec=s)
+    col_extra = body_fn(ctx)
+
+    def in_cab_footprint(c):
+        if not (cab.y0 + 0.03 < c.y < cab.y1 - 0.03):
+            return False
+        return abs(c.x) < cab.params(c.y)[0] * 0.97
+
+    # ---- body shell with arches cut out, door openings and the cabin floor opened up
     sm = K.Mesher(2.0)
     shell_mesh(sm, shell, ny=s.__dict__.get("ny", 40), ns=14, color_fn=s.body_color, y_breaks=s.y_breaks,
                s_breaks=s.s_breaks)
     arches = []
     for (x, y) in ((s.track / 2, s.fy), (-s.track / 2, s.fy), (s.track / 2, s.ry), (-s.track / 2, s.ry)):
         arches.append((math.copysign(s.width / 2 + 0.05, x), y, s.wr + s.arch_lift, s.wr + s.arch_gap, 0.42))
-    merge_bm(body, cut_arches(sm, arches))
+    bm = cut_arches(sm, arches)
 
-    # ---- greenhouse (cabin); dark trim under the glass so pillars read
-    shell_mesh(body, cab, ny=26, ns=10, color_fn=s.cab_color, y_breaks=s.cab_breaks)
+    def keep_body(c, n):
+        if any(in_hole(shell, c, h) for h in _BUILD["body_holes"]):
+            return False
+        # the top of the tub under the cabin: open, so the cabin is one hollow space
+        if n.z > 0.35 and in_cab_footprint(c) and c.z > shell.params(c.y)[2]:
+            return False
+        return True
+    open_up(bm, keep_body, "interior",
+            lambda c: cab.y0 - 0.15 < c.y < cab.y1 + 0.15 and c.z > s.floor_z)
+    merge_bm(body, bm)
 
-    ctx = dict(parts=parts, body=body, shell=shell, cab=cab, spec=s)
-    col_extra = body_fn(ctx)
+    # ---- greenhouse (cabin): bottom half removed (it sat inside the body), windows cut out
+    cm = K.Mesher(2.0)
+    shell_mesh(cm, cab, ny=26, ns=10, color_fn=s.cab_color, y_breaks=s.cab_breaks)
+
+    def keep_cab(c, n):
+        if c.z < cab.params(c.y)[2] + 0.004:
+            return False
+        return not any(in_hole(cab, c, h) for h in _BUILD["cab_holes"])
+    open_up(cm.bm, keep_cab, "interior")
+    merge_bm(body, cm.bm)
+    parts.append(("Glass", _BUILD["glass"], None, "Body"))
 
     # ---- interior: seats, dash, column, driver marker
     iz = s.floor_z
+    # front seats sit low (cartoon heads are big: keep them clear of the roof)
     for x in (-s.seat_x, s.seat_x):
-        seat(body, x, s.seat_y, iz + 0.28, color=s.__dict__.get("seat_color", "seat_grey"))
+        seat(body, x, s.seat_y, iz + 0.2, color=s.__dict__.get("seat_color", "seat_grey"))
     if s.__dict__.get("rear_seat", True):
         rbox(body, (0, s.seat_y + 0.85, iz + 0.28), (s.width - 0.3, 0.46, 0.14), s.__dict__.get("seat_color", "seat_grey"),
              r=0.5)
@@ -508,7 +587,7 @@ def build_car(spec, body_fn):
     hub = Vector((-s.seat_x, s.dash_y + 0.2, s.dash_z + 0.16))
     colm = steering_wheel(parts, hub, 0.17, 0.42)
     merge_bm(body, _bm_of(colm))
-    parts.append(("Seat_Driver", None, (-s.seat_x, s.seat_y - 0.02, iz + 0.36), "Body"))
+    parts.append(("Seat_Driver", None, (-s.seat_x, s.seat_y - 0.02, iz + 0.27), "Body"))
 
     # ---- wheels
     for name, x, y in (("Wheel_FL", s.track / 2, s.fy), ("Wheel_FR", -s.track / 2, s.fy),
@@ -542,32 +621,54 @@ def door(ctx, name, side, y0, y1, zsill_s, zbelt_s, win_top_s, frame=True, glass
     sh, cab, s = ctx["shell"], ctx["cab"], ctx["spec"]
     d = K.Mesher(2.0)
     g = 0.012
-    patch(d, sh, y0 + g, y1 - g, zsill_s, zbelt_s, color, side, off=0.008, ny=5, ns=4, thick=0.035)
+    # the door skin runs from the sill right up to where the cabin starts (no slit under the glass)
+    ztop = max(shell_s(sh, y, cab.params(y)[2] + 0.02) for y in (y0, (y0 + y1) / 2, y1))
+    zbelt_s = max(zbelt_s, min(0.98, ztop))
+    patch(d, sh, y0 + g, y1 - g, zsill_s, zbelt_s, color, side, off=0.008, ny=5, ns=5, thick=0.035, inner="interior")
     gf = glass_front or (lambda s_: y0 + 0.03)
     gr = glass_rear or (lambda s_: y1 - 0.03)
     if frame:
-        patch(d, cab, lambda q: gf(q) - 0.025, lambda q: gr(q) + 0.025, -0.02, win_top_s + 0.05, "trim_black", side,
-              off=0.006, ny=3, ns=3)
-    patch(d, cab, gf, gr, 0.04, win_top_s, "car_glass", side, off=0.016, ny=3, ns=3)
+        frame_ring(d, cab, gf, gr, 0.04, win_top_s, side, 0.025)
+    # the window glass moves with the door but is drawn see-through (its own part)
+    gm = K.Mesher(2.0)
+    patch(gm, cab, gf, gr, 0.04, win_top_s, "car_glass", side, off=0.016, ny=3, ns=3)
+    # openings: the doorway in the body, the window frame's area in the cabin
+    _BUILD["body_holes"].append((lambda q, v=y0: v, lambda q, v=y1: v, zsill_s + 0.02, zbelt_s + 0.01, side))
+    _BUILD["cab_holes"].append((lambda q: gf(q) - 0.025, lambda q: gr(q) + 0.025, -1.0, win_top_s + 0.05, side))
     if handle:
         hp = sh.point(y1 - 0.14, zbelt_s - 0.18, side)
         hn = sh.normal(y1 - 0.14, zbelt_s - 0.18, side)
         d.box(hp + hn * 0.016, (0.02, 0.12, 0.03), "chrome" if s.__dict__.get("chrome_handles") else "trim_black")
-    # darken the doorway on the body (under the skin)
-    patch(ctx["body"], sh, y0, y1, zsill_s, zbelt_s, "well_black", side, off=0.002, ny=4, ns=3)
     hp = sh.point(y0 + 0.02, zbelt_s, side)
     ctx["parts"].append((name, d, tuple(hp), "Body"))
+    ctx["parts"].append((name + "_Glass", gm, tuple(hp), name))
+    # B-pillar behind a front door: a painted post from the sill up into the roof (the closed
+    # doors cover its edges, open ones show it standing between the openings)
+    if name.startswith("Door_F") and s.__dict__.get("b_pillar", True):
+        b = ctx["body"]
+        patch(b, sh, y1 - 0.03, y1 + 0.06, zsill_s, 1.0, color, side, off=0.004, ny=1, ns=4, thick=0.05, inner="interior")
+        patch(b, cab, y1 - 0.03, y1 + 0.06, -0.05, 1.0, s.cab_color(Vector((0, 0, 2))), side, off=0.004, ny=1, ns=6,
+              thick=0.05, inner="interior")
     return d
 
 
+def frame_ring(m, sh, f0, f1, s0, s1, side, fw=0.03, color="trim_black"):
+    """A rubber window surround: four strips round the opening (open in the middle)."""
+    patch(m, sh, lambda q: f0(q) - fw, lambda q: f1(q) + fw, s0 - 0.04, s0, color, side, off=0.007, ny=4, ns=1)
+    if s1 < 0.999:
+        patch(m, sh, lambda q: f0(q) - fw, lambda q: f1(q) + fw, s1, min(1.0, s1 + 0.04), color, side, off=0.007, ny=4, ns=1)
+    patch(m, sh, lambda q: f0(q) - fw, f0, s0, s1, color, side, off=0.007, ny=1, ns=4)
+    patch(m, sh, f1, lambda q: f1(q) + fw, s0, s1, color, side, off=0.007, ny=1, ns=4)
+
+
 def glass(m, sh, y0, y1, s0, s1, side, frame="trim_black", fw=0.03, ny=3, ns=3):
-    """Window: a dark rubber frame patch with the glass inset on top of it."""
+    """Window: a hole in the cabin shell, a rubber surround, and see-through glass (Glass part)."""
     f0 = y0 if callable(y0) else (lambda q, v=y0: v)
     f1 = y1 if callable(y1) else (lambda q, v=y1: v)
     if frame:
-        patch(m, sh, lambda q: f0(q) - fw, lambda q: f1(q) + fw, s0 - 0.04, min(1.0, s1 + 0.04), frame, side, off=0.007,
-              ny=ny, ns=ns)
-    patch(m, sh, f0, f1, s0, s1, "car_glass", side, off=0.014, ny=ny, ns=ns)
+        frame_ring(m, sh, f0, f1, s0, s1, side, fw, frame)
+    patch(_BUILD["glass"], sh, f0, f1, s0, s1, "car_glass", side, off=0.014, ny=ny, ns=ns)
+    _BUILD["cab_holes"].append((f0, f1, s0, s1, side))
 
 
 def lamp_pod(m, c, radii, lens, rim="chrome", rot=(0, 0, 0)):

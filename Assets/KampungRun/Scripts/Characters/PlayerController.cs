@@ -204,6 +204,7 @@ namespace KampungRun
         }
 
         public void DebugPunch(int times) { for (int i = 0; i < times; i++) Punch(); }
+        public void DebugKick() => Kick();
 
         void Punch()
         {
@@ -337,7 +338,35 @@ namespace KampungRun
         // ---------------------------------------------------------------- getting in / out
         // H&R teleported you; we walk to the door (right-hand drive), duck in, or swing a leg
         // over the bike. Wrecks throw you out in an arc and knock you flat.
-        enum Trans { None, ToDoor, Boarding, Alighting }
+        // Cars (with a seat) get the full sequence, the way people really get in: walk to the door,
+        // turn round as it swings open, back down onto the edge of the seat, then swing the legs in
+        // and face the road; getting out mirrors it (swing out, stand up, step away).
+        enum Trans { None, ToDoor, Boarding, Alighting, CarTurn, CarSit, CarSwingIn, CarSwingOut, CarStand }
+        float _yawFrom, _yawTo;
+        Vector3 _doorOutside, _doorEdge;
+
+        bool Hollow(Vehicle v) => !v.TwoWheeler && v.Visuals != null && v.Visuals.Seat != null;
+        SeatFit _fit;
+        SeatFit Fit(Vehicle v, float w)
+        {
+            if (_fit == null) { _fit = GetComponent<SeatFit>(); if (_fit == null) _fit = gameObject.AddComponent<SeatFit>(); }
+            _fit.seat = v.Visuals != null ? v.Visuals.Seat : null;
+            _fit.weight = w;
+            return _fit;
+        }
+        float YawOf(Vector3 dir) => Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
+        Vector3 EdgeRoot(Vehicle v) => _doorEdge - v.transform.up * SitDrop;
+
+        void Step(Trans next, float dur, Vector3 to, float yawTo)
+        {
+            _trans = next;
+            _transT = 0f;
+            _transDur = dur;
+            _transFrom = transform.position;
+            _transTo = to;
+            _yawFrom = transform.eulerAngles.y;
+            _yawTo = yawTo;
+        }
         Trans _trans;
         Vehicle _transVehicle;
         float _transT, _transDur;
@@ -380,6 +409,27 @@ namespace KampungRun
             if (instant) { CommitEnter(v); return; }
             _transVehicle = v;
             v.driver = null;
+            if (Hollow(v))
+            {
+                v.Visuals.DoorPoints(1, out var outR, out var edgeR);
+                v.Visuals.DoorPoints(-1, out var outL, out var edgeL);
+                _doorSide = Vector3.Distance(outL, transform.position) + 0.5f < Vector3.Distance(outR, transform.position) ? -1 : 1;
+                _doorOutside = _doorSide > 0 ? outR : outL;
+                _doorEdge = _doorSide > 0 ? edgeR : edgeL;
+                var dest = _doorOutside;
+                dest.y = transform.position.y;
+                _transFrom = transform.position;
+                _transTo = dest;
+                _transRotFrom = transform.rotation;
+                var toCar = Vector3.ProjectOnPlane(-v.transform.right * _doorSide, Vector3.up);
+                _transRotTo = Quaternion.LookRotation(toCar);
+                _transDur = Mathf.Clamp(Vector3.Distance(_transFrom, _transTo) / def.walk, 0.15f, 0.9f);
+                _transT = 0f;
+                _trans = Trans.ToDoor;
+                _cc.enabled = false;
+                _vel = Vector3.zero;
+                return;
+            }
             // pick the nearer side, the driver's (right) side unless the other is clearly closer
             var door = DoorPoint(v, 1f);
             _doorSide = 1;
@@ -413,7 +463,8 @@ namespace KampungRun
                 transform.SetPositionAndRotation(SeatPoint(v), v.transform.rotation);
                 if (_model) _model.SetActive(true);
                 if (_rig) { _rig.riding = false; _rig.sitting = true; _rig.speed = 0; }
-                v.Visuals.CloseDoor(_doorSide, true, 0.12f);
+                Fit(v, 1f);
+                v.Visuals.CloseDoor(_doorSide, true, 0.2f);
             }
             else if (Visible(v))
             {
@@ -459,8 +510,10 @@ namespace KampungRun
             if (Blocked(exit)) exit = v.transform.position + Vector3.up * 2.6f;
             _yaw = v.transform.eulerAngles.y;
             var rot = Quaternion.Euler(0, _yaw, 0);
+            bool hollowOut = !bail && !instant && Hollow(v);
+            if (!hollowOut && _fit) _fit.Clear();
             if (_model) { _model.SetActive(true); _model.transform.localScale = Vector3.one; }
-            if (_rig) { _rig.riding = false; _rig.sitting = false; }
+            if (_rig) { _rig.riding = false; _rig.sitting = hollowOut; }
             v.role = VehicleRole.Parked;
             v.driver = null;
             if (_engine) Destroy(_engine.gameObject);
@@ -488,6 +541,22 @@ namespace KampungRun
                 transform.SetPositionAndRotation(exit, rot);
                 _vel = v.Body.linearVelocity * 0.3f;
                 _cc.enabled = true;
+            }
+            else if (hollowOut)
+            {
+                // the driver's (right-hand) door, or the other one if something's in the way
+                int side = sideSign > 0 ? 1 : -1;
+                v.Visuals.DoorPoints(side, out _doorOutside, out _doorEdge);
+                _doorSide = side;
+                transform.SetPositionAndRotation(seatWorld, v.transform.rotation);
+                _transVehicle = v;
+                _cc.enabled = false;
+                _vel = Vector3.zero;
+                v.Visuals.OpenDoor(side, true, 1.6f);
+                ProcAudio.Play(ProcAudio.Blip, v.transform.position, 0.25f, 0.8f);
+                // swing the legs out toward the door, turning to face it
+                Step(Trans.CarSwingOut, 0.5f, EdgeRoot(v), v.transform.eulerAngles.y + 90f * side);
+                _transT = -0.18f;                                            // let the door get going first
             }
             else
             {
@@ -562,7 +631,8 @@ namespace KampungRun
         void UpdateTransition(float dt)
         {
             var v = _transVehicle;
-            if (v == null || (_trans != Trans.Alighting && (v.Wrecked || v.PlayerInside)))
+            bool leaving = _trans == Trans.Alighting || _trans == Trans.CarSwingOut || _trans == Trans.CarStand;
+            if (v == null || (!leaving && (v.Wrecked || v.PlayerInside)))
             {
                 // car got wrecked or vanished while we walked over: give up
                 EndTransition();
@@ -570,10 +640,98 @@ namespace KampungRun
                 return;
             }
             _transT += dt;
-            float k = Mathf.Clamp01(_transT / _transDur);
+            float k = Mathf.Clamp01(Mathf.Max(0f, _transT) / _transDur);
             float e = k * k * (3f - 2f * k);
             switch (_trans)
             {
+                case Trans.ToDoor when Hollow(v):
+                {
+                    transform.SetPositionAndRotation(Vector3.Lerp(_transFrom, _transTo, k), Quaternion.Slerp(_transRotFrom, _transRotTo, e));
+                    if (_rig) { _rig.speed = def.walk; _rig.grounded = true; }
+                    if (k >= 1f)
+                    {
+                        if (_rig) _rig.speed = 0f;
+                        v.Visuals.OpenDoor(_doorSide);
+                        ProcAudio.Play(ProcAudio.Blip, v.transform.position, 0.25f, 0.7f);
+                        // turn round (through the car's rear) so the back faces the seat
+                        var p0 = transform.position;
+                        Step(Trans.CarTurn, 0.38f, p0, transform.eulerAngles.y - 180f * _doorSide);
+                    }
+                    break;
+                }
+                case Trans.CarTurn:
+                {
+                    transform.rotation = Quaternion.Euler(0, Mathf.Lerp(_yawFrom, _yawTo, e), 0);
+                    if (_rig) _rig.speed = 0f;
+                    if (k >= 1f)
+                    {
+                        // back down onto the edge of the seat: the sitting pose blends in on the way
+                        if (_rig) _rig.sitting = true;
+                        Step(Trans.CarSit, 0.55f, EdgeRoot(v), _yawTo);
+                    }
+                    break;
+                }
+                case Trans.CarSit:
+                {
+                    Fit(v, e);                                                        // rise / settle onto the cushion
+                    // sink toward the seat with a slight lean back: height eases in late, like sitting on a chair
+                    var p = Vector3.Lerp(_transFrom, _transTo, e);
+                    p.y = Mathf.Lerp(_transFrom.y, _transTo.y, k * k);
+                    transform.SetPositionAndRotation(p, Quaternion.Euler(0, _yawTo, 0));
+                    if (k >= 1f)
+                    {
+                        // swing the legs in and face the road
+                        Step(Trans.CarSwingIn, 0.5f, SeatPoint(v), v.transform.eulerAngles.y);
+                        _yawTo = _yawFrom + Mathf.DeltaAngle(_yawFrom, _yawTo);
+                    }
+                    break;
+                }
+                case Trans.CarSwingIn:
+                {
+                    Fit(v, 1f);
+                    var seat = SeatPoint(v);
+                    transform.SetPositionAndRotation(Vector3.Lerp(_transFrom, seat, e),
+                        Quaternion.Euler(0, Mathf.Lerp(_yawFrom, _yawTo, e), 0));
+                    if (k >= 1f) CommitEnter(v);
+                    break;
+                }
+                case Trans.CarSwingOut:
+                {
+                    if (_transT < 0f) break;                                          // door still opening
+                    var edge = EdgeRoot(v);
+                    transform.SetPositionAndRotation(Vector3.Lerp(_transFrom, edge, e),
+                        Quaternion.Euler(0, Mathf.LerpAngle(_yawFrom, _yawTo, e), 0));
+                    if (k >= 1f)
+                    {
+                        // plant the feet and stand up, stepping out past the door
+                        if (_rig) _rig.sitting = false;
+                        var outside = _doorOutside + v.transform.right * _doorSide * 0.35f;
+                        outside.y = v.transform.position.y + 0.05f;
+                        if (Physics.Raycast(outside + Vector3.up * 1.5f, Vector3.down, out var hit, 3f,
+                                ~(1 << Layers.Vehicle | 1 << Layers.Character | 1 << Layers.Pickup), QueryTriggerInteraction.Ignore))
+                            outside.y = hit.point.y + 0.02f;
+                        Step(Trans.CarStand, 0.55f, outside, _yawTo);
+                    }
+                    break;
+                }
+                case Trans.CarStand:
+                {
+                    if (_fit) _fit.weight = 1f - Mathf.Clamp01(k * 1.6f);             // up off the seat
+                    // the body rises first, then the step away
+                    var p = Vector3.Lerp(_transFrom, _transTo, Mathf.Clamp01((k - 0.2f) / 0.8f));
+                    p.y = Mathf.Lerp(_transFrom.y, _transTo.y, Mathf.Sqrt(k)) + Mathf.Sin(k * Mathf.PI) * 0.06f;
+                    transform.SetPositionAndRotation(p, Quaternion.Euler(0, _yawTo, 0));
+                    if (_rig) _rig.speed = k > 0.5f ? def.walk * 0.5f : 0f;
+                    if (k >= 1f)
+                    {
+                        EndTransition();
+                        _yaw = transform.eulerAngles.y;
+                        _cc.enabled = true;
+                        if (_fit) _fit.Clear();
+                        v.Visuals.CloseDoor(_doorSide, true, 0.15f);
+                    }
+                    break;
+                }
                 case Trans.ToDoor:
                 {
                     transform.SetPositionAndRotation(Vector3.Lerp(_transFrom, _transTo, k), Quaternion.Slerp(_transRotFrom, _transRotTo, e));

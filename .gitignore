@@ -45,3 +45,8 @@ sysinfo.txt
 /.claude/
 __pycache__/
 *.pyc
+
+# ---- promo video frames (Tests/PromoCapture.cs) and renders (Tools/make_promo.py)
+/Tools/promo_frames/
+/Tools/promo_out/
+/Tools/_*.jpg

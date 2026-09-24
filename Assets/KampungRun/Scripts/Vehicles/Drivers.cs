@@ -59,6 +59,7 @@ namespace KampungRun
             var rig = go.AddComponent<CharacterRig>();
             rig.sitting = !v.TwoWheeler;
             rig.riding = v.TwoWheeler;
+            if (!v.TwoWheeler) { var fit = go.AddComponent<SeatFit>(); fit.seat = seat; fit.weight = 1f; }
             foreach (var t in go.GetComponentsInChildren<Transform>()) t.gameObject.layer = Layers.Vehicle;
         }
     }

@@ -59,6 +59,34 @@ namespace KampungRun
 
         public Transform Seat { get; private set; }
 
+        static Material _glass;
+        static Material GlassMaterial
+        {
+            get
+            {
+                if (_glass == null && GameAssets.I.glass != null) _glass = new Material(GameAssets.I.glass) { name = "CarGlass" };
+                return _glass;
+            }
+        }
+
+        /// <summary>World-space door geometry for boarding: the point just outside the doorway on
+        /// `side` (standing height = the car's ground), and the doorway's edge at seat height.</summary>
+        public bool DoorPoints(int side, out Vector3 outside, out Vector3 edge)
+        {
+            outside = edge = transform.position;
+            if (Seat == null) return false;
+            var box = GetComponent<BoxCollider>();
+            float halfW = box ? box.size.x * 0.5f : 0.85f;
+            var seatL = transform.InverseTransformPoint(Seat.position);
+            var d = FindDoor(side, true);
+            float z = seatL.z;
+            if (d != null && d.t) z = Mathf.Lerp(z, transform.InverseTransformPoint(d.t.GetComponent<Renderer>() ?
+                d.t.GetComponent<Renderer>().bounds.center : d.t.position).z, 0.35f);
+            outside = transform.TransformPoint(new Vector3(side * (halfW + 0.55f), 0f, z - 0.05f));
+            edge = transform.TransformPoint(new Vector3(side * (halfW - 0.22f), seatL.y, seatL.z + 0.05f));
+            return true;
+        }
+
         public void Setup(Vehicle v)
         {
             _v = v;
@@ -87,6 +115,14 @@ namespace KampungRun
                     side = lp.x >= 0 ? 1 : -1, front = slide ? false : t.name.Length > 5 && t.name[5] == 'F',
                 });
             }
+            // windows are separate "Glass" parts: draw them see-through so the driver and seats show
+            if (GlassMaterial != null)
+                foreach (var r in GetComponentsInChildren<Renderer>(true))
+                    if (r.name.Contains("Glass"))
+                    {
+                        r.sharedMaterial = GlassMaterial;
+                        r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    }
             _head = Lamps("HeadLights");
             _brake = Lamps("BrakeLights");
             _reverse = Lamps("ReverseLights");

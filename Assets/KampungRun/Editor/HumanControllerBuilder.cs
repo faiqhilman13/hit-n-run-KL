@@ -109,8 +109,8 @@ namespace KampungRun.EditorTools
             T(ride, dismount, 0.1f).AddCondition(AnimatorConditionMode.If, 0, "Dismount");
             T(ride, loco, 0.15f).AddCondition(AnimatorConditionMode.IfNot, 0, "Riding");
             T(dismount, loco, 0.15f, true, 0.9f);
-            Any(sit, 0.15f).AddCondition(AnimatorConditionMode.If, 0, "Sitting");
-            T(sit, loco, 0.15f).AddCondition(AnimatorConditionMode.IfNot, 0, "Sitting");
+            Any(sit, 0.4f).AddCondition(AnimatorConditionMode.If, 0, "Sitting");          // ease down onto the seat
+            T(sit, loco, 0.4f).AddCondition(AnimatorConditionMode.IfNot, 0, "Sitting");   // and up again
             // wave / panic (NPCs)
             T(loco, wave, 0.2f).AddCondition(AnimatorConditionMode.If, 0, "Wave");
             T(wave, loco, 0.2f).AddCondition(AnimatorConditionMode.IfNot, 0, "Wave");

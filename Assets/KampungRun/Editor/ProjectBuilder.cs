@@ -44,6 +44,7 @@ namespace KampungRun.EditorTools
                 AssetDatabase.CreateAsset(ga, AssetsPath);
             }
             ga.latInk = Shader.Find("KampungRun/LatInk");
+            ga.glass = Shader.Find("KampungRun/Glass");
             ga.beam = Shader.Find("KampungRun/Beam");
             ga.sky = Shader.Find("KampungRun/CartoonSky");
             ga.text3d = Shader.Find("KampungRun/Text3D");
