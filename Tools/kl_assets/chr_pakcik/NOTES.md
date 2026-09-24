@@ -1,0 +1,67 @@
+# chr_pakcik
+
+**Status:** exported, Unity round trip PASSED
+
+## Files
+- `chr_pakcik.blend` - editable source (collections EXPORT / COLLISION / REFERENCE)
+- `chr_pakcik.fbx` - export (Forward +Z / Up +Y in Unity, 1 unit = 1 m)
+- `textures/kl_palette.png` - shared flat-colour atlas (point-filtered in Unity)
+- `previews/` - three-quarter + front/side/back (Blender Workbench), `unity-import.png` - in-engine proof
+
+## Blender stats (from the build script)
+```json
+{
+ "asset": "chr_pakcik",
+ "triangles": 6480,
+ "materials": 1,
+ "bones": 23,
+ "shape_keys": [
+  "Grin",
+  "Alarm",
+  "Determined",
+  "Blink"
+ ],
+ "clips": [
+  "_tpose",
+  "idle",
+  "walk",
+  "run",
+  "panic",
+  "jump",
+  "punch",
+  "kick",
+  "ride",
+  "mount",
+  "dismount",
+  "sit",
+  "knockdown",
+  "wave"
+ ],
+ "dimensions_m": [
+  0.737,
+  0.8,
+  1.712
+ ],
+ "blender": "5.2.1 LTS"
+}
+```
+
+## Unity import (actually tested)
+```
+Unity 6000.6.2f1 / URP - round trip for chr_pakcik
+Animator: avatar=chr_pakcikAvatar valid=True human=True
+  Hips           -> Hips
+  Head           -> Head
+  LeftHand       -> LeftHand
+  RightFoot      -> RightFoot
+  LeftLowerArm   -> LeftLowerArm
+  RightUpperLeg  -> RightUpperLeg
+Clips (14): _tpose 0.04s, dismount 0.75s, idle 4.00s loop, jump 0.92s, kick 0.67s, knockdown 2.17s, mount 0.75s, panic 0.50s, punch 0.58s, ride 1.00s loop, run 0.50s loop, sit 1.00s loop, walk 0.67s loop, wave 1.00s loop
+Bounds size (m): 1.664 x 1.662 x 0.456; min.y=0.005
+Forward check: toes-ankle = (0.00, -0.06, 0.14) -> faces +Z (OK) (avatar toe mapping: none - optional bone)
+Joint heights (m): hips 0.872, head 1.290; root scale (1.00, 1.00, 1.00), mesh node scale (1.00, 1.00, 1.00), importer globalScale 1 useFileScale True fileScale 1
+Handedness: left hand x = -0.64 (left is -X, correct for +Z forward)
+Mesh: 3466 verts, 6480 tris, 1 material(s), 23 bones, blendshapes: Grin, Alarm, Determined, Blink
+Material: M_KL_Atlas shader=KampungRun/LatInk palette=kl_palette
+Proof render: unity-import.png (idle pose sampled at 0.3 s, 1 m cube at x = 1.2)
+```

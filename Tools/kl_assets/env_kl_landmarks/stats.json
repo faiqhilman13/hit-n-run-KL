@@ -1,0 +1,128 @@
+{
+ "asset": "env_kl_landmarks",
+ "modules": [
+  {
+   "id": "env_lm_kl_sentral",
+   "triangles": 1168,
+   "lod1_triangles": 1080,
+   "size_m": [
+    37.0,
+    31.0,
+    49.06
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_lm_muzium_negara",
+   "triangles": 1380,
+   "lod1_triangles": 1348,
+   "size_m": [
+    34.0,
+    19.96,
+    19.48
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_lm_masjid_negara",
+   "triangles": 1156,
+   "lod1_triangles": 972,
+   "size_m": [
+    34.0,
+    34.0,
+    42.0
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_pbg_lake",
+   "triangles": 1046,
+   "lod1_triangles": null,
+   "size_m": [
+    30.95,
+    19.0,
+    0.41
+   ],
+   "collision": false
+  },
+  {
+   "id": "env_pbg_footbridge",
+   "triangles": 600,
+   "lod1_triangles": 120,
+   "size_m": [
+    2.42,
+    10.02,
+    2.26
+   ],
+   "collision": false
+  },
+  {
+   "id": "env_pbg_gazebo",
+   "triangles": 184,
+   "lod1_triangles": null,
+   "size_m": [
+    5.8,
+    5.8,
+    6.4
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_pbg_pergola",
+   "triangles": 1404,
+   "lod1_triangles": 960,
+   "size_m": [
+    4.7,
+    8.65,
+    3.64
+   ],
+   "collision": false
+  },
+  {
+   "id": "env_pbg_flowerbed",
+   "triangles": 1172,
+   "lod1_triangles": 934,
+   "size_m": [
+    6.0,
+    2.0,
+    1.45
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_pbg_orchid_arch",
+   "triangles": 1860,
+   "lod1_triangles": 1554,
+   "size_m": [
+    4.22,
+    0.64,
+    3.24
+   ],
+   "collision": false
+  },
+  {
+   "id": "env_pbg_bench",
+   "triangles": 72,
+   "lod1_triangles": null,
+   "size_m": [
+    1.8,
+    0.48,
+    1.0
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_pbg_fountain",
+   "triangles": 394,
+   "lod1_triangles": 106,
+   "size_m": [
+    6.2,
+    6.2,
+    3.5
+   ],
+   "collision": true
+  }
+ ],
+ "materials": 1,
+ "blender": "5.2.1 LTS"
+}

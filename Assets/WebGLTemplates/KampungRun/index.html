@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#f7d44a">
+  <title>{{{ PRODUCT_NAME }}}</title>
+  <link rel="stylesheet" href="TemplateData/style.css">
+</head>
+<body>
+  <div id="game">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+
+    <div id="loader">
+      <div class="card">
+        <div class="title">KAMPUNG RUN<span>: KL</span></div>
+        <div class="subtitle">Pandu, tumbuk, tendang &amp; selamatkan Kuala Lumpur</div>
+        <div class="bar"><div class="fill" id="fill"></div></div>
+        <div class="status" id="status">Memuatkan... 0%</div>
+        <div class="tip" id="tip"></div>
+      </div>
+    </div>
+
+    <div id="rotate">
+      <div class="phone"></div>
+      <div>Pusingkan telefon ke landskap</div>
+      <small>Rotate your phone to landscape</small>
+    </div>
+
+    <button id="fullscreen" title="Skrin penuh / Fullscreen" aria-label="Fullscreen">&#x26F6;</button>
+  </div>
+
+  <script>
+    var canvas = document.getElementById("unity-canvas");
+    var loader = document.getElementById("loader");
+    var fill = document.getElementById("fill");
+    var statusEl = document.getElementById("status");
+    var tip = document.getElementById("tip");
+    var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent));
+
+    var tips = isMobile ? [
+      "Ibu jari kiri: gerak / pandu.  Leret kanan: pusing kamera.",
+      "LOMPAT dua kali untuk lompat berganda. Tekan E dekat kereta untuk naik.",
+      "Tolak kayu bedik sampai hujung untuk berlari."
+    ] : [
+      "WASD gerak, tetikus pandang, Space lompat, Q tumbuk, F tendang, E naik kereta.",
+      "Tendang di udara untuk hentak! H untuk hon, R untuk betulkan kereta.",
+      "Cari semua Kad Lat dan hapuskan Burung Kamera MegaMaju."
+    ];
+    var tipIndex = 0;
+    function nextTip() { tip.textContent = tips[tipIndex++ % tips.length]; }
+    nextTip();
+    var tipTimer = setInterval(nextTip, 4000);
+
+    var building = ["Membina jalan raya...", "Menanam pokok kelapa...", "Mengecat rumah kedai...", "Memanggil Mak Som...",
+                    "Menjerang teh tarik...", "Menghidupkan motor..."];
+    var buildTimer = null;
+
+    // the game calls this (via KampungRun.jslib) once the city is built and drawn
+    window.onKampungReady = function () {
+      clearInterval(tipTimer);
+      if (buildTimer) clearInterval(buildTimer);
+      loader.classList.add("done");
+      setTimeout(function () { loader.style.display = "none"; }, 600);
+      canvas.focus();
+    };
+
+    var config = {
+      dataUrl: "Build/{{{ DATA_FILENAME }}}",
+      frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
+      codeUrl: "Build/{{{ CODE_FILENAME }}}",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+      productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+      productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+    };
+    // phones: cap the backing resolution so fill-rate stays sane
+    if (isMobile) config.devicePixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+
+    var script = document.createElement("script");
+    script.src = "Build/{{{ LOADER_FILENAME }}}";
+    script.onload = function () {
+      createUnityInstance(canvas, config, function (progress) {
+        var pct = Math.round(progress * 100);
+        fill.style.width = pct + "%";
+        statusEl.textContent = "Memuatkan... " + pct + "%";
+        if (progress >= 1 && !buildTimer) {
+          var i = 0;
+          statusEl.textContent = building[0];
+          buildTimer = setInterval(function () { statusEl.textContent = building[++i % building.length]; }, 900);
+        }
+      }).then(function (instance) {
+        window.unityInstance = instance;
+        document.getElementById("fullscreen").onclick = function () { instance.SetFullscreen(1); };
+      }).catch(function (message) {
+        statusEl.textContent = "Alamak! Permainan gagal dimuatkan: " + message;
+        statusEl.classList.add("error");
+      });
+    };
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>

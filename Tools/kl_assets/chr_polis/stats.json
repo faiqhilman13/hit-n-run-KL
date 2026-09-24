@@ -1,0 +1,34 @@
+{
+ "asset": "chr_polis",
+ "triangles": 15160,
+ "materials": 1,
+ "bones": 23,
+ "shape_keys": [
+  "Grin",
+  "Alarm",
+  "Determined",
+  "Blink"
+ ],
+ "clips": [
+  "_tpose",
+  "idle",
+  "walk",
+  "run",
+  "panic",
+  "jump",
+  "punch",
+  "kick",
+  "ride",
+  "mount",
+  "dismount",
+  "sit",
+  "knockdown",
+  "wave"
+ ],
+ "dimensions_m": [
+  0.83,
+  0.908,
+  1.821
+ ],
+ "blender": "5.2.1 LTS"
+}

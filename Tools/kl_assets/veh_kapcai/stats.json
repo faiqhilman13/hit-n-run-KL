@@ -1,0 +1,23 @@
+{
+ "asset": "veh_kapcai",
+ "triangles": 7452,
+ "lod1_body_triangles": null,
+ "lod0_body_triangles": 2708,
+ "materials": 1,
+ "parts": [
+  "Body",
+  "Seat_Rider",
+  "FX_Exhaust",
+  "Steering",
+  "HeadLights",
+  "FrontWheel",
+  "RearWheel",
+  "COL_veh_kapcai"
+ ],
+ "dimensions_m": {
+  "length": 1.958,
+  "width": 0.72,
+  "height": 1.307
+ },
+ "blender": "5.2.1 LTS"
+}

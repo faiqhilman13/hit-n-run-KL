@@ -1,0 +1,15 @@
+Unity 6000.6.2f1 / URP - kit round trip for env_kl_landmarks
+  env_lm_kl_sentral            size 37.00 x 49.06 x 31.00 m, min.y -0.06, collision COL proxy, LODGroup 2 levels: LOD0 1168 tris @0.18 / LOD1 1080 tris @0
+  env_lm_muzium_negara         size 34.00 x 19.48 x 19.96 m, min.y -0.06, collision COL proxy, LODGroup 2 levels: LOD0 1380 tris @0.18 / LOD1 1348 tris @0
+  env_lm_masjid_negara         size 34.00 x 42.00 x 34.00 m, min.y 0.00, collision COL proxy, LODGroup 2 levels: LOD0 1156 tris @0.18 / LOD1 972 tris @0
+  env_pbg_lake                 size 30.95 x 0.42 x 19.00 m, min.y -0.08, collision none (walk-through), no LOD
+  env_pbg_footbridge           size 2.42 x 2.26 x 10.02 m, min.y 0.19, collision none (walk-through), LODGroup 2 levels: LOD0 600 tris @0.18 / LOD1 120 tris @0
+  env_pbg_gazebo               size 5.80 x 6.40 x 5.80 m, min.y 0.00, collision COL proxy, no LOD
+  env_pbg_pergola              size 4.70 x 3.64 x 8.65 m, min.y 0.00, collision none (walk-through), LODGroup 2 levels: LOD0 1404 tris @0.18 / LOD1 960 tris @0
+  env_pbg_flowerbed            size 6.00 x 1.45 x 2.00 m, min.y 0.00, collision COL proxy, LODGroup 2 levels: LOD0 1172 tris @0.18 / LOD1 934 tris @0
+  env_pbg_orchid_arch          size 4.22 x 3.24 x 0.64 m, min.y -0.32, collision none (walk-through), LODGroup 2 levels: LOD0 1860 tris @0.18 / LOD1 1554 tris @0
+  env_pbg_bench                size 1.80 x 1.01 x 0.48 m, min.y -0.01, collision COL proxy, no LOD
+  env_pbg_fountain             size 6.20 x 3.50 x 6.20 m, min.y 0.00, collision COL proxy, LODGroup 2 levels: LOD0 394 tris @0.18 / LOD1 106 tris @0
+Material: M_KL_Atlas shader=KampungRun/LatInk palette=kl_palette
+Facing: modules are authored front = -Y and turned at assembly; fronts face Unity +Z (the render looks from +Z).
+Proof render: unity-import.png (11 modules imported and placed, viewed from the front)

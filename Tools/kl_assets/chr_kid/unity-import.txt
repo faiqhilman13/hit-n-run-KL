@@ -1,0 +1,16 @@
+Unity 6000.6.2f1 / URP - round trip for chr_kid
+Animator: avatar=chr_kidAvatar valid=True human=True
+  Hips           -> Hips
+  Head           -> Head
+  LeftHand       -> LeftHand
+  RightFoot      -> RightFoot
+  LeftLowerArm   -> LeftLowerArm
+  RightUpperLeg  -> RightUpperLeg
+Clips (14): _tpose 0.04s, dismount 0.75s, idle 4.00s loop, jump 0.92s, kick 0.67s, knockdown 2.17s, mount 0.75s, panic 0.50s, punch 0.58s, ride 1.00s loop, run 0.50s loop, sit 1.00s loop, walk 0.67s loop, wave 1.00s loop
+Bounds size (m): 1.158 x 1.177 x 0.426; min.y=0.000
+Forward check: toes-ankle = (0.00, -0.06, 0.10) -> faces +Z (OK) (avatar toe mapping: yes)
+Joint heights (m): hips 0.540, head 0.820; root scale (1.00, 1.00, 1.00), mesh node scale (1.00, 1.00, 1.00), importer globalScale 1 useFileScale True fileScale 1
+Handedness: left hand x = -0.44 (left is -X, correct for +Z forward)
+Mesh: 3080 verts, 5792 tris, 1 material(s), 23 bones, blendshapes: Grin, Alarm, Determined, Blink
+Material: M_KL_Atlas shader=KampungRun/LatInk palette=kl_palette
+Proof render: unity-import.png (idle pose sampled at 0.3 s, 1 m cube at x = 1.2)

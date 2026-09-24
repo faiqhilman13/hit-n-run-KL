@@ -1,0 +1,34 @@
+{
+ "asset": "veh_hilux",
+ "triangles": 22196,
+ "lod1_body_triangles": null,
+ "lod0_body_triangles": 11112,
+ "materials": 1,
+ "parts": [
+  "Body",
+  "Door_FL",
+  "Door_RL",
+  "Door_FR",
+  "Door_RR",
+  "FX_Exhaust",
+  "HeadLights",
+  "BrakeLights",
+  "ReverseLights",
+  "Ornament",
+  "Antenna",
+  "SteeringWheel",
+  "SteeringAxis",
+  "Seat_Driver",
+  "Wheel_FL",
+  "Wheel_FR",
+  "Wheel_RL",
+  "Wheel_RR",
+  "COL_veh_hilux"
+ ],
+ "dimensions_m": {
+  "length": 5.342,
+  "width": 2.22,
+  "height": 2.299
+ },
+ "blender": "5.2.1 LTS"
+}

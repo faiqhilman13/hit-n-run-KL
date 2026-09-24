@@ -1,0 +1,11 @@
+# Unity + Blender project: normalise text, never touch binaries
+* text=auto
+*.cs text diff=csharp
+*.shader text
+*.py text
+*.fbx binary
+*.png binary
+*.jpg binary
+*.wasm binary
+*.unityweb binary
+*.asset -text

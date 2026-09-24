@@ -1,0 +1,34 @@
+{
+ "asset": "veh_teksi",
+ "triangles": 18596,
+ "lod1_body_triangles": null,
+ "lod0_body_triangles": 9172,
+ "materials": 1,
+ "parts": [
+  "Body",
+  "Door_FL",
+  "Door_RL",
+  "Door_FR",
+  "Door_RR",
+  "FX_Exhaust",
+  "HeadLights",
+  "BrakeLights",
+  "ReverseLights",
+  "Ornament",
+  "Antenna",
+  "SteeringWheel",
+  "SteeringAxis",
+  "Seat_Driver",
+  "Wheel_FL",
+  "Wheel_FR",
+  "Wheel_RL",
+  "Wheel_RR",
+  "COL_veh_teksi"
+ ],
+ "dimensions_m": {
+  "length": 4.351,
+  "width": 1.929,
+  "height": 1.577
+ },
+ "blender": "5.2.1 LTS"
+}

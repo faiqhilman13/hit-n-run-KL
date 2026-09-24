@@ -1,0 +1,34 @@
+{
+ "asset": "veh_alphard",
+ "triangles": 19890,
+ "lod1_body_triangles": null,
+ "lod0_body_triangles": 9438,
+ "materials": 1,
+ "parts": [
+  "Body",
+  "Door_FL",
+  "SlideDoor_L",
+  "Door_FR",
+  "SlideDoor_R",
+  "FX_Exhaust",
+  "HeadLights",
+  "BrakeLights",
+  "ReverseLights",
+  "Ornament",
+  "Antenna",
+  "SteeringWheel",
+  "SteeringAxis",
+  "Seat_Driver",
+  "Wheel_FL",
+  "Wheel_FR",
+  "Wheel_RL",
+  "Wheel_RR",
+  "COL_veh_alphard"
+ ],
+ "dimensions_m": {
+  "length": 4.981,
+  "width": 2.192,
+  "height": 2.029
+ },
+ "blender": "5.2.1 LTS"
+}

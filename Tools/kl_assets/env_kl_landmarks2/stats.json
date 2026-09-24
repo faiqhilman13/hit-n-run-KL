@@ -1,0 +1,95 @@
+{
+ "asset": "env_kl_landmarks2",
+ "modules": [
+  {
+   "id": "env_lm2_batu_caves",
+   "triangles": 5788,
+   "lod1_triangles": 2538,
+   "size_m": [
+    43.25,
+    40.76,
+    31.86
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_lm2_merdeka118",
+   "triangles": 928,
+   "lod1_triangles": 864,
+   "size_m": [
+    30.0,
+    30.16,
+    165.15
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_lm2_tugu_negara",
+   "triangles": 3768,
+   "lod1_triangles": 1744,
+   "size_m": [
+    34.0,
+    30.0,
+    12.54
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_lm2_istana_negara",
+   "triangles": 5488,
+   "lod1_triangles": 1880,
+   "size_m": [
+    36.0,
+    23.97,
+    24.4
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_lm2_thean_hou",
+   "triangles": 2592,
+   "lod1_triangles": 1372,
+   "size_m": [
+    32.0,
+    29.15,
+    23.91
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_lm2_masjid_jamek",
+   "triangles": 5612,
+   "lod1_triangles": 2120,
+   "size_m": [
+    32.0,
+    26.0,
+    16.9
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_lm2_pavilion",
+   "triangles": 1688,
+   "lod1_triangles": 852,
+   "size_m": [
+    36.0,
+    34.0,
+    24.8
+   ],
+   "collision": true
+  },
+  {
+   "id": "env_lm2_stadium_merdeka",
+   "triangles": 3340,
+   "lod1_triangles": 3148,
+   "size_m": [
+    38.83,
+    45.3,
+    21.8
+   ],
+   "collision": false
+  }
+ ],
+ "materials": 1,
+ "blender": "5.2.1 LTS"
+}
