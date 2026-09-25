@@ -238,7 +238,7 @@ namespace KampungRun.Tests
             yield return Frames(3);
 
             // --- 5. bopping: jab, jab, big one, kick - they topple and get back up
-            var bopAt = CityBuilder.BlockCenter(4, 3) + new Vector3(-19f, 0.2f, 4f);
+            var bopAt = CityBuilder.BlockCenter(4, 3) + new Vector3(-CityBuilder.Block * 0.5f + 1.8f, 0.2f, 4f);   // the west sidewalk
             var ped = PedestrianSpawner.Spawn(bopAt, new Rect(bopAt.x - 20, bopAt.z - 20, 40, 40), gm.transform, "chr_pakcik");
             p.Teleport(bopAt - Vector3.forward * 1.1f, Quaternion.LookRotation(Vector3.forward));
             cc.target = p.transform; cc.targetBody = null;
@@ -263,7 +263,7 @@ namespace KampungRun.Tests
             if (ped) Object.Destroy(ped.gameObject);
 
             // --- 6. kapcai weaving between lanes, leaning into every turn
-            float bikeZ = CityBuilder.RoadZ(4) + 2.5f;
+            float bikeZ = CityBuilder.RoadZ(4) + 6f;                         // room to weave across the lanes
             ClearLane(CityBuilder.RoadZ(4), 8f);
             var bike = gm.SummonCar("kapcai", new Vector3(CityBuilder.RoadX(3) + 6f, 0.6f, bikeZ), Quaternion.Euler(0, 90, 0));
             yield return Frames(15);
@@ -273,19 +273,20 @@ namespace KampungRun.Tests
             cc.distance = 4.8f; cc.pitch = 10f;
             cc.SnapBehind();
             yield return Frames(40);
-            yield return Shot("06_kapcai", 4.0f, t => bd.steer = Mathf.Sin(t * Mathf.PI * 4f) * 0.75f);
+            yield return Shot("06_kapcai", 4.0f, t => bd.steer = Mathf.Sin(t * Mathf.PI * 4f) * 0.34f);   // lane to lane, not onto the kerb
             p.ExitVehicle(false, true);
             Object.Destroy(bike.gameObject);
 
             // --- 7. landmarks fly-arounds (landmark blocks face +Z; their place marker is on the road in front)
-            Vector3 C(string place, float back = 24.5f) => gm.City.places[place] - new Vector3(0, 0, back);
+            const float L = CityBuilder.LandmarkScale;                                   // landmarks are laid out and scaled by this
+            Vector3 C(string place, float back = 24.5f) => gm.City.places[place] - new Vector3(0, 0, back * L);
             p.Teleport(CityBuilder.BlockCenter(0, 0) + Vector3.up * 0.3f, Quaternion.identity);   // out of shot (on the map)
-            yield return Orbit("07_batu", C("BatuCaves") + new Vector3(0, 0, 16f), 3.0f, 30f, 14f, 150f, 50f, 7f);
-            yield return Orbit("08_merdeka118", C("Merdeka118"), 3.0f, 120f, 2f, 200f, -40f, 55f);
-            yield return Orbit("09_klcc", gm.City.places["Towers"] + new Vector3(0, 0, 21f), 3.0f, 150f, 16f, 215f, 40f, 75f);
-            yield return Orbit("10_theanhou", C("TheanHou"), 2.6f, 38f, 12f, 145f, 45f, 7f);
-            yield return Orbit("11_jamek", gm.City.places["Masjid"] + new Vector3(18f, 0, 0), 2.6f, 36f, 10f, 60f, 45f, 6f);
-            yield return Orbit("12_istana", C("IstanaNegara"), 2.6f, 40f, 10f, 205f, -45f, 7f);
+            yield return Orbit("07_batu", C("BatuCaves") + new Vector3(0, 0, 16f * L), 3.0f, 30f * L, 14f, 150f, 50f, 7f * L);
+            yield return Orbit("08_merdeka118", C("Merdeka118"), 3.0f, 120f * L, 2f, 200f, -40f, 55f * L);
+            yield return Orbit("09_klcc", gm.City.places["Towers"] + new Vector3(0, 0, 21f * L), 3.0f, 150f * L, 16f, 215f, 40f, 75f * L);
+            yield return Orbit("10_theanhou", C("TheanHou"), 2.6f, 38f * L, 12f, 145f, 45f, 7f * L);
+            yield return Orbit("11_jamek", gm.City.places["Masjid"] + new Vector3(18f * L, 0, 0), 2.6f, 36f * L, 10f, 60f, 45f, 6f * L);
+            yield return Orbit("12_istana", C("IstanaNegara"), 2.6f, 40f * L, 10f, 205f, -45f, 7f * L);
 
             // ================================================================ night, Adik's Kancil
             yield return LoadLevel(4);
