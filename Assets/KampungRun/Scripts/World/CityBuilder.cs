@@ -4,7 +4,12 @@ using UnityEngine;
 namespace KampungRun
 {
     /// <summary>
-    /// "Kuala Lumpur-ish": a compressed, made-up district mixing kampung, river and city.
+    /// "Kuala Lumpur-ish": a made-up district mixing kampung, river and city, at Hit &amp; Run scale -
+    /// people, cars and shophouses are life-sized; blocks are ~100 m, city roads four lanes.
+    ///
+    /// Every block is four 44 m lots around a back lane (lorong), each lot built by one of the
+    /// district generators below (shophouse rows, condos, kampung houses...). Landmarks instead
+    /// take the whole block, laid out and scaled up by LandmarkScale.
     ///
     ///   col 0-1 : Kampung Sungai Kecil (stilt houses, palms, surau, the family home)
     ///   col 2   : Sungai (the river) - east-west roads cross on bridges
@@ -18,7 +23,13 @@ namespace KampungRun
     public class CityBuilder
     {
         public const int NX = 9, NZ = 6;
-        public const float Block = 44f, Road = 10f, Pitch = Block + Road;
+        public const float Lot = 44f, Lane = 8f;                // a lot = one district generator's patch
+        public const float Block = Lot * 2f + Lane, Road = 20f, Pitch = Block + Road;
+        public const float LandmarkScale = 2f;                  // landmark models + their block layout
+        public const float RiverWidth = 44f;                    // the water; the rest of the river block is promenade
+        /// <summary>How much bigger the city is than the old compressed one (54 m pitch): mission
+        /// timers, search radii and traffic ranges scale by this.</summary>
+        public const float WorldScale = Pitch / 54f;
         public const int RiverCol = 2;
         public static readonly float X0 = -NX * Pitch * 0.5f, Z0 = -NZ * Pitch * 0.5f;
 
@@ -95,18 +106,36 @@ namespace KampungRun
             BuildStreetLife();
             BuildBorder();
             _ground.Build(root, "Ground");
+            BatchStatics();
 
             float hx = NX * Pitch * 0.5f + 20, hz = NZ * Pitch * 0.5f + 20;
             _city.bounds = new Bounds(Vector3.zero, new Vector3(hx * 2, 200, hz * 2));
             return _city;
         }
 
+        /// <summary>The life-size city is thousands of props: static-batch every one that never moves
+        /// (not breakables, critters or anything with a rigidbody) so they draw in a few calls.</summary>
+        void BatchStatics()
+        {
+            var gos = new List<GameObject>();
+            foreach (var holder in new[] { _props, _kitRoot })
+                foreach (Transform prop in holder)
+                {
+                    if (!prop.gameObject.isStatic || prop.GetComponentInChildren<Breakable>() || prop.GetComponentInChildren<Rigidbody>()
+                        || prop.GetComponentInChildren<Critter>()) continue;
+                    foreach (var mf in prop.GetComponentsInChildren<MeshFilter>())
+                        if (mf.sharedMesh && mf.sharedMesh.isReadable && mf.GetComponent<MeshRenderer>()) gos.Add(mf.gameObject);
+                }
+            if (gos.Count > 0) StaticBatchingUtility.Combine(gos.ToArray(), _city.root.gameObject);
+            Debug.Log($"[City] static-batched {gos.Count} prop meshes");
+        }
+
         // ------------------------------------------------------------------ roads
         /// <summary>Place a KL street-kit module (static, no physics - colliders are separate boxes).</summary>
-        GameObject Kit(string id, Vector3 pos, float yaw, float lengthScale = 1f)
+        GameObject Kit(string id, Vector3 pos, float yaw, float lengthScale = 1f, float widthScale = 1f)
         {
             var go = ModelFactory.Spawn(id, pos, Quaternion.Euler(0, yaw, 0), _kitRoot);
-            go.transform.localScale = new Vector3(1f, 1f, lengthScale);
+            go.transform.localScale = new Vector3(widthScale, 1f, lengthScale);
             go.isStatic = true;
             foreach (var t in go.GetComponentsInChildren<Transform>()) t.gameObject.isStatic = true;
             return go;
@@ -121,8 +150,25 @@ namespace KampungRun
             float zMin = RoadZ(0) - Road * 0.5f, zMax = RoadZ(NZ) + Road * 0.5f;
             _kitRoot = new GameObject("StreetKit").transform;
             _kitRoot.SetParent(_city.root, false);
-            float seg = Block / 4f;                 // four stretched 10 m tiles per 44 m segment
-            float stretch = seg / 10f;
+            const int tiles = 8;                    // stretched 10 m tiles per block-long segment
+            float seg = Block / tiles, stretch = seg / 10f;
+            float half = Road * 0.5f;
+
+            // One stretch of road. City streets are two 2-lane tiles side by side (four lanes, the
+            // tiles' edge lines meeting as a centre divide); kampung roads are a single narrow lane
+            // tile with grass verges.
+            void Straight(string id, Vector3 p, float yaw, bool kampung)
+            {
+                var across = Quaternion.Euler(0, yaw, 0) * Vector3.right;
+                if (kampung)
+                {
+                    Kit(id, p, yaw, stretch);
+                    var size = Mathf.Approximately(yaw, 0f) ? new Vector3(Road, 0.02f, seg) : new Vector3(seg, 0.02f, Road);
+                    _ground.Box(p + Vector3.up * 0.01f, size, LatMaterials.Pal.Grass, false, 0f);
+                }
+                else
+                    foreach (float s in new[] { -1f, 1f }) Kit(id, p + across * s * half * 0.5f, yaw, stretch);
+            }
 
             // --- intersections: crossroads inside, T-junctions on the edge, corners at the map corners
             for (int i = 0; i <= NX; i++)
@@ -130,13 +176,17 @@ namespace KampungRun
                 {
                     var p = new Vector3(RoadX(i), 0, RoadZ(k));
                     bool w = i == 0, e = i == NX, s = k == 0, n = k == NZ;
-                    if ((w || e) && (s || n))
-                        Kit("env_road_corner", p, w && s ? 0 : e && s ? -90 : e && n ? 180 : 90);
-                    else if (w) Kit("env_road_t", p, 0);
-                    else if (e) Kit("env_road_t", p, 180);
-                    else if (s) Kit("env_road_t", p, -90);
-                    else if (n) Kit("env_road_t", p, 90);
-                    else Kit("env_road_cross", p, 0);
+                    bool kampung = i < RiverCol;
+                    float sc = kampung ? 1f : Road / 10f;
+                    string id; float yaw;
+                    if ((w || e) && (s || n)) { id = "env_road_corner"; yaw = w && s ? 0 : e && s ? -90 : e && n ? 180 : 90; }
+                    else if (w) { id = "env_road_t"; yaw = 0; }
+                    else if (e) { id = "env_road_t"; yaw = 180; }
+                    else if (s) { id = "env_road_t"; yaw = -90; }
+                    else if (n) { id = "env_road_t"; yaw = 90; }
+                    else { id = "env_road_cross"; yaw = 0; }
+                    Kit(id, p, yaw, sc, sc);
+                    if (kampung) _ground.Box(p + Vector3.up * 0.01f, new Vector3(Road, 0.02f, Road), LatMaterials.Pal.Grass, false, 0f);
                 }
 
             // --- north-south segments (they also wall the river, so their collider goes deep)
@@ -144,15 +194,15 @@ namespace KampungRun
             {
                 float x = RoadX(i);
                 _ground.ColliderOnly(new Vector3(x, -1.5f, 0), new Vector3(Road, 3f, zMax - zMin));
+                bool kampung = i <= RiverCol, city = i > RiverCol;
                 for (int k = 0; k < NZ; k++)
-                    for (int t = 0; t < 4; t++)
+                    for (int t = 0; t < tiles; t++)
                     {
-                        float z = RoadZ(k) + Road * 0.5f + seg * (t + 0.5f);
-                        bool city = i > RiverCol;
+                        float z = RoadZ(k) + half + seg * (t + 0.5f);
                         bool chowkit = (i == 3 || i == 4) && k == NZ - 1;
-                        string id = chowkit ? "env_road_straight_wet" : city && (t == 0 || t == 3) ? "env_crosswalk"
-                            : !city ? "env_kb_lane" : "env_road_straight";
-                        Kit(id, new Vector3(x, 0, z), 0, stretch);
+                        string id = chowkit ? "env_road_straight_wet" : city && (t == 0 || t == tiles - 1) ? "env_crosswalk"
+                            : kampung ? "env_kb_lane" : "env_road_straight";
+                        Straight(id, new Vector3(x, 0, z), 0, kampung);
                     }
             }
             // --- east-west segments: split around the river, a bridge across it
@@ -162,25 +212,29 @@ namespace KampungRun
                 _ground.ColliderOnly(new Vector3((xMin + riverL) * 0.5f, -1.5f, z), new Vector3(riverL - xMin, 3f, Road));
                 _ground.ColliderOnly(new Vector3((riverR + xMax) * 0.5f, -1.5f, z), new Vector3(xMax - riverR, 3f, Road));
                 for (int i = 0; i < NX; i++)
-                    for (int t = 0; t < 4; t++)
+                    for (int t = 0; t < tiles; t++)
                     {
-                        float x = RoadX(i) + Road * 0.5f + seg * (t + 0.5f);
+                        float x = RoadX(i) + half + seg * (t + 0.5f);
                         bool chowkit = i == 3 && (k == NZ - 1 || k == NZ);
-                        Kit(chowkit ? "env_road_straight_wet" : i < RiverCol ? "env_kb_lane" : "env_road_straight",
-                            new Vector3(x, 0, z), 90, stretch);
+                        bool kampung = i < RiverCol;
+                        bool city = i > RiverCol;
+                        Straight(chowkit ? "env_road_straight_wet" : kampung ? "env_kb_lane"
+                                : city && (t == 0 || t == tiles - 1) ? "env_crosswalk" : "env_road_straight",
+                            new Vector3(x, 0, z), 90, kampung);
                     }
-                // bridge deck under the road tiles + railings + pier
+                // bridge deck under the road tiles + railings + piers standing in the water
                 float bx = (riverL + riverR) * 0.5f;
                 // deck top flush with the other road colliders (y = 0) so cars ride on the drawn tiles
                 _ground.Box(new Vector3(bx, -0.55f, z), new Vector3(Block + 0.2f, 0.5f, Road), LatMaterials.Pal.Wall, false, 1.4f);
                 _ground.ColliderOnly(new Vector3(bx, -0.5f, z), new Vector3(Block + 0.2f, 1f, Road));
                 foreach (float side in new[] { -1f, 1f })
                 {
-                    _ground.Box(new Vector3(bx, 0.55f, z + side * (Road * 0.5f - 0.2f)), new Vector3(Block, 1.1f, 0.35f), LatMaterials.Pal.Rail, true, 2f);
-                    for (int p = 0; p < 7; p++)
-                        _ground.Box(new Vector3(riverL + 3 + p * (Block - 6) / 6f, 0.7f, z + side * (Road * 0.5f - 0.2f)), new Vector3(0.6f, 1.4f, 0.6f), LatMaterials.Pal.Wall, false, 2f);
+                    _ground.Box(new Vector3(bx, 0.55f, z + side * (half - 0.2f)), new Vector3(Block, 1.1f, 0.35f), LatMaterials.Pal.Rail, true, 2f);
+                    for (int p = 0; p < 15; p++)
+                        _ground.Box(new Vector3(riverL + 3 + p * (Block - 6) / 14f, 0.7f, z + side * (half - 0.2f)), new Vector3(0.6f, 1.4f, 0.6f), LatMaterials.Pal.Wall, false, 2f);
                 }
-                _ground.Box(new Vector3(bx, -1.8f, z), new Vector3(3f, 2f, Road * 0.7f), LatMaterials.Pal.Wall, true, 2f);
+                foreach (float px in new[] { -RiverWidth * 0.25f, RiverWidth * 0.25f })
+                    _ground.Box(new Vector3(bx + px, -1.8f, z), new Vector3(3f, 2f, Road * 0.7f), LatMaterials.Pal.Wall, true, 2f);
                 _city.places[$"Bridge{k}"] = new Vector3(bx, 0.2f, z);
             }
 
@@ -195,7 +249,7 @@ namespace KampungRun
                     if (i < NX) RoadNetwork.Link(grid[i, k], grid[i + 1, k]);
                     if (k < NZ) RoadNetwork.Link(grid[i, k], grid[i, k + 1]);
                 }
-            _city.roads.laneOffset = Road * 0.25f;
+            _city.roads.laneOffset = 2.6f;          // the inner lane each way (kampung lanes are 5 m too)
 
             // coins along some roads, H&R style trails
             for (int n = 0; n < 22; n++)
@@ -203,7 +257,7 @@ namespace KampungRun
                 bool alongX = _rng.NextDouble() < 0.5;
                 int line = alongX ? RI(0, NZ + 1) : RI(0, NX + 1);
                 float start = alongX ? R(xMin + 20, xMax - 60) : R(zMin + 20, zMax - 60);
-                float lane = _rng.NextDouble() < 0.5 ? -Road * 0.25f : Road * 0.25f;
+                float lane = _rng.NextDouble() < 0.5 ? -2.6f : 2.6f;
                 for (int c = 0; c < 5; c++)
                 {
                     var p = alongX ? new Vector3(start + c * 4f, 1f, RoadZ(line) + lane) : new Vector3(RoadX(line) + lane, 1f, start + c * 4f);
@@ -215,8 +269,8 @@ namespace KampungRun
         /// <summary>Kerb + sidewalk strips all round a block (striped KL kerbs), 3 m deep.</summary>
         void Kerbs(Vector3 c, string edge = "env_curb_edge")
         {
-            float h = Block * 0.5f, seg = Block / 4f, stretch = seg / 10f;
-            for (int t = 0; t < 4; t++)
+            float h = Block * 0.5f, seg = Block / 8f, stretch = seg / 10f;
+            for (int t = 0; t < 8; t++)
             {
                 float a = -h + seg * (t + 0.5f);
                 Kit(edge, c + new Vector3(-h + 1.5f, 0, a), 0, stretch);     // west side (road to -X)
@@ -231,18 +285,46 @@ namespace KampungRun
         {
             float x = BlockCenter(RiverCol, 0).x;
             float zLen = NZ * Pitch + 60;
-            _ground.Box(new Vector3(x, -3.4f, 0), new Vector3(Block + 2, 2f, zLen), LatMaterials.Pal.Water, true, 0f);
-            _city.places["River"] = new Vector3(x, -2.4f, 0);
+            _ground.Box(new Vector3(x, -3.4f, 0), new Vector3(RiverWidth + 2, 2f, zLen), LatMaterials.Pal.Water, true, 0f);
+            Place("River", new Vector3(x, -2.4f, 0));
 
-            // riverside railings on both banks, with gaps where the bridges cross
-            float rl = x - Block * 0.5f, rr = x + Block * 0.5f;
+            // River of Life: a paved promenade on each bank between the road and the water, with
+            // palms, lamps and benches; people stroll along it
+            float wl = x - RiverWidth * 0.5f, wr = x + RiverWidth * 0.5f;         // water edges
+            float bl = x - Block * 0.5f, br = x + Block * 0.5f;                   // road kerbs
+            float pw = (Block - RiverWidth) * 0.5f;                               // promenade width
+            for (int k = 0; k < NZ; k++)
+            {
+                float z0 = RoadZ(k) + Road * 0.5f, z1 = RoadZ(k + 1) - Road * 0.5f, zc = (z0 + z1) * 0.5f;
+                foreach (float s in new[] { -1f, 1f })
+                {
+                    float px = s < 0 ? (bl + wl) * 0.5f : (wr + br) * 0.5f;
+                    _ground.Box(new Vector3(px, G - 1.6f, zc), new Vector3(pw, 3.2f, z1 - z0), LatMaterials.Pal.Pavement, true, 1.2f);
+                    _ground.Box(new Vector3(px + s * pw * 0.25f, G + 0.01f, zc), new Vector3(pw * 0.35f, 0.02f, z1 - z0 - 6f), LatMaterials.Pal.Grass, false, 0f);
+                    _city.walkZones.Add(new Rect(px - pw * 0.5f + 0.5f, z0 + 1f, pw - 1f, z1 - z0 - 2f));
+                    for (int i = 0; i < 5; i++)
+                    {
+                        float pz = z0 + 10f + i * (z1 - z0 - 20f) / 4f;
+                        KitProp("env_palm", new Vector3(px + s * pw * 0.25f, G, pz), R(0, 360), R(0.9f, 1.15f));
+                        if (i % 2 == 0) KitProp("env_pbg_bench", new Vector3(px - s * pw * 0.12f, G, pz + 4f), s < 0 ? 90 : -90);
+                        var lamp = Prop("env_lamp_post", new Vector3((s < 0 ? wl : wr) - s * 1.2f, G, pz + 8f), s < 0 ? 90 : -90, false);
+                        var cap = lamp.AddComponent<CapsuleCollider>();
+                        cap.center = new Vector3(0, 3.5f, 0); cap.radius = 0.18f; cap.height = 7;
+                    }
+                }
+            }
+
+            // riverside railings along the water on both banks, with gaps where the bridges cross
             float edge = NZ * Pitch * 0.5f + Road * 0.5f + 14f; // out to the border wall
-            AddRail(rl, rr, -edge, RoadZ(0) - Road * 0.5f);
-            for (int k = 1; k <= NZ; k++) AddRail(rl, rr, RoadZ(k - 1) + Road * 0.5f, RoadZ(k) - Road * 0.5f);
-            AddRail(rl, rr, RoadZ(NZ) + Road * 0.5f, edge);
+            AddRail(wl, wr, -edge, RoadZ(0) - Road * 0.5f);
+            for (int k = 1; k <= NZ; k++) AddRail(wl, wr, RoadZ(k - 1) + Road * 0.5f, RoadZ(k) - Road * 0.5f);
+            AddRail(wl, wr, RoadZ(NZ) + Road * 0.5f, edge);
+            // the river walls down to the water
+            foreach (float s in new[] { -1f, 1f })
+                _ground.Box(new Vector3(x + s * (RiverWidth * 0.5f + 0.5f), -1.9f, 0), new Vector3(1f, 3.6f, zLen), LatMaterials.Pal.Wall, true, 1.2f);
 
             // a few floating things so the river reads as water
-            for (int i = 0; i < 12; i++)
+            for (int i = 0; i < 20; i++)
                 _ground.Box(new Vector3(x + R(-15, 15), -2.35f, R(-zLen * 0.45f, zLen * 0.45f)), new Vector3(R(1, 3), 0.05f, 0.15f), LatMaterials.Pal.RoadLine, false, 0f,
                     Quaternion.Euler(0, R(0, 180), 0));
         }
@@ -298,30 +380,88 @@ namespace KampungRun
             {
                 float a = i * 90f;
                 var dir = Quaternion.Euler(0, a, 0) * Vector3.forward;
-                float d = (i % 2 == 0 ? wz : wx) + 70f;
+                float d = (i % 2 == 0 ? wz : wx) + 120f;
                 var go = Prop("Prop_Skyline", dir * d, a + 180f, false);
-                go.transform.localScale = new Vector3(3.6f, 1.3f, 1f);
-                var go2 = Prop("Prop_Skyline", dir * (d + 50f) + Quaternion.Euler(0, a, 0) * Vector3.right * 90f, a + 180f, false);
-                go2.transform.localScale = new Vector3(3f, 1.8f, 1f);
+                go.transform.localScale = new Vector3(7.5f, 2.4f, 1f);
+                var go2 = Prop("Prop_Skyline", dir * (d + 90f) + Quaternion.Euler(0, a, 0) * Vector3.right * 200f, a + 180f, false);
+                go2.transform.localScale = new Vector3(6f, 3.2f, 1f);
             }
         }
 
         // ------------------------------------------------------------------ blocks
+        /// <summary>Landmarks own their whole block (laid out at LandmarkScale); everything else is
+        /// four lots of district buildings.</summary>
+        static bool IsLandmark(Zone z) => z switch
+        {
+            Zone.KLSentral or Zone.MuziumNegara or Zone.MasjidNegara or Zone.PerdanaGardens or Zone.BatuCaves or
+            Zone.TuguNegara or Zone.Pavilion or Zone.Merdeka118 or Zone.StadiumMerdeka or Zone.TheanHou or
+            Zone.IstanaNegara or Zone.Towers or Zone.KLTower or Zone.Dataran or Zone.Masjid or Zone.Padang => true,
+            _ => false,
+        };
+
+        /// <summary>What goes on each lot of a district block: the district's special building on
+        /// one lot (north lots come first, so named places land on the main road), the rest filler.</summary>
+        static Zone LotZone(Zone z, int lot)
+        {
+            switch (z)
+            {
+                case Zone.Home: return lot == 1 ? Zone.Home : Zone.Kampung;           // north-east: faces the river road
+                case Zone.Surau: return lot == 0 ? Zone.Surau : Zone.Kampung;
+                case Zone.Mamak: return lot == 0 ? Zone.Mamak : Zone.Shops;
+                case Zone.Pasar: return lot == 0 || lot == 1 ? Zone.Pasar : Zone.Shops; // Petaling Street runs through
+                case Zone.PasarSeni: return lot == 3 ? Zone.PasarSeni : Zone.Shops;
+                case Zone.Dealer: return lot == 0 ? Zone.Dealer : Zone.Shops;
+                default: return z;                                                   // shops, condos, kampung, Chow Kit...
+            }
+        }
+
+        // lot order: north-west, north-east, south-west, south-east
+        static readonly Vector2[] LotOffsets =
+        {
+            new Vector2(-1, 1), new Vector2(1, 1), new Vector2(-1, -1), new Vector2(1, -1),
+        };
+
         void BuildBlock(int col, int row, Zone zone)
         {
             var c = BlockCenter(col, row);
             if (zone == Zone.River) return;
             bool kampung = col < RiverCol;
+            bool landmark = IsLandmark(zone);
             Color top = kampung ? LatMaterials.Pal.Grass : LatMaterials.Pal.Pavement;
             if (zone == Zone.Park || zone == Zone.KLTower || zone == Zone.PerdanaGardens || zone == Zone.BatuCaves ||
-                zone == Zone.TuguNegara || zone == Zone.IstanaNegara) top = LatMaterials.Pal.Park;
+                zone == Zone.TuguNegara || zone == Zone.IstanaNegara || zone == Zone.Padang) top = LatMaterials.Pal.Park;
             // block: striped kerbs + 3 m sidewalks from the kit, the inside filled with grass or paving
             _ground.ColliderOnly(c + new Vector3(0, G - 1.6f, 0), new Vector3(Block, 3.2f, Block));
             _ground.Box(c + new Vector3(0, G - 1.6f, 0), new Vector3(Block - 5.9f, 3.2f, Block - 5.9f), top, false, 0f);
             _ground.Box(c + new Vector3(0, -1.6f, 0), new Vector3(Block, 3.0f, Block), LatMaterials.Pal.Wall, false, 0f);
             Kerbs(c, zone == Zone.Brickfields ? "env_bf_curb_edge" : "env_curb_edge");
-            _city.walkZones.Add(new Rect(c.x - 20.5f, c.z - 20.5f, 41f, 41f));
 
+            if (landmark)
+            {
+                _city.walkZones.Add(new Rect(c.x - Block * 0.5f + 1.5f, c.z - Block * 0.5f + 1.5f, Block - 3f, Block - 3f));
+                _ls = LandmarkScale;
+                BuildZone(c, zone);
+                _ls = 1f;
+                return;
+            }
+
+            // the back lanes between the four lots: a sealed lorong in town, a sandy path in the kampung
+            var laneColor = kampung ? LatMaterials.Pal.Dirt : LatMaterials.Pal.Road;
+            _ground.Box(c + new Vector3(0, G + 0.01f, 0), new Vector3(Lane, 0.02f, Block - 6f), laneColor, false, 0f);
+            _ground.Box(c + new Vector3(0, G + 0.012f, 0), new Vector3(Block - 6f, 0.02f, Lane), laneColor, false, 0f);
+            for (int lot = 0; lot < 4; lot++)
+            {
+                var lc = c + new Vector3(LotOffsets[lot].x, 0, LotOffsets[lot].y) * ((Lot + Lane) * 0.5f);
+                _city.walkZones.Add(new Rect(lc.x - 20.5f, lc.z - 20.5f, 41f, 41f));
+                var lz = LotZone(zone, lot);
+                BuildZone(lc, lz);
+                if (!kampung && lz != Zone.Park && lz != Zone.ChowKit && lz != Zone.Brickfields)
+                    StreetLamps(lc);
+            }
+        }
+
+        void BuildZone(Vector3 c, Zone zone)
+        {
             switch (zone)
             {
                 case Zone.Kampung: KampungBlock(c); break;
@@ -339,7 +479,7 @@ namespace KampungRun
                 case Zone.KLTower: KLTowerBlock(c); break;
                 case Zone.Dataran: DataranBlock(c); break;
                 case Zone.Dealer: DealerBlock(c); break;
-                case Zone.BukitBintang: ShopBlock(c, true); if (!_city.places.ContainsKey("BukitBintang")) _city.places["BukitBintang"] = c + new Vector3(-21, G, 0); break;
+                case Zone.BukitBintang: ShopBlock(c, true); Place("BukitBintang", c + new Vector3(-21, G, 0)); break;
                 case Zone.PasarSeni: PasarSeniBlock(c); break;
                 case Zone.Brickfields: BrickfieldsBlock(c); break;
                 case Zone.KLSentral: KLSentralBlock(c); break;
@@ -354,10 +494,17 @@ namespace KampungRun
                 case Zone.TheanHou: Landmark(c, "env_lm2_thean_hou", "TheanHou", "TOKONG THEAN HOU", 0); break;
                 case Zone.IstanaNegara: Landmark(c, "env_lm2_istana_negara", "IstanaNegara", "ISTANA NEGARA", 0); break;
             }
-            if (!kampung && zone != Zone.Park && zone != Zone.KLTower && zone != Zone.Dataran && zone != Zone.ChowKit &&
-                zone != Zone.Brickfields && zone != Zone.PerdanaGardens && zone != Zone.BatuCaves && zone != Zone.StadiumMerdeka)
-                StreetLamps(c);
         }
+
+        // layout scale: 1 on a lot, LandmarkScale while a landmark lays out its block
+        float _ls = 1f;
+        /// <summary>A block-layout offset (x, z scaled by the layout scale; height as given).</summary>
+        Vector3 V(float x, float y, float z) => new Vector3(x * _ls, y, z * _ls);
+
+        /// <summary>Named places are first-come: a district's special lot sets them, filler lots
+        /// of the same kind (Chow Kit, Brickfields...) don't move them.</summary>
+        void Place(string key, Vector3 p) { if (!_city.places.ContainsKey(key)) _city.places[key] = p; }
+        void Face(string key, Quaternion q) { if (!_city.facings.ContainsKey(key)) _city.facings[key] = q; }
 
         const float G = 0.18f; // block top height = kerb height of the street kit
 
@@ -375,6 +522,10 @@ namespace KampungRun
             go.transform.localScale = Vector3.one * scale;
             go.isStatic = true;
             if (collider) ModelFactory.AddBoundsCollider(go, 0.05f);
+            // small clutter (crates, stools, bollards, pots...) is only drawn near the camera
+            var b = ModelFactory.LocalBounds(go);
+            if (Mathf.Max(b.size.x, b.size.y, b.size.z) * scale < 3.2f)
+                foreach (var t in go.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = Layers.Detail;
             return go;
         }
 
@@ -476,37 +627,39 @@ namespace KampungRun
             KitProp("env_kb_flower_pot", c + new Vector3(2.4f, G, 1.6f), 0);
             KitProp("env_kb_flower_pot_white", c + new Vector3(2.4f, G, -1.6f), 0);
             // the verandah/stairs of a 90deg house point +X
-            _city.places["Home"] = c + new Vector3(8, G, 0);
-            _city.facings["Home"] = Quaternion.Euler(0, 90, 0);
-            _city.places["HomeVerandah"] = c + new Vector3(3.2f, G, -2.8f);   // at the foot of the stairs
-            _city.places["HomeCar"] = c + new Vector3(12, G + 0.3f, 7);
-            _city.facings["HomeCar"] = Quaternion.Euler(0, 90, 0); // nose toward the road
-            _city.places["HomeYard"] = c + new Vector3(10, G, -6);
-            _city.places["PlayerSpawn"] = c + new Vector3(9, G + 0.1f, 2);
-            _city.facings["PlayerSpawn"] = Quaternion.Euler(0, 90, 0);
+            Place("Home", c + new Vector3(8, G, 0));
+            Face("Home", Quaternion.Euler(0, 90, 0));
+            Place("HomeVerandah", c + new Vector3(3.2f, G, -2.8f));   // at the foot of the stairs
+            Place("HomeCar", c + new Vector3(12, G + 0.3f, 7));
+            Face("HomeCar", Quaternion.Euler(0, 90, 0)); // nose toward the road
+            Place("HomeYard", c + new Vector3(10, G, -6));
+            Place("PlayerSpawn", c + new Vector3(9, G + 0.1f, 2));
+            Face("PlayerSpawn", Quaternion.Euler(0, 90, 0));
         }
 
         void SurauBlock(Vector3 c)
         {
             Prop("Bld_Surau", c + new Vector3(0, G, 2), 180, true);
             Scatter(c, 6, new[] { "Prop_Palm", "Prop_Palm2" }, new List<Vector2> { new Vector2(0, 2) }, 9f);
-            _city.places["Surau"] = c + new Vector3(0, G, -6);
+            Place("Surau", c + new Vector3(0, G, -6));
         }
 
         void PadangBlock(Vector3 c)
         {
-            // kampung football field: two goal frames made of posts
+            // kampung football field: a full-size pitch (real 7.3 m goals), halfway line and touchlines
+            float len = 30f * _ls, wid = 22f * _ls;
             foreach (float s in new[] { -1f, 1f })
             {
-                var gz = c.z + s * 15f;
-                _ground.Box(new Vector3(c.x - 3, 1.2f, gz), new Vector3(0.2f, 2.4f, 0.2f), LatMaterials.Pal.RoadLine, true);
-                _ground.Box(new Vector3(c.x + 3, 1.2f, gz), new Vector3(0.2f, 2.4f, 0.2f), LatMaterials.Pal.RoadLine, true);
-                _ground.Box(new Vector3(c.x, 2.4f, gz), new Vector3(6.2f, 0.2f, 0.2f), LatMaterials.Pal.RoadLine, true);
+                var gz = c.z + s * len * 0.5f;
+                _ground.Box(new Vector3(c.x - 3.66f, 1.22f, gz), new Vector3(0.2f, 2.44f, 0.2f), LatMaterials.Pal.RoadLine, true);
+                _ground.Box(new Vector3(c.x + 3.66f, 1.22f, gz), new Vector3(0.2f, 2.44f, 0.2f), LatMaterials.Pal.RoadLine, true);
+                _ground.Box(new Vector3(c.x, 2.44f, gz), new Vector3(7.5f, 0.2f, 0.2f), LatMaterials.Pal.RoadLine, true);
+                _ground.Box(new Vector3(c.x + s * wid * 0.5f, 0.21f, c.z), new Vector3(0.25f, 0.02f, len), LatMaterials.Pal.RoadLine, false, 0f);
             }
-            _ground.Box(new Vector3(c.x, 0.21f, c.z), new Vector3(30f, 0.02f, 0.25f), LatMaterials.Pal.RoadLine, false, 0f);
-            _city.places["Padang"] = c + Vector3.up * G;
-            Tree("Prop_RainTree", c + new Vector3(-18, G, 18));
-            Tree("Prop_RainTree", c + new Vector3(18, G, -18));
+            _ground.Box(new Vector3(c.x, 0.21f, c.z), new Vector3(wid, 0.02f, 0.25f), LatMaterials.Pal.RoadLine, false, 0f);
+            Place("Padang", c + Vector3.up * G);
+            foreach (var t in new[] { new Vector2(-18, 18), new Vector2(18, -18), new Vector2(-18, -18), new Vector2(18, 18), new Vector2(-19, 0), new Vector2(19, 3) })
+                Tree("Prop_RainTree", c + V(t.x, G, t.y), R(1f, 1.3f));
         }
 
         void ShopRow(Vector3 c, float along, bool north, bool alongX, int variant)
@@ -665,8 +818,8 @@ namespace KampungRun
                     }
                 prevTop = top;
             }
-            _city.places["ChowKit"] = c + new Vector3(0, G, 24.5f);
-            _city.facings["ChowKit"] = Quaternion.Euler(0, 90, 0);
+            Place("ChowKit", c + new Vector3(0, G, 24.5f));
+            Face("ChowKit", Quaternion.Euler(0, 90, 0));
         }
 
         static readonly string[] BfShops = { "env_bf_shopfront_yellow", "env_bf_shopfront_pink", "env_bf_shopfront_blue" };
@@ -746,8 +899,8 @@ namespace KampungRun
             foreach (float sx in new[] { -1f, 1f })
                 foreach (float sz in new[] { -1f, 1f })
                     KitProp(_rng.NextDouble() < 0.5 ? "env_kb_flower_pot" : "env_kb_flower_pot_white", c + new Vector3(sx * 19.6f, G, sz * 19.6f), 0);
-            _city.places["Brickfields"] = c + new Vector3(0, G, 24.5f);
-            _city.facings["Brickfields"] = Quaternion.Euler(0, 90, 0);
+            Place("Brickfields", c + new Vector3(0, G, 24.5f));
+            Face("Brickfields", Quaternion.Euler(0, 90, 0));
         }
 
         /// <summary>
@@ -764,13 +917,16 @@ namespace KampungRun
                 foreach (float s in new[] { -1f, 1f })                   // piers are solid
                     _ground.ColliderOnly(new Vector3(x, baseY + 3.3f, z + s * 6f * scale), new Vector3(1.6f, 6.6f, 1.6f));
             }
+            const float bridgeSpan = 1.9f;                               // 38 m: piers at +/-11.4 m, clear of the deck
             for (int k = 0; k <= NZ; k++)
             {
                 float rz = RoadZ(k);
-                Seg(rz, 1.1f);                                            // spans the bridge: piers at +/-6.6 m, clear of the deck
+                Seg(rz, bridgeSpan);
                 if (k == NZ) break;
-                Seg(rz + 19f, 0.8f);
-                Seg(rz + 35f, 0.8f);
+                float from = rz + 10f * bridgeSpan, to = RoadZ(k + 1) - 10f * bridgeSpan;
+                int n = Mathf.Max(1, Mathf.RoundToInt((to - from) / 20f));
+                float len = (to - from) / n;
+                for (int i = 0; i < n; i++) Seg(from + len * (i + 0.5f), len / 20f);
             }
             var train = new GameObject("LRT").transform;
             train.SetParent(_city.root, false);
@@ -786,17 +942,17 @@ namespace KampungRun
             sh.speed = 11f;
             sh.pause = 4f;
             train.position = sh.a;
-            _city.places["LRT"] = new Vector3(x, railY, 0);
+            Place("LRT", new Vector3(x, railY, 0));
         }
 
         /// <summary>Far skyline backdrop cards (P1 kit) beyond the west and north map edges.</summary>
         void BuildSkyline()
         {
             float hx = NX * Pitch * 0.5f + Road * 0.5f, hz = NZ * Pitch * 0.5f + Road * 0.5f;
-            foreach (float z in new[] { -120f, 0f, 120f })
-                Kit("env_kb_skyline", new Vector3(-hx - 90f, 0, z), 90, 1f).transform.localScale = Vector3.one * 1.3f;
-            foreach (float x in new[] { -110f, 0f, 110f })
-                Kit("env_kb_skyline", new Vector3(x, 0, hz + 90f), 180, 1f).transform.localScale = Vector3.one * 1.3f;
+            for (int i = -2; i <= 2; i++)
+                Kit("env_kb_skyline", new Vector3(-hx - 160f, 0, i * hz * 0.45f), 90, 1f).transform.localScale = Vector3.one * 2.2f;
+            for (int i = -3; i <= 3; i++)
+                Kit("env_kb_skyline", new Vector3(i * hx * 0.3f, 0, hz + 160f), 180, 1f).transform.localScale = Vector3.one * 2.2f;
         }
 
         // ------------------------------------------------------------------ landmarks (env_kl_landmarks kit)
@@ -831,67 +987,68 @@ namespace KampungRun
         /// <summary>KL Sentral: the transit hub facing the north road, taxi bays and planters.</summary>
         void KLSentralBlock(Vector3 c)
         {
-            var hub = KitProp("env_lm_kl_sentral", c + new Vector3(0, G, -3f), 0);
+            var hub = KitProp("env_lm_kl_sentral", c + V(0, G, -3f), 0, _ls);
             LetterSign(hub, "KL SENTRAL", new Vector3(0, 8.4f, 11.5f), 0.16f, new Color(0.7f, 0.1f, 0.1f));
-            for (int i = 0; i < 6; i++)
-                ModelFactory.UseProxyCollider(Prop("env_bollard", c + new Vector3(-12.5f + i * 5f, G, 17.2f), 0, false));
+            for (int i = 0; i < 12; i++)
+                ModelFactory.UseProxyCollider(Prop("env_bollard", c + V(-13.75f + i * 2.5f, G, 17.2f), 0, false));
             foreach (float x in new[] { -17f, 17f })
-                KitProp("env_planter", c + new Vector3(x, G, 16.5f), 0);
-            _city.itemSpots.Add(c + new Vector3(0, G + 0.6f, 16f));
-            _city.places["KLSentral"] = c + new Vector3(0, G, 24.5f);
-            _city.facings["KLSentral"] = Quaternion.Euler(0, 90, 0);
+                KitProp("env_planter", c + V(x, G, 16.5f), 0);
+            _city.itemSpots.Add(c + V(0, G + 0.6f, 16f));
+            Place("KLSentral", c + V(0, G, 24.5f));
+            Face("KLSentral", Quaternion.Euler(0, 90, 0));
         }
 
         /// <summary>Muzium Negara on its podium behind a lawn with hibiscus beds and palms.</summary>
         void MuziumNegaraBlock(Vector3 c)
         {
-            var mu = KitProp("env_lm_muzium_negara", c + new Vector3(0, G, -3f), 0);
+            var mu = KitProp("env_lm_muzium_negara", c + V(0, G, -3f), 0, _ls);
             LetterSign(mu, "MUZIUM NEGARA", new Vector3(0, 7.55f, 7.75f), 0.1f, new Color(0.35f, 0.2f, 0.08f));
             foreach (float x in new[] { -11f, 11f })
             {
-                KitProp("env_pbg_flowerbed", c + new Vector3(x, G, 11f), 0);
-                KitProp("env_palm", c + new Vector3(x * 1.55f, G, 12f), R(0, 360));
+                KitProp("env_pbg_flowerbed", c + V(x, G, 11f), 0);
+                KitProp("env_palm", c + V(x * 1.55f, G, 12f), R(0, 360));
             }
-            SignPost("MUZIUM NEGARA", c + new Vector3(0, G, 17.5f), 0);
-            _city.itemSpots.Add(c + new Vector3(-6, G + 0.6f, 12f));
-            _city.places["MuziumNegara"] = c + new Vector3(0, G, 24.5f);
-            _city.facings["MuziumNegara"] = Quaternion.Euler(0, 90, 0);
+            SignPost("MUZIUM NEGARA", c + V(0, G, 17.5f), 0);
+            _city.itemSpots.Add(c + V(-6, G + 0.6f, 12f));
+            Place("MuziumNegara", c + V(0, G, 24.5f));
+            Face("MuziumNegara", Quaternion.Euler(0, 90, 0));
         }
 
         /// <summary>Perdana Botanical Gardens: lake with lotus and a footbridge, a wakaf pavilion,
         /// bougainvillea pergola, hibiscus beds, orchid arch, fountain, benches, big shady trees.</summary>
         void PerdanaGardensBlock(Vector3 c)
         {
-            var lakeAt = c + new Vector3(-3f, G, -2f);
-            Prop("env_pbg_lake", lakeAt, 0, false);
-            Prop("env_pbg_footbridge", lakeAt + new Vector3(12.5f, 0, 0), 0, false);
-            KitProp("env_pbg_gazebo", c + new Vector3(-14.5f, G, 13.5f), 0);
-            Prop("env_pbg_pergola", c + new Vector3(15.5f, G, -8f), 0, false);
-            KitProp("env_pbg_fountain", c + new Vector3(14f, G, 12.5f), 0);
-            Prop("env_pbg_orchid_arch", c + new Vector3(-15.5f, G, -14f), 90, false);
+            var lakeAt = c + V(-3f, G, -2f);
+            Prop("env_pbg_lake", lakeAt, 0, false, _ls);
+            Prop("env_pbg_footbridge", lakeAt + new Vector3(12.5f * _ls, 0, 0), 0, false, _ls);
+            KitProp("env_pbg_gazebo", c + V(-14.5f, G, 13.5f), 0, 1.3f);
+            Prop("env_pbg_pergola", c + V(15.5f, G, -8f), 0, false, 1.3f);
+            KitProp("env_pbg_fountain", c + V(14f, G, 12.5f), 0, 1.4f);
+            Prop("env_pbg_orchid_arch", c + V(-15.5f, G, -14f), 90, false);
             foreach (float x in new[] { -6f, 2f })
-                KitProp("env_pbg_flowerbed", c + new Vector3(x, G, 16.5f), 0);
+                KitProp("env_pbg_flowerbed", c + V(x, G, 16.5f), 0);
             foreach (var b in new[] { new Vector3(-10, 0, 10), new Vector3(4, 0, 10.5f), new Vector3(-18, 0, -4), new Vector3(8, 0, -14) })
-                KitProp("env_pbg_bench", c + b + Vector3.up * G, Mathf.Atan2(-b.x, -b.z) * Mathf.Rad2Deg);
-            foreach (var t in new[] { new Vector3(-17, 0, 3), new Vector3(17, 0, 3), new Vector3(-6, 0, -17), new Vector3(3, 0, 17.5f) })
-                KitProp("env_kb_rain_tree", c + t + Vector3.up * G, R(0, 360), R(0.9f, 1.15f));
-            KitProp("env_palm", c + new Vector3(10, G, 16), 0);
-            SignPost("TAMAN BOTANI PERDANA", c + new Vector3(-6f, G, 19f), 0);
-            _city.itemSpots.Add(c + new Vector3(-14.5f, G + 1.6f, 13.5f));
-            _city.itemSpots.Add(c + new Vector3(15.5f, G + 0.6f, -8f));
-            _city.places["TamanPerdana"] = c + new Vector3(0, G, 24.5f);
-            _city.facings["TamanPerdana"] = Quaternion.Euler(0, 90, 0);
+                KitProp("env_pbg_bench", c + b * _ls + Vector3.up * G, Mathf.Atan2(-b.x, -b.z) * Mathf.Rad2Deg);
+            foreach (var t in new[] { new Vector3(-17, 0, 3), new Vector3(17, 0, 3), new Vector3(-6, 0, -17), new Vector3(3, 0, 17.5f),
+                         new Vector3(-19, 0, -19), new Vector3(19, 0, -19), new Vector3(-20, 0, 12), new Vector3(20, 0, 19), new Vector3(0, 0, -20) })
+                KitProp("env_kb_rain_tree", c + t * _ls + Vector3.up * G, R(0, 360), R(1.1f, 1.4f));
+            KitProp("env_palm", c + V(10, G, 16), 0);
+            SignPost("TAMAN BOTANI PERDANA", c + V(-6f, G, 19f), 0);
+            _city.itemSpots.Add(c + V(-14.5f, G + 1.6f, 13.5f));
+            _city.itemSpots.Add(c + V(15.5f, G + 0.6f, -8f));
+            Place("TamanPerdana", c + V(0, G, 24.5f));
+            Face("TamanPerdana", Quaternion.Euler(0, 90, 0));
         }
 
         /// <summary>Masjid Negara: star-roofed prayer hall, reflecting pools and the minaret.</summary>
         void MasjidNegaraBlock(Vector3 c)
         {
-            KitProp("env_lm_masjid_negara", c + new Vector3(0, G, 0), 0);
+            KitProp("env_lm_masjid_negara", c + V(0, G, 0), 0, _ls);
             // the minaret is outside the hall proxy: give it its own collider
-            _ground.ColliderOnly(c + new Vector3(-13.5f, G + 18f, 13.5f), new Vector3(2.6f, 36f, 2.6f));
-            SignPost("MASJID NEGARA", c + new Vector3(8f, G, 19.2f), 0);
-            _city.places["MasjidNegara"] = c + new Vector3(0, G, 24.5f);
-            _city.facings["MasjidNegara"] = Quaternion.Euler(0, 90, 0);
+            _ground.ColliderOnly(c + V(-13.5f, G + 18f * _ls, 13.5f), new Vector3(2.6f, 36f, 2.6f) * _ls);
+            SignPost("MASJID NEGARA", c + V(8f, G, 19.2f), 0);
+            Place("MasjidNegara", c + V(0, G, 24.5f));
+            Face("MasjidNegara", Quaternion.Euler(0, 90, 0));
         }
 
         // ------------------------------------------------------------------ east side landmarks (env_kl_landmarks2)
@@ -899,12 +1056,14 @@ namespace KampungRun
         /// mission item spot and a named place (+ facing) for missions and fast travel.</summary>
         void Landmark(Vector3 c, string model, string place, string sign, float yaw)
         {
-            KitProp(model, c + new Vector3(0, G, 0), yaw);
-            SignPost(sign, c + new Vector3(12f, G, 19.2f), 0);
-            foreach (float x in new[] { -17f, 17f }) KitProp("env_palm", c + new Vector3(x, G, 17.5f), R(0, 360));
-            _city.itemSpots.Add(c + new Vector3(-12f, G + 0.6f, 16f));
-            _city.places[place] = c + new Vector3(0, G, 24.5f);
-            _city.facings[place] = Quaternion.Euler(0, 90, 0);
+            KitProp(model, c + V(0, G, 0), yaw, _ls);
+            SignPost(sign, c + V(12f, G, 20.5f), 0);
+            // a row of palms along the front, the grounds' corners planted with rain trees
+            foreach (float x in new[] { -19f, -11f, 11f, 19f }) KitProp("env_palm", c + V(x, G, 19.5f), R(0, 360), R(1f, 1.2f));
+            foreach (float x in new[] { -20f, 20f }) KitProp("env_kb_rain_tree", c + V(x, G, -20f), R(0, 360), R(1.1f, 1.3f));
+            _city.itemSpots.Add(c + V(-12f, G + 0.6f, 18.5f));
+            Place(place, c + V(0, G, 24.5f));
+            Face(place, Quaternion.Euler(0, 90, 0));
         }
 
         /// <summary>Batu Caves: the limestone hill, the golden statue and the rainbow stairs up to
@@ -913,23 +1072,23 @@ namespace KampungRun
         {
             Landmark(c, "env_lm2_batu_caves", "BatuCaves", "BATU CAVES", 0);
             // stairs run from the plaza (front, +Z in the world after the kit's turn) up into the hill
-            float run = 12f, rise = 17.5f, len = Mathf.Sqrt(run * run + rise * rise);
+            float run = 12f * _ls, rise = 17.5f * _ls, len = Mathf.Sqrt(run * run + rise * rise);
             var ramp = new GameObject("BatuStairsRamp");
             ramp.transform.SetParent(_props, false);
-            ramp.transform.position = c + new Vector3(0, G + rise * 0.5f, 3f);
+            ramp.transform.position = c + V(0, G + rise * 0.5f, 3f);
             ramp.transform.rotation = Quaternion.Euler(Mathf.Atan2(rise, run) * Mathf.Rad2Deg, 0, 0);
-            ramp.AddComponent<BoxCollider>().size = new Vector3(6f, 0.3f, len);
+            ramp.AddComponent<BoxCollider>().size = new Vector3(6f * _ls, 0.3f, len);
             // statue pedestal is solid
-            _ground.ColliderOnly(c + new Vector3(9.5f, G + 7f, 10.5f), new Vector3(5f, 14f, 5f));
+            _ground.ColliderOnly(c + V(9.5f, G + 7f * _ls, 10.5f), new Vector3(5f, 14f, 5f) * _ls);
         }
 
         /// <summary>Stadium Merdeka: an open bowl you can drive into - only the outer wall and the
         /// floodlight towers are solid, with a gap on the south side as the tunnel entrance.</summary>
         void StadiumBlock(Vector3 c)
         {
-            Prop("env_lm2_stadium_merdeka", c + new Vector3(0, G, 0), 0, false);
-            float rx = 13 * 1.47f, ry = 16 * 1.47f;
-            int n = 28;
+            Prop("env_lm2_stadium_merdeka", c + V(0, G, 0), 0, false, _ls);
+            float rx = 13 * 1.47f * _ls, ry = 16 * 1.47f * _ls;
+            int n = 40;
             for (int i = 0; i < n; i++)
             {
                 float a0 = i / (float)n * Mathf.PI * 2f, a1 = (i + 1) / (float)n * Mathf.PI * 2f;
@@ -939,14 +1098,14 @@ namespace KampungRun
                 if (mid.z > ry * 0.9f) continue;                        // the entrance gap (north side in the kit = world south)
                 var go = new GameObject("StadiumWall");
                 go.transform.SetParent(_props, false);
-                go.transform.position = c + mid + Vector3.up * (G + 3.3f);
+                go.transform.position = c + mid + Vector3.up * (G + 3.3f * _ls);
                 go.transform.rotation = Quaternion.LookRotation(p1 - p0);
-                go.AddComponent<BoxCollider>().size = new Vector3(1.2f, 6.6f, (p1 - p0).magnitude + 0.2f);
+                go.AddComponent<BoxCollider>().size = new Vector3(1.2f * _ls, 6.6f * _ls, (p1 - p0).magnitude + 0.2f);
             }
-            SignPost("STADIUM MERDEKA", c + new Vector3(12f, G, 20.5f), 0);
-            _city.itemSpots.Add(c + new Vector3(0, G + 0.6f, 0));
-            _city.places["StadiumMerdeka"] = c + new Vector3(0, G, 24.5f);
-            _city.facings["StadiumMerdeka"] = Quaternion.Euler(0, 90, 0);
+            SignPost("STADIUM MERDEKA", c + V(12f, G, 20.5f), 0);
+            _city.itemSpots.Add(c + V(0, G + 0.6f, 0));
+            Place("StadiumMerdeka", c + V(0, G, 24.5f));
+            Face("StadiumMerdeka", Quaternion.Euler(0, 90, 0));
         }
 
         void CondoBlock(Vector3 c)
@@ -962,11 +1121,14 @@ namespace KampungRun
 
         void MasjidBlock(Vector3 c)
         {
-            KitProp("env_lm2_masjid_jamek", c + new Vector3(2, G, 0), -90);
-            _city.places["Masjid"] = c + new Vector3(-16, G, 0);
-            Tree("Prop_Palm", c + new Vector3(-16, G, 14));
-            Tree("Prop_Palm2", c + new Vector3(-16, G, -14));
-            Tree("Prop_Palm", c + new Vector3(16, G, 16));
+            KitProp("env_lm2_masjid_jamek", c + V(2, G, 0), -90, _ls);
+            Place("Masjid", c + V(-16, G, 0));
+            Tree("Prop_Palm", c + V(-16, G, 14));
+            Tree("Prop_Palm2", c + V(-16, G, -14));
+            Tree("Prop_Palm", c + V(16, G, 16));
+            Tree("Prop_Palm2", c + V(16, G, -16));
+            Tree("Prop_Palm", c + V(-19, G, 4), 1.2f);
+            Tree("Prop_Palm2", c + V(-19, G, -4), 1.2f);
         }
 
         void MamakBlock(Vector3 c)
@@ -982,9 +1144,9 @@ namespace KampungRun
                 }
             var counter = m.AddComponent<BoxCollider>();
             counter.center = new Vector3(0, 1.1f, -3.6f); counter.size = new Vector3(7, 2.2f, 1.3f);
-            _city.places["Mamak"] = c + new Vector3(-8, G, 16);
-            _city.places["MamakCounter"] = c + new Vector3(-8, G, 4.3f);
-            _city.facings["MamakCounter"] = Quaternion.identity;
+            Place("Mamak", c + new Vector3(-8, G, 16));
+            Place("MamakCounter", c + new Vector3(-8, G, 4.3f));
+            Face("MamakCounter", Quaternion.identity);
             ShopRow(c, -8, false, true, 0);
             ShopRow(c, 8, false, true, 1);
             Prop("Bld_ShopRowB", c + new Vector3(12, G, 11.5f), 0, true);
@@ -1006,18 +1168,18 @@ namespace KampungRun
                     bc.center = new Vector3(0, 0.5f, 0); bc.size = new Vector3(2.6f, 1f, 1.3f);
                     _city.itemSpots.Add(p + Vector3.up * 1.2f);
                 }
-            _city.places["Pasar"] = c + new Vector3(0, G, 0);
+            Place("Pasar", c + new Vector3(0, G, 0));
             var gate = Prop("Prop_ChinatownGate", c + new Vector3(-19.5f, G, 0), 90, false);
             foreach (float gz in new[] { -6.5f, 6.5f })
             {
                 var gc = gate.AddComponent<CapsuleCollider>(); gc.center = new Vector3(gz, 3, 0); gc.radius = 0.5f; gc.height = 6;
             }
-            _city.places["PasarGate"] = c + new Vector3(-24, G, 0);
+            Place("PasarGate", c + new Vector3(-24, G, 0));
         }
 
         void TowersBlock(Vector3 c)
         {
-            var t = Prop("Bld_MenaraKembar", c + new Vector3(0, G, -2), 180, false, 0.82f);
+            var t = Prop("Bld_MenaraKembar", c + V(0, G, -2), 180, false, 0.82f * _ls);
             // colliders: podium + two tower shafts
             var pod = t.AddComponent<BoxCollider>(); pod.center = new Vector3(0, 6, -6); pod.size = new Vector3(50, 12, 28);
             foreach (float sx in new[] { -14f, 14f })
@@ -1025,7 +1187,7 @@ namespace KampungRun
                 var cap = t.AddComponent<CapsuleCollider>();
                 cap.center = new Vector3(sx, 60, 0); cap.radius = 8.5f; cap.height = 120;
             }
-            _city.places["Towers"] = c + new Vector3(0, G, -21);
+            Place("Towers", c + V(0, G, -21));
         }
 
         void ParkBlock(Vector3 c)
@@ -1034,40 +1196,41 @@ namespace KampungRun
             _ground.Box(c + new Vector3(0, 0.55f, 0), new Vector3(9, 0.5f, 9), LatMaterials.Pal.Water, false, 0f);
             _ground.Box(c + new Vector3(0, 1.6f, 0), new Vector3(0.6f, 2.4f, 0.6f), LatMaterials.Pal.RoadLine, true);
             Scatter(c, 10, new[] { "Prop_RainTree", "Prop_Palm" }, new List<Vector2> { Vector2.zero }, 9f);
-            _city.places["Park"] = c + new Vector3(0, G, -8);
+            Place("Park", c + new Vector3(0, G, -8));
         }
 
         void KLTowerBlock(Vector3 c)
         {
             // Bukit Nanas: a raised mound of forest with the tower on top
-            _ground.Box(c + new Vector3(0, 0.9f, 0), new Vector3(34, 1.6f, 34), LatMaterials.Pal.Park, true, 1.4f);
-            _ground.Box(c + new Vector3(0, 1.8f, 0), new Vector3(22, 1.6f, 22), LatMaterials.Pal.Park, true, 1.4f);
-            var t = Prop("Bld_MenaraKL", c + new Vector3(0, 2.6f, 0), 0, false, 0.9f);
+            _ground.Box(c + V(0, 0.9f, 0), new Vector3(34 * _ls, 1.6f, 34 * _ls), LatMaterials.Pal.Park, true, 1.4f);
+            _ground.Box(c + V(0, 1.8f, 0), new Vector3(22 * _ls, 1.6f, 22 * _ls), LatMaterials.Pal.Park, true, 1.4f);
+            var t = Prop("Bld_MenaraKL", c + V(0, 2.6f, 0), 0, false, 0.9f * _ls);
             var cap = t.AddComponent<CapsuleCollider>(); cap.center = new Vector3(0, 40, 0); cap.radius = 3.5f; cap.height = 80;
             var bc = t.AddComponent<BoxCollider>(); bc.center = new Vector3(0, 1.5f, 0); bc.size = new Vector3(16, 3, 16);
             var used = new List<Vector2> { Vector2.zero };
-            for (int i = 0; i < 14; i++)
+            for (int i = 0; i < 26; i++)
             {
-                var a = i / 14f * Mathf.PI * 2f;
-                var p = new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * R(12, 18);
-                Tree(i % 3 == 0 ? "Prop_Palm" : "Prop_RainTree", c + new Vector3(p.x, i % 2 == 0 ? 1.7f : 0.2f, p.y), R(0.9f, 1.3f));
+                var a = i / 26f * Mathf.PI * 2f;
+                var p = new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * R(12, 19);
+                bool onHill = Mathf.Abs(p.x) < 16.5f && Mathf.Abs(p.y) < 16.5f;          // the forest on the lower terrace
+                Tree(i % 3 == 0 ? "Prop_Palm" : "Prop_RainTree", c + V(p.x, onHill ? 1.7f : G, p.y), R(1f, 1.4f));
             }
-            _city.places["KLTower"] = c + new Vector3(0, 3.4f, -12);
+            Place("KLTower", c + V(0, 3.4f, -12));
         }
 
         void DataranBlock(Vector3 c)
         {
             // Dataran Merdeka: the padang, the tall flagpole, and the Sultan Abdul Samad building
-            _ground.Box(c + new Vector3(7, 0.22f, 0), new Vector3(28, 0.06f, 40), LatMaterials.Pal.Park, false, 0f);
-            Prop("Bld_SultanAbdulSamad", c + new Vector3(-14, G, 0), 90, true);
-            var pole = Prop("Prop_Flagpole", c + new Vector3(8, G, 0), 0, false);
+            _ground.Box(c + V(7, 0.22f, 0), new Vector3(28 * _ls, 0.06f, 40 * _ls), LatMaterials.Pal.Park, false, 0f);
+            Prop("Bld_SultanAbdulSamad", c + V(-14, G, 0), 90, true, _ls);
+            var pole = Prop("Prop_Flagpole", c + V(8, G, 0), 0, false, _ls);
             var cap = pole.AddComponent<CapsuleCollider>(); cap.center = new Vector3(0, 10, 0); cap.radius = 0.4f; cap.height = 20;
             var bc = pole.AddComponent<BoxCollider>(); bc.center = new Vector3(0, 0.4f, 0); bc.size = new Vector3(5, 0.8f, 5);
-            _city.places["Dataran"] = c + new Vector3(8, G, -8);
-            _city.places["DataranRoad"] = c + new Vector3(21, G, 0);
-            Sign("DATARAN MERDEKA", c + new Vector3(20.5f, 2.2f, -12), 90);
-            Tree("Prop_RainTree", c + new Vector3(18, G, 18));
-            Tree("Prop_RainTree", c + new Vector3(18, G, -18));
+            Place("Dataran", c + V(8, G, -8));
+            Place("DataranRoad", c + V(21, G, 0));
+            Sign("DATARAN MERDEKA", c + V(20.5f, 2.2f, -12), 90);
+            foreach (float z in new[] { -19f, -9f, 9f, 19f })
+                Tree("Prop_RainTree", c + V(19.5f, G, z), R(1.1f, 1.3f));
         }
 
         void DealerBlock(Vector3 c)
@@ -1082,20 +1245,20 @@ namespace KampungRun
             dealer.transform.SetPositionAndRotation(c + new Vector3(-8, G, 19f), Quaternion.identity);
             dealer.AddComponent<CarDealer>();
             Sign("KEDAI KERETA\nTERPAKAI", c + new Vector3(-8, 4.4f, 17.6f), 0);
-            _city.places["Dealer"] = dealer.transform.position;
+            Place("Dealer", dealer.transform.position);
             // clothes shop on the south side
             var shop = new GameObject("KedaiBaju");
             shop.transform.SetParent(_props, false);
             shop.transform.SetPositionAndRotation(c + new Vector3(8, G, -19f), Quaternion.Euler(0, 180, 0));
             shop.AddComponent<ClothesShop>();
             Sign("KEDAI BAJU", c + new Vector3(8, 4.2f, -17.6f), 180);
-            _city.places["ClothesShop"] = shop.transform.position;
+            Place("ClothesShop", shop.transform.position);
         }
 
         void PasarSeniBlock(Vector3 c)
         {
             Prop("Bld_PasarSeni", c + new Vector3(0, G, -4), 180, true);
-            _city.places["PasarSeni"] = c + new Vector3(0, G, -18);
+            Place("PasarSeni", c + new Vector3(0, G, -18));
             Sign("PASAR SENI", c + new Vector3(0, 11.5f, -13.4f), 180);
             ShopRow(c, -8, true, true, 1);
             ShopRow(c, 8, true, true, 0);
@@ -1110,8 +1273,8 @@ namespace KampungRun
             var steel = new Color(0.82f, 0.82f, 0.8f);
             for (float z = z0; z <= z1; z += 14.5f)
             {
-                float gz = Mathf.Repeat(z - Z0 + 10f, Pitch);
-                if (gz < 20f) continue; // keep intersections clear
+                float gz = Mathf.Repeat(z - Z0 + Road * 0.5f, Pitch);
+                if (gz < Road + 6f || gz > Pitch - 6f) continue; // keep intersections clear
                 _ground.Box(new Vector3(x, 4f, z), new Vector3(1.1f, 8f, 1.1f), steel, true, 2f);
                 _ground.Box(new Vector3(x, 8.1f, z), new Vector3(3.2f, 0.6f, 1.6f), steel, false, 2f);
             }
@@ -1129,7 +1292,7 @@ namespace KampungRun
             mt.a = new Vector3(x, 0, z0 + 5);
             mt.b = new Vector3(x, 0, z1 - 20);
             mt.speed = 9f;
-            _city.places["Monorail"] = new Vector3(x, 0, 0);
+            Place("Monorail", new Vector3(x, 0, 0));
         }
 
         void BuildPhoneBooths()
@@ -1140,13 +1303,13 @@ namespace KampungRun
                 b.AddComponent<PhoneBooth>();
                 _city.places["Phone_" + key] = pos;
             }
-            var home = BlockCenter(1, 2);
-            Booth("Home", home + new Vector3(18, G, -12), 90);
-            Booth("Mamak", BlockCenter(3, 2) + new Vector3(4, G, 19.5f), 0);
-            Booth("Dataran", BlockCenter(3, 4) + new Vector3(19.5f, G, 8), 90);
-            Booth("Towers", BlockCenter(5, 5) + new Vector3(-12, G, 19.5f), 0);
-            Booth("KLTower", BlockCenter(6, 0) + new Vector3(-19.5f, G, 16), -90);
-            Booth("Surau", BlockCenter(0, 4) + new Vector3(12, G, -18), 180);
+            float e = Block * 0.5f - 2.2f;                              // on the sidewalk, just inside the kerb
+            Booth("Home", BlockCenter(1, 2) + new Vector3(e, G, 14), 90);
+            Booth("Mamak", BlockCenter(3, 2) + new Vector3(-14, G, e), 0);
+            Booth("Dataran", BlockCenter(3, 4) + new Vector3(e, G, 17), 90);
+            Booth("Towers", BlockCenter(5, 5) + new Vector3(-26, G, e), 0);
+            Booth("KLTower", BlockCenter(6, 0) + new Vector3(-e, G, 30), -90);
+            Booth("Surau", BlockCenter(0, 4) + new Vector3(-26, G, -e), 180);
         }
 
         /// <summary>District name for the HUD, H&amp;R-style area callouts.</summary>
@@ -1254,7 +1417,7 @@ namespace KampungRun
                 for (int k = 0; k <= NZ; k++)
                 {
                     var n = new Vector3(RoadX(i), G, RoadZ(k));
-                    if (Mathf.Abs(n.x) > 200 || Mathf.Abs(n.z) > 170) continue;
+                    if (Mathf.Abs(n.x) > 200 * WorldScale || Mathf.Abs(n.z) > 170 * WorldScale) continue;
                     TrafficLight(n + new Vector3(Road * 0.5f + 1.2f, 0, Road * 0.5f + 1.2f), -90);
                     TrafficLight(n + new Vector3(-Road * 0.5f - 1.2f, 0, -Road * 0.5f - 1.2f), 90);
                 }
@@ -1262,10 +1425,10 @@ namespace KampungRun
             for (int col = RiverCol + 1; col < NX; col++)
                 for (int row = 0; row < NZ; row++)
                 {
-                    if (_rng.NextDouble() > 0.45) continue;
+                    if (_rng.NextDouble() > 0.6) continue;
                     var c = BlockCenter(col, row);
                     bool east = _rng.NextDouble() < 0.5;
-                    var pos = c + new Vector3(east ? 20.6f : -20.6f, G, R(-6, 6));
+                    var pos = c + new Vector3(east ? Block * 0.5f - 1.4f : -Block * 0.5f + 1.4f, G, (_rng.NextDouble() < 0.5 ? 1 : -1) * R(12, 34));
                     Prop("Prop_BusStop", pos, east ? 90 : -90, true);
                     Prop("Prop_Bin", pos + new Vector3(0, 0, 3.2f), 0, true);
                 }
@@ -1296,13 +1459,13 @@ namespace KampungRun
                 for (int row = 0; row < NZ; row++)
                 {
                     var c = BlockCenter(col, row);
-                    int n = RI(2, 5);
-                    for (int i = 0; i < n; i++) Critter("Prop_Ayam", c + new Vector3(R(-15, 15), G, R(-15, 15)), true);
+                    int n = RI(5, 10);
+                    for (int i = 0; i < n; i++) Critter("Prop_Ayam", c + new Vector3(R(-40, 40), G, R(-40, 40)), true);
                 }
-            for (int i = 0; i < 12; i++)
+            for (int i = 0; i < 30; i++)
             {
                 var c = BlockCenter(RI(RiverCol + 1, NX), RI(0, NZ));
-                Critter("Prop_Kucing", c + new Vector3(R(-18, 18), G, (_rng.NextDouble() < 0.5 ? 1 : -1) * 19.5f), false);
+                Critter("Prop_Kucing", c + new Vector3(R(-40, 40), G, (_rng.NextDouble() < 0.5 ? 1 : -1) * (Block * 0.5f - 2f)), false);
             }
         }
 

@@ -300,7 +300,7 @@ namespace KampungRun
             _mapCam.targetTexture = rt;
             _mapCam.clearFlags = CameraClearFlags.SolidColor;
             _mapCam.backgroundColor = new Color(0.9f, 0.87f, 0.78f);
-            _mapCam.farClipPlane = 400f;
+            _mapCam.farClipPlane = 800f;
             _mapCam.cullingMask = ~((1 << Layers.Character) | (1 << Layers.Pickup));
             _mapCam.depth = -10;
             var data = UnityEngine.Rendering.Universal.CameraExtensions.GetUniversalAdditionalCameraData(_mapCam);
@@ -317,7 +317,7 @@ namespace KampungRun
             var cam = Camera.main;
             float yaw = cam ? cam.transform.eulerAngles.y : 0f;
             _mapCam.transform.SetPositionAndRotation(p.Focus + Vector3.up * 200f, Quaternion.Euler(90f, yaw, 0f));
-            _mapCam.orthographicSize = p.Driving ? 95f : 60f;
+            _mapCam.orthographicSize = p.Driving ? 150f : 85f;
             float heading = p.Driving ? p.vehicle.transform.eulerAngles.y : p.transform.eulerAngles.y;
             _mapPlayer.localRotation = Quaternion.Euler(0, 0, -(heading - yaw));
         }

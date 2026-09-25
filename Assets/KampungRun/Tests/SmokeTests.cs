@@ -218,7 +218,7 @@ namespace KampungRun.Tests
             var rd = new RouteDriver(route, 13f);
             follower.driver = rd;
 
-            yield return Seconds(12f);
+            yield return Seconds(12f * CityBuilder.WorldScale);
             int moved = 0, flipped = 0, alive = 0;
             foreach (var v in cars)
             {
@@ -240,7 +240,7 @@ namespace KampungRun.Tests
             Assert.LessOrEqual(flipped, 2, "traffic keeps flipping over");
             Assert.Greater(pedMoved, pedAlive / 2, "most pedestrians should be walking");
 
-            yield return Seconds(14f);
+            yield return Seconds(14f * CityBuilder.WorldScale);
             Debug.Log($"[AI] route idx after 26s={rd.index}/{route.Count} pos={follower.transform.position}");
             Assert.GreaterOrEqual(rd.index, 2, "route-following car didn't make its way along the route");
 
@@ -691,6 +691,70 @@ namespace KampungRun.Tests
             }
         }
 
+        /// <summary>The life-size city: an aerial view and street-level views of each district, and a
+        /// budget check on how much the map spawns.</summary>
+        [UnityTest]
+        public IEnumerator CityOverview()
+        {
+            GameState.Ephemeral = true;
+            GameState.Data = new SaveData();
+            GameManager.ForceLevel = 1;
+            SceneManager.LoadScene("KampungRun");
+            yield return Frames(30);
+            var gm = GameManager.I;
+            Skip();
+            var p = gm.Player;
+            var cc = ChaseCamera.I;
+            int renderers = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None).Length;
+            int colliders = Object.FindObjectsByType<Collider>(FindObjectsSortMode.None).Length;
+            Debug.Log($"[City] {CityBuilder.NX}x{CityBuilder.NZ} blocks of {CityBuilder.Block} m, roads {CityBuilder.Road} m, " +
+                      $"map {gm.City.bounds.size.x:F0}x{gm.City.bounds.size.z:F0} m; renderers={renderers} colliders={colliders} places={gm.City.places.Count}");
+            // every named place is on the map, and not buried in a building
+            foreach (var kv in gm.City.places)
+                Assert.IsTrue(gm.City.bounds.Contains(new Vector3(kv.Value.x, 0, kv.Value.z)), $"{kv.Key} is off the map");
+
+            // aerial: the whole city from the south-west, high up
+            cc.enabled = false;
+            RenderSettings.fog = false;                             // the whole city, not the haze
+            var cam = Camera.main.transform;
+            cam.position = new Vector3(-420f, 380f, -520f);
+            cam.LookAt(new Vector3(60f, 0f, 20f));
+            yield return Frames(3);
+            Shot("95_city_aerial");
+            cam.position = new Vector3(0f, 900f, -40f);
+            cam.rotation = Quaternion.Euler(90f, 0f, 0f);
+            yield return Frames(3);
+            Shot("95_city_top");
+            RenderSettings.fog = true;
+            cc.enabled = true;
+
+            var views = new (string name, string place, float yaw, float pitch, float dist)[]
+            {
+                ("street_bukitbintang", "BukitBintang", 60f, 10f, 9f),
+                ("street_chowkit", "ChowKit", 200f, 10f, 9f),
+                ("kampung_home", "PlayerSpawn", 250f, 12f, 9f),
+                ("landmark_towers", "Towers", 0f, 5f, 12f),
+                ("landmark_merdeka118", "Merdeka118", 180f, 4f, 12f),
+                ("landmark_batu", "BatuCaves", 180f, 6f, 12f),
+                ("landmark_stadium", "StadiumMerdeka", 180f, 12f, 12f),
+                ("landmark_masjidnegara", "MasjidNegara", 180f, 6f, 12f),
+                ("dataran", "Dataran", 250f, 8f, 10f),
+            };
+            foreach (var (name, place, yaw, pitch, dist) in views)
+            {
+                if (!gm.City.places.TryGetValue(place, out var at)) { Debug.LogWarning($"[City] no place {place}"); continue; }
+                p.Teleport(at + Vector3.up * 0.3f, Quaternion.Euler(0, yaw + 180f, 0));
+                cc.target = p.transform; cc.targetBody = null; cc.yaw = yaw; cc.pitch = pitch; cc.distance = dist;
+                yield return Seconds(1.2f);
+                Shot($"96_{name}");
+            }
+            // the river promenade from a bridge
+            p.Teleport(gm.City.places["Bridge3"] + new Vector3(0, 0.3f, 0), Quaternion.identity);
+            cc.yaw = 0f; cc.pitch = 12f; cc.distance = 10f;
+            yield return Seconds(1.2f);
+            Shot("96_river_promenade");
+        }
+
         /// <summary>Downtown KL is busy (the crowd follows the player around the city blocks) while the
         /// kampung keeps its quieter crowd. Runs with the browser build's numbers.</summary>
         [UnityTest]
@@ -703,13 +767,13 @@ namespace KampungRun.Tests
             yield return Frames(30);
             var gm = GameManager.I;
             Skip();
-            gm.pedestrianCount = 30; gm.cityNear = 20f; gm.crowdCap = 180;      // WebGL desktop settings
+            gm.pedestrianCount = 100; gm.cityNear = 24f; gm.crowdCap = 240;     // WebGL desktop settings
             var p = gm.Player;
             var cc = ChaseCamera.I;
             int Near(Vector3 at)
             {
                 int n = 0;
-                foreach (var ped in Pedestrian.All) if (ped && Vector3.Distance(ped.transform.position, at) < 60f) n++;
+                foreach (var ped in Pedestrian.All) if (ped && Vector3.Distance(ped.transform.position, at) < 80f) n++;
                 return n;
             }
             var spots = new[]
@@ -725,7 +789,7 @@ namespace KampungRun.Tests
                 cc.target = p.transform; cc.targetBody = null; cc.yaw = 30f; cc.pitch = 14f; cc.distance = 9f;
                 yield return Seconds(10f);
                 int n = Near(at);
-                Debug.Log($"[Crowd] {name}: {n} people within 60 m ({Pedestrian.All.Count} alive)");
+                Debug.Log($"[Crowd] {name}: {n} people within 80 m ({Pedestrian.All.Count} alive)");
                 Shot($"90_crowd_{name}");
                 if (isCity) city = Mathf.Min(city, n); else kampung = n;
             }
@@ -942,7 +1006,7 @@ namespace KampungRun.Tests
                 yield return Seconds(1f);                                  // settle from the drop
                 float restY = car.transform.position.y, minY = 9f, minX = 0f, topSpeed = 0f;
                 float endX = CityBuilder.RoadX(CityBuilder.NX) - 8f, t0 = Time.time;
-                while (car.transform.position.x < endX && Time.time - t0 < 30f)
+                while (car.transform.position.x < endX && Time.time - t0 < 30f * CityBuilder.WorldScale)
                 {
                     var cp = car.transform.position;
                     if (cp.y < minY) { minY = cp.y; minX = cp.x; }

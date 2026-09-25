@@ -41,6 +41,7 @@ namespace KampungRun
         static List<Vector3> Near(Vector3 center, float radius, int n, int seed, float lift = 0.8f)
         {
             var rng = new System.Random(seed);
+            radius *= CityBuilder.WorldScale;                   // radii were set on the old compressed map
             var pool = new List<Vector3>();
             foreach (var s in _city.itemSpots) if (Vector3.Distance(s, center) < radius) pool.Add(s);
             var result = new List<Vector3>();

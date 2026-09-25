@@ -16,11 +16,11 @@ namespace KampungRun
         [Tooltip("Skip the title screen and jump straight into this level (0 = show title).")]
         public int autoStartLevel;
         public static int ForceLevel; // set by tests before the scene loads
-        public int trafficCount = 22;
-        public int pedestrianCount = 60;
-        public float cityCrowd = 3f;                    // map-wide spread: city blocks get this many times the kampung crowd
-        public float cityNear = 12f;                    // ...and the city blocks around the player are topped up to this
-        public int crowdCap = 260;                      // most pedestrians alive at once
+        public int trafficCount = 45;
+        public int pedestrianCount = 200;               // map-wide spread; also sets the kampung's per-lot crowd
+        public float cityCrowd = 1f;                    // map-wide spread: city lots get this many times the kampung crowd
+        public float cityNear = 12f;                    // ...and the city lots around the player are topped up to this
+        public int crowdCap = 320;                      // most pedestrians alive at once
 
         public CityBuilder.City City { get; private set; }
         public MissionManager Missions { get; private set; }
@@ -57,11 +57,10 @@ namespace KampungRun
             bool phone = Application.isMobilePlatform;
             WebLite = phone;
             Application.targetFrameRate = -1;                       // browsers pace frames themselves
-            trafficCount = phone ? 9 : 14;
-            pedestrianCount = phone ? 16 : 30;
-            cityCrowd = phone ? 2f : 3f;
-            cityNear = phone ? 10f : 20f;
-            crowdCap = phone ? 60 : 180;
+            trafficCount = phone ? 16 : 30;
+            pedestrianCount = phone ? 52 : 100;
+            cityNear = phone ? 12f : 24f;
+            crowdCap = phone ? 90 : 240;
             if (UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urp)
             {
                 urp.shadowDistance = phone ? 45f : 70f;
@@ -117,7 +116,10 @@ namespace KampungRun
                 cgo.AddComponent<AudioListener>();
             }
             _cam.clearFlags = CameraClearFlags.SolidColor;
-            _cam.farClipPlane = 900f;
+            _cam.farClipPlane = 1700f;                              // Merdeka 118 from across town
+            var cull = new float[32];
+            cull[Layers.Detail] = Application.platform == RuntimePlatform.WebGLPlayer ? 150f : 200f;
+            _cam.layerCullDistances = cull;
             _cam.fieldOfView = 62f;
             var data = _cam.GetUniversalAdditionalCameraData();
             data.renderPostProcessing = true;
@@ -167,8 +169,9 @@ namespace KampungRun
             _sun.intensity = l.number == 4 ? 0.8f : 1.1f;
             _cam.backgroundColor = l.fog;
             RenderSettings.fogColor = l.fog;
-            RenderSettings.fogStartDistance = l.fogStart;
-            RenderSettings.fogEndDistance = l.fogEnd;
+            // the life-size city is ~2x the old one: push the haze out with it
+            RenderSettings.fogStartDistance = l.fogStart * 1.5f;
+            RenderSettings.fogEndDistance = l.fogEnd * 1.6f;
             RenderSettings.ambientLight = l.paper;
 
             // cartoon sky
@@ -535,7 +538,7 @@ namespace KampungRun
         {
             if (_pedRoot == null || Player == null || (_crowdTimer -= Time.deltaTime) > 0f) return;
             _crowdTimer = 0.5f;
-            const float Near = 110f, Far = 140f;
+            const float Near = 130f, Far = 170f;
             var focus = Player.Focus;
             var zones = City.walkZones;
             float baseD = pedestrianCount / (float)Mathf.Max(1, zones.Count);
@@ -551,10 +554,12 @@ namespace KampungRun
             }
             spare.Sort((a, b) => Flat(b.transform.position - focus).CompareTo(Flat(a.transform.position - focus)));
             int moves = 0, si = 0;
-            foreach (var z in zones)
+            // fill the closest lots first, so the street you're on is the busy one
+            var near = zones.FindAll(z => Flat(new Vector3(z.center.x, 0f, z.center.y) - focus) < Near);
+            near.Sort((a, b) => Flat(new Vector3(a.center.x, 0f, a.center.y) - focus).CompareTo(Flat(new Vector3(b.center.x, 0f, b.center.y) - focus)));
+            foreach (var z in near)
             {
                 if (moves >= 14) break;
-                if (Flat(new Vector3(z.center.x, 0f, z.center.y) - focus) > Near) continue;
                 counts.TryGetValue(z, out int have);
                 int want = Mathf.RoundToInt(Kampung(z) ? baseD : baseD * cityNear);
                 for (; have < want && moves < 14; have++)
@@ -562,7 +567,7 @@ namespace KampungRun
                     // a sidewalk spot the camera can't see
                     Vector3 pos = Vector3.zero;
                     bool found = false;
-                    for (int tries = 0; tries < 6 && !found; tries++) { pos = SidewalkPoint(z); found = !OnScreen(pos); }
+                    for (int tries = 0; tries < 10 && !found; tries++) { pos = SidewalkPoint(z); found = !InView(pos); }
                     if (!found) break;
                     if (si < spare.Count) { counts[spare[si].zone]--; spare[si++].Relocate(pos, z); }
                     else if (Pedestrian.All.Count < crowdCap) PedestrianSpawner.Spawn(pos, z, _pedRoot);
@@ -575,6 +580,18 @@ namespace KampungRun
 
         static float Flat(Vector3 v) { v.y = 0f; return v.magnitude; }
 
+        /// <summary>Would the player see someone appear here? On screen, close enough to make out
+        /// (under 90 m), and not hidden behind a building.</summary>
+        bool InView(Vector3 p)
+        {
+            if (!OnScreen(p) || _cam == null) return false;
+            var eye = _cam.transform.position;
+            var head = p + Vector3.up * 1.4f;
+            if ((head - eye).sqrMagnitude > 90f * 90f) return false;
+            const int solid = ~((1 << Layers.Character) | (1 << Layers.Pickup) | (1 << Layers.Vehicle) | (1 << Layers.Detail));
+            return !Physics.Linecast(eye, head, solid, QueryTriggerInteraction.Ignore);
+        }
+
         bool OnScreen(Vector3 p)
         {
             if (_cam == null) return false;
@@ -586,7 +603,7 @@ namespace KampungRun
         {
             var roads = City.roads;
             var p = Player ? Player.Focus : Vector3.zero;
-            var node = anywhere ? roads.RandomNodeAwayFrom(p, 30f) : roads.RandomNodeAwayFrom(p, 90f, 220f);
+            var node = anywhere ? roads.RandomNodeAwayFrom(p, 30f) : roads.RandomNodeAwayFrom(p, 120f, 340f);
             var next = node.links[Random.Range(0, node.links.Count)];
             var pos = roads.LanePoint(node.pos, next.pos, 0.3f) + Vector3.up * 0.6f;
             if (Physics.CheckSphere(pos + Vector3.up, 3f, 1 << Layers.Vehicle)) return;
@@ -606,7 +623,7 @@ namespace KampungRun
             {
                 var v = _traffic[i];
                 if (v == null) { _traffic.RemoveAt(i); continue; }
-                bool far = Vector3.Distance(v.transform.position, p) > 260f;
+                bool far = Vector3.Distance(v.transform.position, p) > 400f;
                 bool dead = v.Wrecked && Vector3.Distance(v.transform.position, p) > 60f;
                 bool fell = v.transform.position.y < -1.5f; // in the river or off the map
                 if (v.role != VehicleRole.Traffic && v.role != VehicleRole.Parked) { _traffic.RemoveAt(i); continue; }

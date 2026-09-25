@@ -91,7 +91,7 @@ namespace KampungRun
             if (_step >= Current.objectives.Count) { Complete(); return; }
             var o = Current.objectives[_step];
             o.failReason = null;
-            TimeLeft = o.timeLimit;
+            TimeLeft = o.timeLimit * CityBuilder.WorldScale;   // limits were set on the old compressed map
             o.Begin(this);
             if (!string.IsNullOrEmpty(o.text)) ProcAudio.Play2D(ProcAudio.Blip, 0.4f);
         }

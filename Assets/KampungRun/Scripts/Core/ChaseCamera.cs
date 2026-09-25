@@ -97,6 +97,7 @@ namespace KampungRun
         public const int Vehicle = 8;
         public const int Character = 9;
         public const int Pickup = 10;
+        public const int Detail = 11;       // street clutter: drawn only near the camera
         public const int World = 0;
     }
 }
