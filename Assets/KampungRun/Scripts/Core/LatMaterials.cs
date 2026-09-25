@@ -25,6 +25,23 @@ namespace KampungRun
             return m;
         }
 
+        static readonly Dictionary<(Color, Texture, int, float), Material> Textured = new Dictionary<(Color, Texture, int, float), Material>();
+
+        /// <summary>A LatInk material painted with a tiling texture (building facades), tinted by c.</summary>
+        public static Material GetTextured(Color c, Texture tex, int surface = SurfaceKinds.None, float gloss = 0f)
+        {
+            var key = (c, tex, surface, gloss);
+            if (Textured.TryGetValue(key, out var m) && m != null) return m;
+            m = new Material(GameAssets.I.latInk) { name = $"LatInk_{tex.name}_{ColorUtility.ToHtmlStringRGB(c)}", enableInstancing = true };
+            m.SetColor("_BaseColor", c);
+            m.SetTexture("_BaseMap", tex);
+            m.SetFloat("_OutlineWidth", 0f);
+            m.SetFloat("_Surface", surface);
+            m.SetFloat("_Gloss", gloss);
+            Textured[key] = m;
+            return m;
+        }
+
         static Material _signText;
 
         /// <summary>Depth-tested material for world-space TextMesh signs.</summary>

@@ -17,9 +17,9 @@ namespace KampungRun
         public int autoStartLevel;
         public static int ForceLevel; // set by tests before the scene loads
         public int trafficCount = 45;
-        public int pedestrianCount = 200;               // map-wide spread; also sets the kampung's per-lot crowd
-        public float cityCrowd = 1f;                    // map-wide spread: city lots get this many times the kampung crowd
-        public float cityNear = 12f;                    // ...and the city lots around the player are topped up to this
+        public int pedestrianCount = 200;               // townsfolk spread over the city at the start
+        public float kampungDensity = 0.008f;           // people per metre of pavement in the kampung
+        public float cityDensity = 0.08f;               // ...and on the city pavements round the player
         public int crowdCap = 320;                      // most pedestrians alive at once
 
         public CityBuilder.City City { get; private set; }
@@ -57,10 +57,11 @@ namespace KampungRun
             bool phone = Application.isMobilePlatform;
             WebLite = phone;
             Application.targetFrameRate = -1;                       // browsers pace frames themselves
-            trafficCount = phone ? 16 : 30;
-            pedestrianCount = phone ? 52 : 100;
-            cityNear = phone ? 12f : 24f;
-            crowdCap = phone ? 90 : 240;
+            trafficCount = phone ? 16 : 24;
+            pedestrianCount = phone ? 60 : 80;
+            kampungDensity = phone ? 0.003f : 0.0045f;
+            cityDensity = phone ? 0.025f : 0.05f;
+            crowdCap = phone ? 90 : 170;
             if (UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urp)
             {
                 urp.shadowDistance = phone ? 45f : 70f;
@@ -100,9 +101,57 @@ namespace KampungRun
         void Start()
         {
             StartCoroutine(SignalReady());
+            // browser benchmark (Tools/web_bench.py): index.html?level=1&spot=Dataran&bench=noshadow,nopeds
+            var benchLevel = UrlArg("level");
             if (ForceLevel > 0) { int l = ForceLevel; ForceLevel = 0; LoadLevel(l); }
+            else if (int.TryParse(benchLevel, out int bl) && bl > 0) { LoadLevel(bl); StartCoroutine(Bench()); }
             else if (autoStartLevel > 0) LoadLevel(autoStartLevel);
             else TitleScreen();
+        }
+
+        /// <summary>A query-string argument of the page the WebGL build runs in (null elsewhere).</summary>
+        static string UrlArg(string key)
+        {
+            if (Application.platform != RuntimePlatform.WebGLPlayer) return null;
+            var url = Application.absoluteURL;
+            int q = url.IndexOf('?');
+            if (q < 0) return null;
+            foreach (var pair in url.Substring(q + 1).Split('&'))
+            {
+                var kv = pair.Split('=');
+                if (kv.Length == 2 && kv[0] == key) return System.Uri.UnescapeDataString(kv[1]);
+            }
+            return null;
+        }
+
+        /// <summary>Benchmark set-up: stand at a named place and switch systems off to see what they cost.</summary>
+        System.Collections.IEnumerator Bench()
+        {
+            yield return null;
+            HUD.I.DebugSkipDialogue();
+            GameInput.Locked = false;
+            var spot = UrlArg("spot");
+            if (spot != null && City.places.TryGetValue(spot, out var at))
+                Player.Teleport(at + Vector3.up * 0.3f, City.facings.TryGetValue(spot, out var f) ? f : Quaternion.identity);
+            var flags = (UrlArg("bench") ?? "").Split(',');
+            foreach (var flag in flags)
+            {
+                if (flag == "noshadow") _sun.shadows = LightShadows.None;
+                else if (flag == "nopost") { var d = _cam.GetUniversalAdditionalCameraData(); d.renderPostProcessing = false; d.antialiasing = AntialiasingMode.None; }
+                else if (flag == "nopeds") { crowdCap = 0; cityDensity = 0f; foreach (var p in new List<Pedestrian>(Pedestrian.All)) if (p) Destroy(p.gameObject); }
+                else if (flag == "notraffic") { trafficCount = 0; foreach (var v in _traffic) if (v) Destroy(v.gameObject); _traffic.Clear(); }
+                else if (flag == "nosigns") foreach (var t in FindObjectsByType<TextMesh>()) t.GetComponent<MeshRenderer>().enabled = false;
+                else if (flag.StartsWith("far=") && float.TryParse(flag.Substring(4), out float far)) _cam.farClipPlane = far;
+                else if (flag.StartsWith("lodbias=") && float.TryParse(flag.Substring(8), out float lb)) QualitySettings.lodBias = lb;
+                else if (flag == "skin2") foreach (var s in FindObjectsByType<SkinnedMeshRenderer>()) s.quality = SkinQuality.Bone2;
+                else if (flag.StartsWith("peds=") && int.TryParse(flag.Substring(5), out int np))
+                {
+                    crowdCap = np;
+                    var all = new List<Pedestrian>(Pedestrian.All);
+                    for (int i = np; i < all.Count; i++) if (all[i]) Destroy(all[i].gameObject);
+                }
+            }
+            Debug.Log($"[Bench] ready: level {GameState.Level} at {spot ?? "home"} flags [{string.Join(",", flags)}]");
         }
 
         // ------------------------------------------------------------ rendering setup
@@ -229,6 +278,8 @@ namespace KampungRun
             cc.yaw = 200f;
             ApplyLevelLook(GameData.Levels[Mathf.Clamp(GameState.Level, 1, GameData.LastLevel)]);
             ProcAudio.PlayMusic(0);
+            // the real-KL districts are built from OpenStreetMap (ODbL): credit it
+            HUD.I.Footnote("Data peta © penyumbang OpenStreetMap");
             ShowTitleMenu();
         }
 
@@ -338,6 +389,7 @@ namespace KampungRun
         public void LoadLevel(int level)
         {
             Resume();
+            HUD.I.Footnote(null);
             UnloadLevel();
             GameState.Data.level = level;
             GameState.Save();
@@ -489,21 +541,12 @@ namespace KampungRun
         Transform _pedRoot;
         float _crowdTimer;
 
-        static Vector3 SidewalkPoint(Rect z)
+        static float DistTo(WalkZone z, Vector3 p)
         {
-            float t = Random.value;
-            var inset = new Rect(z.x + 1.5f, z.y + 1.5f, z.width - 3f, z.height - 3f);
-            Vector2 p = Random.Range(0, 4) switch
-            {
-                0 => new Vector2(Mathf.Lerp(inset.xMin, inset.xMax, t), inset.yMin),
-                1 => new Vector2(Mathf.Lerp(inset.xMin, inset.xMax, t), inset.yMax),
-                2 => new Vector2(inset.xMin, Mathf.Lerp(inset.yMin, inset.yMax, t)),
-                _ => new Vector2(inset.xMax, Mathf.Lerp(inset.yMin, inset.yMax, t)),
-            };
-            return new Vector3(p.x, 0.2f, p.y);
+            float dx = Mathf.Max(z.bounds.xMin - p.x, 0f, p.x - z.bounds.xMax);
+            float dz = Mathf.Max(z.bounds.yMin - p.z, 0f, p.z - z.bounds.yMax);
+            return Mathf.Sqrt(dx * dx + dz * dz);
         }
-
-        static bool Kampung(Rect z) => CityBuilder.District(new Vector3(z.center.x, 0f, z.center.y)).StartsWith("Kampung");
 
         void SpawnPedestrians()
         {
@@ -511,63 +554,70 @@ namespace KampungRun
             root.SetParent(_levelRoot, false);
             _pedRoot = root;
             var zones = City.walkZones;
-            // pedestrianCount sets the kampung's per-block crowd; the KL city blocks east of the
-            // river are busier streets and get cityCrowd times as many people per block
-            var weights = new float[zones.Count];
-            float sum = 0f;
-            for (int i = 0; i < zones.Count; i++)
+            // the kampung gets its own steady crowd; the rest are spread over the city by pavement length
+            // (the crowd bubble in ManageCrowd then keeps the streets round the player busy)
+            var city = new List<WalkZone>();
+            float cityLen = 0f;
+            foreach (var z in zones)
             {
-                weights[i] = Kampung(zones[i]) ? 1f : cityCrowd;
-                sum += weights[i];
+                if (z.kampung)
+                {
+                    int n = Mathf.RoundToInt(kampungDensity * z.perimeter + Random.value * 0.5f);
+                    for (int i = 0; i < n; i++) PedestrianSpawner.Spawn(z.PointAt(z.Random()), z, root);
+                }
+                else { city.Add(z); cityLen += z.perimeter; }
             }
-            int total = Mathf.RoundToInt(pedestrianCount * sum / Mathf.Max(1, zones.Count));
-            for (int i = 0; i < total; i++)
+            for (int i = 0; i < pedestrianCount && city.Count > 0; i++)
             {
-                float pick = Random.value * sum;
+                float pick = Random.value * cityLen;
                 int zi = 0;
-                while (zi < zones.Count - 1 && pick > weights[zi]) { pick -= weights[zi]; zi++; }
-                var z = zones[zi];
-                PedestrianSpawner.Spawn(SidewalkPoint(z), z, root);
+                while (zi < city.Count - 1 && pick > city[zi].perimeter) { pick -= city[zi].perimeter; zi++; }
+                PedestrianSpawner.Spawn(city[zi].PointAt(city[zi].Random()), city[zi], root);
             }
         }
 
-        /// <summary>H&amp;R-busy streets without thousands of people: the city blocks around the player
-        /// are topped up to cityNear x the kampung crowd, using townsfolk left far behind (or new ones,
-        /// up to crowdCap). People only ever appear out of the camera's view.</summary>
+        /// <summary>H&amp;R-busy streets without thousands of people: the pavements round the player are
+        /// topped up to cityDensity people per metre, using townsfolk left far behind (or new ones, up to
+        /// crowdCap). People only ever appear where the camera can't see them.</summary>
         void ManageCrowd()
         {
             if (_pedRoot == null || Player == null || (_crowdTimer -= Time.deltaTime) > 0f) return;
             _crowdTimer = 0.5f;
-            const float Near = 130f, Far = 170f;
+            const float Near = 140f, Far = 180f;
             var focus = Player.Focus;
             var zones = City.walkZones;
-            float baseD = pedestrianCount / (float)Mathf.Max(1, zones.Count);
-            var counts = new Dictionary<Rect, int>();
+            var counts = new Dictionary<WalkZone, int>();
             var spare = new List<Pedestrian>();
             foreach (var ped in Pedestrian.All)
             {
-                if (ped == null) continue;
+                if (ped == null || ped.zone == null) continue;
                 counts.TryGetValue(ped.zone, out int n);
                 counts[ped.zone] = n + 1;
                 // only city folk get moved about - the kampung keeps its own people
-                if (ped.Idle && !Kampung(ped.zone) && Flat(ped.transform.position - focus) > Far && !OnScreen(ped.transform.position)) spare.Add(ped);
+                if (ped.Idle && !ped.zone.kampung && Flat(ped.transform.position - focus) > Far && !OnScreen(ped.transform.position)) spare.Add(ped);
             }
             spare.Sort((a, b) => Flat(b.transform.position - focus).CompareTo(Flat(a.transform.position - focus)));
             int moves = 0, si = 0;
-            // fill the closest lots first, so the street you're on is the busy one
-            var near = zones.FindAll(z => Flat(new Vector3(z.center.x, 0f, z.center.y) - focus) < Near);
-            near.Sort((a, b) => Flat(new Vector3(a.center.x, 0f, a.center.y) - focus).CompareTo(Flat(new Vector3(b.center.x, 0f, b.center.y) - focus)));
+            // fill the closest pavements first, so the street you're on is the busy one
+            var near = zones.FindAll(z => !z.kampung && DistTo(z, focus) < Near);
+            near.Sort((a, b) => DistTo(a, focus).CompareTo(DistTo(b, focus)));
             foreach (var z in near)
             {
                 if (moves >= 14) break;
                 counts.TryGetValue(z, out int have);
-                int want = Mathf.RoundToInt(Kampung(z) ? baseD : baseD * cityNear);
+                // a long loop only needs its near stretch busy
+                float nearLen = Mathf.Min(z.perimeter, Near * 2.2f);
+                int want = Mathf.RoundToInt(cityDensity * nearLen * z.busy);
                 for (; have < want && moves < 14; have++)
                 {
-                    // a sidewalk spot the camera can't see
+                    // a pavement spot near the player that the camera can't see
                     Vector3 pos = Vector3.zero;
                     bool found = false;
-                    for (int tries = 0; tries < 10 && !found; tries++) { pos = SidewalkPoint(z); found = !InView(pos); }
+                    for (int tries = 0; tries < 12 && !found; tries++)
+                    {
+                        pos = z.PointAt(z.Closest(focus) + Random.Range(-Near, Near));   // the stretch of the loop near you
+                        found = Flat(pos - focus) < Near && !InView(pos);
+                    }
                     if (!found) break;
                     if (si < spare.Count) { counts[spare[si].zone]--; spare[si++].Relocate(pos, z); }
                     else if (Pedestrian.All.Count < crowdCap) PedestrianSpawner.Spawn(pos, z, _pedRoot);
@@ -603,7 +653,8 @@ namespace KampungRun
         {
             var roads = City.roads;
             var p = Player ? Player.Focus : Vector3.zero;
-            var node = anywhere ? roads.RandomNodeAwayFrom(p, 30f) : roads.RandomNodeAwayFrom(p, 120f, 340f);
+            // at the start anywhere around you (inside the 400 m that traffic lives in), later out of sight ahead
+            var node = anywhere ? roads.RandomNodeAwayFrom(p, 30f, 360f) : roads.RandomNodeAwayFrom(p, 120f, 340f);
             var next = node.links[Random.Range(0, node.links.Count)];
             var pos = roads.LanePoint(node.pos, next.pos, 0.3f) + Vector3.up * 0.6f;
             if (Physics.CheckSphere(pos + Vector3.up, 3f, 1 << Layers.Vehicle)) return;
@@ -633,7 +684,7 @@ namespace KampungRun
                     _traffic.RemoveAt(i);
                 }
             }
-            if (_traffic.Count < trafficCount) SpawnTrafficCar(false);
+            for (int n = 0; n < 3 && _traffic.Count < trafficCount; n++) SpawnTrafficCar(false);
         }
     }
 }

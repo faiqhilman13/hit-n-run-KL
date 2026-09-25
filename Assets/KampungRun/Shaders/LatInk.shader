@@ -277,7 +277,9 @@ Shader "KampungRun/LatInk"
         Pass
         {
             Name "LatOutline"
-            Tags { "LightMode" = "SRPDefaultUnlit" }
+            // the game runs the Hit & Run look, which has no ink outlines: under its own LightMode URP never
+            // draws this pass (a custom renderer feature could bring the outlines back)
+            Tags { "LightMode" = "LatOutline" }
             Cull Front
             ZWrite On
 

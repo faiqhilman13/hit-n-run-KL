@@ -14,7 +14,7 @@ namespace KampungRun
         enum State { Walk, Idle, Flee, Tumble, Down, Stagger, Grumble }
 
         public static readonly List<Pedestrian> All = new List<Pedestrian>();
-        public Rect zone;
+        public WalkZone zone;
         public float walkSpeed = 1.4f;
 
         State _state = State.Walk;
@@ -28,18 +28,23 @@ namespace KampungRun
         float _hitCooldown;
         int _combo, _coinsGiven;        // staggers in a row (the third one floors them), coins shaken loose
         float _comboT;
-        // far away (a few pixels in the haze) we keep walking but stop drawing and animating,
-        // so a busy downtown crowd stays cheap
-        const float DrawDist = 170f;
+        // far away (a few pixels in the haze) we keep walking but stop drawing and animating, and further
+        // than a street or two the body is posed less often: a busy downtown crowd stays cheap (a browser
+        // animates and skins every one of them on its single thread)
+        static readonly float DrawDist = Application.platform == RuntimePlatform.WebGLPlayer ? 110f : 170f;
+        const float FullRateDist = 30f;
         Renderer[] _renderers;
         Animator _anim;
         bool _hidden;
-        float _drawCheck, _farDt;
+        float _drawCheck, _farDt, _animDt;
+        int _animStep = 1;
+        int _animPhase;
         static readonly string[] Shouts = { "WOI!", "ADUH!", "APA NI?!", "HOI!", "MAK AI!", "ALAMAK!" };
 
         void Awake()
         {
             All.Add(this);
+            _animPhase = Random.Range(0, 4);         // spread the throttled crowd's poses over the frames
             _rig = GetComponentInChildren<CharacterRig>();
             _model = transform.Find("Model");
         }
@@ -50,7 +55,7 @@ namespace KampungRun
         public bool Idle => _state == State.Walk || _state == State.Idle;
 
         /// <summary>Crowd recycling: pop onto another block's sidewalk and carry on walking.</summary>
-        public void Relocate(Vector3 pos, Rect newZone)
+        public void Relocate(Vector3 pos, WalkZone newZone)
         {
             zone = newZone;
             transform.position = pos;
@@ -66,17 +71,30 @@ namespace KampungRun
             _drawCheck = Random.Range(0.4f, 0.6f);
             var cam = Camera.main;
             if (!cam) return;
-            bool hide = (cam.transform.position - transform.position).sqrMagnitude > DrawDist * DrawDist;
-            if (hide == _hidden) return;
-            _hidden = hide;
+            float d2 = (cam.transform.position - transform.position).sqrMagnitude;
+            bool hide = d2 > DrawDist * DrawDist;
             if (_renderers == null)
             {
                 // only the parts that are showing now (costume bits switched off stay off)
                 _renderers = System.Array.FindAll(GetComponentsInChildren<Renderer>(), r => r.enabled);
                 _anim = GetComponentInChildren<Animator>();
             }
+            // posed every frame close up, every other frame down the street, every fourth beyond
+            _animStep = hide || _state != State.Walk && _state != State.Idle ? 1 : d2 < FullRateDist * FullRateDist ? 1 : d2 < 70f * 70f ? 2 : 4;
+            if (_anim) _anim.enabled = !hide && _animStep == 1;
+            if (hide == _hidden) return;
+            _hidden = hide;
             foreach (var r in _renderers) if (r) r.enabled = !hide;
-            if (_anim) _anim.enabled = !hide;
+        }
+
+        void LateUpdate()
+        {
+            // the throttled animator is stepped by hand (with all the time since its last pose)
+            if (_hidden || _anim == null || _animStep == 1) { _animDt = 0f; return; }
+            _animDt += Time.deltaTime;
+            if ((Time.frameCount + _animPhase) % _animStep != 0) return;
+            _anim.Update(_animDt);
+            _animDt = 0f;
         }
 
         void Start()
@@ -85,33 +103,28 @@ namespace KampungRun
             PickTarget();
         }
 
+        // walking round the pavement loop: where we are on it, where we're heading, and the next corner
+        float _ringU, _goalU, _wayU, _wayT;
+        int _ringDir = 1;
+        bool _wayIsGoal = true;
+
         void PickTarget()
         {
-            // walk to a random point on the pavement ring of our block
-            float inset = 1.5f;
-            var r = new Rect(zone.x + inset, zone.y + inset, zone.width - inset * 2, zone.height - inset * 2);
-            int side = Random.Range(0, 4);
-            float t = Random.value;
-            Vector2 p = side switch
-            {
-                0 => new Vector2(Mathf.Lerp(r.xMin, r.xMax, t), r.yMin),
-                1 => new Vector2(Mathf.Lerp(r.xMin, r.xMax, t), r.yMax),
-                2 => new Vector2(r.xMin, Mathf.Lerp(r.yMin, r.yMax, t)),
-                _ => new Vector2(r.xMax, Mathf.Lerp(r.yMin, r.yMax, t)),
-            };
-            // go via the nearest corner if it's on another side, so we stay on the ring
-            Vector2 cur = new Vector2(transform.position.x, transform.position.z);
-            bool sameSide = Mathf.Abs(cur.x - p.x) < 1f || Mathf.Abs(cur.y - p.y) < 1f;
-            if (!sameSide)
-            {
-                var corner = new Vector2(Mathf.Abs(cur.x - r.xMin) < Mathf.Abs(cur.x - r.xMax) ? r.xMin : r.xMax,
-                                         Mathf.Abs(cur.y - r.yMin) < Mathf.Abs(cur.y - r.yMax) ? r.yMin : r.yMax);
-                // snap the corner onto our current edge direction
-                if (Mathf.Abs(cur.x - r.xMin) < 1.5f || Mathf.Abs(cur.x - r.xMax) < 1.5f) corner.x = cur.x;
-                else corner.y = cur.y;
-                p = corner;
-            }
-            _target = new Vector3(p.x, transform.position.y, p.y);
+            // a random spot on our block's pavement loop, going round the short way
+            if (zone == null) { _target = transform.position; return; }
+            _ringU = zone.Closest(transform.position);
+            _goalU = zone.Random();
+            _ringDir = zone.Along(_ringU, _goalU, 1) <= zone.perimeter * 0.5f ? 1 : -1;
+            NextWaypoint();
+        }
+
+        void NextWaypoint()
+        {
+            float corner = zone.NextCorner(_ringU, _ringDir);
+            _wayIsGoal = zone.Along(_ringU, _goalU, _ringDir) <= zone.Along(_ringU, corner, _ringDir);
+            _wayU = _wayIsGoal ? _goalU : corner;
+            _target = zone.PointAt(_wayU, transform.position.y);
+            _wayT = 0f;
         }
 
         void Update()
@@ -150,8 +163,11 @@ namespace KampungRun
                     break;
                 case State.Walk:
                     Move(_target, walkSpeed, dt);
+                    _wayT += dt;
+                    if (_wayT > 25f) { PickTarget(); break; }              // stuck on something: head somewhere else
                     if (Flat(transform.position - _target).magnitude < 0.6f)
                     {
+                        if (!_wayIsGoal && zone != null) { _ringU = _wayU; NextWaypoint(); break; }   // round the corner
                         if (Random.value < 0.3f) { _state = State.Idle; _timer = Random.Range(2f, 6f); }
                         PickTarget();
                     }
@@ -280,9 +296,12 @@ namespace KampungRun
             var away = Flat(transform.position - threat).normalized;
             if (away.sqrMagnitude < 0.1f) away = Random.insideUnitSphere;
             var p = transform.position + Flat(away + Random.insideUnitSphere * 0.5f).normalized * 12f;
-            // stay inside our block
-            p.x = Mathf.Clamp(p.x, zone.xMin + 1, zone.xMax - 1);
-            p.z = Mathf.Clamp(p.z, zone.yMin + 1, zone.yMax - 1);
+            // stay round our block
+            if (zone != null)
+            {
+                p.x = Mathf.Clamp(p.x, zone.bounds.xMin + 1, zone.bounds.xMax - 1);
+                p.z = Mathf.Clamp(p.z, zone.bounds.yMin + 1, zone.bounds.yMax - 1);
+            }
             _target = p;
         }
 
@@ -387,7 +406,7 @@ namespace KampungRun
         };
         static readonly Color[] Skins = { new Color(0.8f, 0.58f, 0.4f), new Color(0.62f, 0.42f, 0.28f), new Color(0.9f, 0.72f, 0.56f), new Color(0.5f, 0.34f, 0.22f) };
 
-        public static Pedestrian Spawn(Vector3 pos, Rect zone, Transform parent, string model = null)
+        public static Pedestrian Spawn(Vector3 pos, WalkZone zone, Transform parent, string model = null)
         {
             model ??= Models[Random.Range(0, Models.Length)];
             var go = ModelFactory.Spawn(model, pos, Quaternion.Euler(0, Random.Range(0, 360), 0), parent, "Orang");
@@ -401,6 +420,9 @@ namespace KampungRun
             });
             go.AddComponent<CharacterRig>();
             foreach (var t in go.GetComponentsInChildren<Transform>()) t.gameObject.layer = Layers.Character;
+            // two bones a vertex is plenty for a townsperson, and halves the skinning a browser does on its CPU
+            if (Application.platform == RuntimePlatform.WebGLPlayer)
+                foreach (var s in go.GetComponentsInChildren<SkinnedMeshRenderer>(true)) s.quality = SkinQuality.Bone2;
             var rb = go.AddComponent<Rigidbody>();
             rb.isKinematic = true;
             var cap = go.AddComponent<CapsuleCollider>();
@@ -415,7 +437,7 @@ namespace KampungRun
 
         public static void SpawnFleeing(Vector3 pos, Quaternion rot)
         {
-            var zone = new Rect(pos.x - 30, pos.z - 30, 60, 60);
+            var zone = WalkZone.FromRect(new Rect(pos.x - 30, pos.z - 30, 60, 60), 0f);
             var p = Spawn(pos, zone, GameManager.I.transform, "chr_townman");
             p.Flee(6f);
             Fx.Word(pos + Vector3.up * 2.2f, "KERETA AKU!");

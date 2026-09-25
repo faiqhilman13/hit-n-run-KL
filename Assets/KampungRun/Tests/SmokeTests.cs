@@ -49,6 +49,13 @@ namespace KampungRun.Tests
 
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
 
+        // The filler streets south of the old town (Jalan Hang Tuah / Bukit Petaling): plain grid
+        // avenues, away from the real-KL districts, for tests that need a straight road.
+        static Vector3 South(int i, int k, float dx = 0f, float dz = 0f, float y = 0.6f) =>
+            new Vector3(CityBuilder.RoadX(i) + dx, y, CityBuilder.RoadZ(k) + dz);
+
+        static WalkZone Box(Vector3 c, float half) => WalkZone.FromRect(new Rect(c.x - half, c.z - half, half * 2f, half * 2f), 0f);
+
         static Transform FindDeep(Transform t, string name)
         {
             foreach (var c in t.GetComponentsInChildren<Transform>(true)) if (c.name == name) return c;
@@ -209,11 +216,11 @@ namespace KampungRun.Tests
             // a scripted follow-mission style car on a real route
             var route = new System.Collections.Generic.List<Vector3>
             {
-                new Vector3(CityBuilder.RoadX(4), 0.3f, CityBuilder.RoadZ(4)),
-                new Vector3(CityBuilder.RoadX(4), 0.3f, CityBuilder.RoadZ(2)),
-                new Vector3(CityBuilder.RoadX(5), 0.3f, CityBuilder.RoadZ(2)),
+                South(12, 3, 0, 0, 0.3f),
+                South(12, 1, 0, 0, 0.3f),
+                South(13, 1, 0, 0, 0.3f),
             };
-            var start = new Vector3(CityBuilder.RoadX(2), 0.9f, CityBuilder.RoadZ(4));
+            var start = South(10, 3, 0, 0, 0.9f);
             var follower = VehicleSpawner.Spawn("van", start, Quaternion.LookRotation(Vector3.right), VehicleRole.MissionTarget);
             var rd = new RouteDriver(route, 13f);
             follower.driver = rd;
@@ -409,11 +416,11 @@ namespace KampungRun.Tests
             yield return Seconds(0.8f);
             Shot("43_pakmat_closeup");
             // a street crowd in the city
-            var shops = CityBuilder.BlockCenter(4, 2);
-            p.Teleport(new Vector3(CityBuilder.RoadX(4) + 7.5f, 0.3f, shops.z - 4f), Quaternion.Euler(0, 20, 0));
+            var shops = CityBuilder.BlockCenter(11, 2);
+            p.Teleport(new Vector3(CityBuilder.RoadX(11) + 7.5f, 0.3f, shops.z - 4f), Quaternion.Euler(0, 20, 0));
             for (int i = 0; i < 8; i++)
                 PedestrianSpawner.Spawn(p.transform.position + new Vector3(Random.Range(-3f, 3f), 0, Random.Range(3f, 12f)),
-                    new Rect(p.transform.position.x - 8, p.transform.position.z, 16, 16), gm.transform);
+                    WalkZone.FromRect(new Rect(p.transform.position.x - 8, p.transform.position.z, 16, 16), 0f), gm.transform);
             cc.yaw = 20f; cc.pitch = 8f; cc.distance = 7f;
             yield return Seconds(1.5f);
             Shot("41_townsfolk_crowd");
@@ -496,14 +503,15 @@ namespace KampungRun.Tests
                 yield return Seconds(1.2f);
                 Shot(name);
             }
-            // each place sits on the road north of its block; look back south at the building
-            yield return Look("50_kl_sentral", gm.City.places["KLSentral"] + new Vector3(-6f, 0.2f, 2f), 170f, 26f, 12f);
-            yield return Look("51_muzium_negara", gm.City.places["MuziumNegara"] + new Vector3(-6f, 0.3f, -9f), 160f, 11f, 16f);
-            yield return Look("52_taman_perdana", gm.City.places["TamanPerdana"] + new Vector3(0f, 0.2f, -8f), 200f, 22f, 26f);
-            yield return Look("53_masjid_negara", gm.City.places["MasjidNegara"] + new Vector3(4f, 0.2f, 2f), 190f, 30f, 14f);
+            // each place sits at the kerb facing its landmark: look that way over the player's head
+            float Facing(string key) => gm.City.facings.TryGetValue(key, out var f) ? f.eulerAngles.y : 0f;
+            yield return Look("50_kl_sentral", gm.City.places["KLSentral"] + Vector3.up * 0.2f, Facing("KLSentral"), 30f, 12f);
+            yield return Look("51_muzium_negara", gm.City.places["MuziumNegara"] + Vector3.up * 0.2f, Facing("MuziumNegara"), 22f, 12f);
+            yield return Look("52_taman_perdana", gm.City.places["TamanPerdana"] + Vector3.up * 0.2f, Facing("TamanPerdana"), 22f, 20f);
+            yield return Look("53_masjid_negara", gm.City.places["MasjidNegara"] + Vector3.up * 0.2f, Facing("MasjidNegara"), 34f, 12f);
             // a townsperson walking: the new soft-skinned, bouncy walk cycle up close
             var ped = PedestrianSpawner.Spawn(p.transform.position + p.transform.right * 2.5f,
-                new Rect(p.transform.position.x - 30, p.transform.position.z - 30, 60, 60), gm.transform, "chr_townman");
+                Box(p.transform.position, 30f), gm.transform, "chr_townman");
             yield return Seconds(1.5f);
             cc.target = ped.transform; cc.targetBody = null; cc.distance = 3.5f; cc.pitch = 4f; cc.yaw = ped.transform.eulerAngles.y + 90f;
             cc.SnapBehind();
@@ -533,7 +541,7 @@ namespace KampungRun.Tests
             var cc = ChaseCamera.I;
             foreach (var id in new[] { "teksi", "foodtruck" })
             {
-                var start = new Vector3(CityBuilder.RoadX(4) + 2.5f, 0.6f, CityBuilder.RoadZ(1) + 8f);
+                var start = South(12, 1, 2.5f, 8f);
                 var v = gm.SummonCar(id, start, Quaternion.identity);
                 yield return Seconds(0.6f);
                 p.EnterVehicle(v, true);
@@ -558,12 +566,12 @@ namespace KampungRun.Tests
                 yield return Seconds(1.2f);
                 Shot(name);
             }
-            var kb = CityBuilder.BlockCenter(0, 3);
+            var kb = CityBuilder.BlockCenter(CityBuilder.Layout.kampung.c0, CityBuilder.Layout.kampung.r0 + 3);
             yield return Look("31_kampung_baru", kb + new Vector3(0, 0.3f, 27f), 150f, 16f, 14f);
             var bf = gm.City.places["Brickfields"];
-            yield return Look("32_brickfields", bf + new Vector3(-6f, 0.1f, 0.5f), 200f, 15f, 9f);
+            yield return Look("32_brickfields", bf + Vector3.up * 0.2f, gm.City.facings["Brickfields"].eulerAngles.y, 15f, 9f);
             var lrt = gm.City.places["LRT"];
-            yield return Look("33_lrt_river", new Vector3(lrt.x + 26f, 0.3f, CityBuilder.RoadZ(2)), -100f, 22f, 8f);
+            yield return Look("33_lrt_river", new Vector3(lrt.x + 40f, 0.3f, CityBuilder.RoadZ(16)), -100f, 22f, 8f);
             yield return Look("34_chowkit", gm.City.places["ChowKit"] + new Vector3(-10f, 0.1f, 0), 110f, 14f, 12f);
             var home = gm.City.places["Home"];
             yield return Look("35_home_kb_house", home + new Vector3(2f, 0.2f, 4f), -120f, 12f, 12f);
@@ -617,7 +625,7 @@ namespace KampungRun.Tests
             foreach (var t in Object.FindObjectsByType<Vehicle>(FindObjectsSortMode.None)) Object.Destroy(t.gameObject);
             var ids = new[] { "myvi", "saga", "kancil", "van", "hilux", "kapcai", "teksi", "polis" };
             // showroom: parked in a row along an avenue
-            var row = new Vector3(CityBuilder.RoadX(3) + 2.5f, 0.6f, CityBuilder.RoadZ(2) + 6f);
+            var row = South(12, 2, 2.5f, 12f);
             var parked = new System.Collections.Generic.List<Vehicle>();
             for (int i = 0; i < ids.Length; i++)
             {
@@ -651,7 +659,7 @@ namespace KampungRun.Tests
 
             foreach (var id in ids)
             {
-                var start = new Vector3(CityBuilder.RoadX(1) + 2.5f, 0.6f, CityBuilder.RoadZ(1) + 8f);
+                var start = South(12, 1, 2.5f, 8f);
                 var v = gm.SummonCar(id, start, Quaternion.identity);
                 yield return Seconds(0.5f);
                 p.EnterVehicle(v, true);
@@ -709,6 +717,21 @@ namespace KampungRun.Tests
             int colliders = Object.FindObjectsByType<Collider>(FindObjectsSortMode.None).Length;
             Debug.Log($"[City] {CityBuilder.NX}x{CityBuilder.NZ} blocks of {CityBuilder.Block} m, roads {CityBuilder.Road} m, " +
                       $"map {gm.City.bounds.size.x:F0}x{gm.City.bounds.size.z:F0} m; renderers={renderers} colliders={colliders} places={gm.City.places.Count}");
+            // what the renderers are (a browser culls every one of them each frame)
+            var byOwner = new System.Collections.Generic.Dictionary<string, int>();
+            foreach (var r in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            {
+                var t = r.transform;
+                string owner = t.root.name;
+                for (var q = t; q.parent != null; q = q.parent) if (q.parent.parent == null || q.parent.name == "Props" || q.parent.name == "StreetKit") { owner = q.parent.name + "/" + (q.parent.name == "Props" || q.parent.name == "StreetKit" ? q.name.Split(' ')[0] : q.name); break; }
+                byOwner.TryGetValue(owner, out int c);
+                byOwner[owner] = c + 1;
+            }
+            var owners = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, int>>(byOwner);
+            owners.Sort((a, b) => b.Value.CompareTo(a.Value));
+            var top = new System.Text.StringBuilder();
+            for (int i = 0; i < Mathf.Min(25, owners.Count); i++) top.Append($" {owners[i].Key}={owners[i].Value}");
+            Debug.Log("[City] renderers by owner:" + top);
             // every named place is on the map, and not buried in a building
             foreach (var kv in gm.City.places)
                 Assert.IsTrue(gm.City.bounds.Contains(new Vector3(kv.Value.x, 0, kv.Value.z)), $"{kv.Key} is off the map");
@@ -717,14 +740,87 @@ namespace KampungRun.Tests
             cc.enabled = false;
             RenderSettings.fog = false;                             // the whole city, not the haze
             var cam = Camera.main.transform;
-            cam.position = new Vector3(-420f, 380f, -520f);
-            cam.LookAt(new Vector3(60f, 0f, 20f));
+            float clip = Camera.main.farClipPlane;
+            Camera.main.farClipPlane = 6000f;
+            cam.position = new Vector3(-1500f, 1100f, -1900f);
+            cam.LookAt(new Vector3(0f, 0f, 0f));
             yield return Frames(3);
             Shot("95_city_aerial");
-            cam.position = new Vector3(0f, 900f, -40f);
+            cam.position = new Vector3(0f, 2250f, 0f);
             cam.rotation = Quaternion.Euler(90f, 0f, 0f);
             yield return Frames(3);
             Shot("95_city_top");
+            // the districts from above, to compare with the satellite view (Tools/klmap)
+            foreach (var (name, x, z, h) in new[] { ("kotalama", 58f, -58f, 900f), ("east", 700f, 520f, 1000f), ("west", -600f, -350f, 1000f), ("north", -300f, 820f, 900f) })
+            {
+                cam.position = new Vector3(x, h, z);
+                cam.rotation = Quaternion.Euler(90f, 0f, 0f);
+                yield return Frames(3);
+                Shot($"95_top_{name}");
+            }
+            // every real-KL landmark from the air, framed on its model
+            var landmarks = new System.Collections.Generic.List<Transform>();
+            foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
+                if (t.name.StartsWith("Landmark_")) landmarks.Add(t);
+            foreach (var t in landmarks)
+            {
+                if (!t) continue;
+                var rs = t.GetComponentsInChildren<Renderer>();
+                if (rs.Length == 0) continue;
+                var b = rs[0].bounds;
+                foreach (var r in rs) b.Encapsulate(r.bounds);
+                float size = Mathf.Max(b.size.x, b.size.y, b.size.z);
+                cam.position = b.center + new Vector3(-0.55f, 0.5f, -0.7f).normalized * Mathf.Max(60f, size * 1.4f);
+                cam.LookAt(b.center);
+                yield return Frames(3);
+                Debug.Log($"[City] {t.name}: {b.size.x:F0} x {b.size.y:F0} x {b.size.z:F0} m at {b.center}");
+                Shot("97_" + t.name.Substring("Landmark_".Length).ToLower());
+            }
+            // each real-KL district straight down, no HUD (Tools/klmap/compare.py puts the satellite view beside it)
+            var camera = Camera.main;
+            foreach (var lp in CityBuilder.Layout.patches)
+            {
+                var rect = Rect.MinMaxRect(CityBuilder.RoadX(lp.c0) + CityBuilder.Road * 0.5f, CityBuilder.RoadZ(lp.r0) + CityBuilder.Road * 0.5f,
+                                           CityBuilder.RoadX(lp.c1 + 1) - CityBuilder.Road * 0.5f, CityBuilder.RoadZ(lp.r1 + 1) - CityBuilder.Road * 0.5f);
+                bool ortho = camera.orthographic;
+                float size = camera.orthographicSize;
+                camera.orthographic = true;
+                camera.orthographicSize = rect.height * 0.5f;
+                cam.position = new Vector3(rect.center.x, 1200f, rect.center.y);
+                cam.rotation = Quaternion.Euler(90f, 0f, 0f);
+                int w = 1024, h = Mathf.RoundToInt(1024 * rect.height / rect.width);
+                var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };
+                var canvases = Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+                foreach (var cv in canvases) cv.enabled = false;
+                camera.aspect = w / (float)h;
+                var req = new UniversalRenderPipeline.SingleCameraRequest { destination = rt };
+                yield return Frames(2);
+                if (RenderPipeline.SupportsRenderRequest(camera, req)) RenderPipeline.SubmitRenderRequest(camera, req);
+                var prev = RenderTexture.active;
+                RenderTexture.active = rt;
+                var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
+                tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+                tex.Apply();
+                RenderTexture.active = prev;
+                File.WriteAllBytes(Path.Combine(ShotDir, $"95_ortho_{lp.name}.png"), tex.EncodeToPNG());
+                Object.Destroy(tex);
+                rt.Release();
+                foreach (var cv in canvases) cv.enabled = true;
+                camera.ResetAspect();
+                camera.orthographic = ortho;
+                camera.orthographicSize = size;
+            }
+            // the filler districts' flyovers and roundabouts
+            foreach (var kv in gm.City.places)
+            {
+                if (!kv.Key.StartsWith("Flyover") && !kv.Key.StartsWith("Bulatan")) continue;
+                bool fly = kv.Key.StartsWith("Flyover");
+                cam.position = kv.Value + (fly ? new Vector3(-70f, 55f, -90f) : new Vector3(-38f, 42f, -48f));
+                cam.LookAt(kv.Value);
+                yield return Frames(3);
+                Shot("98_" + kv.Key.ToLower());
+            }
+            Camera.main.farClipPlane = clip;
             RenderSettings.fog = true;
             cc.enabled = true;
 
@@ -743,16 +839,54 @@ namespace KampungRun.Tests
             foreach (var (name, place, yaw, pitch, dist) in views)
             {
                 if (!gm.City.places.TryGetValue(place, out var at)) { Debug.LogWarning($"[City] no place {place}"); continue; }
-                p.Teleport(at + Vector3.up * 0.3f, Quaternion.Euler(0, yaw + 180f, 0));
-                cc.target = p.transform; cc.targetBody = null; cc.yaw = yaw; cc.pitch = pitch; cc.distance = dist;
+                // the real-KL places sit at the kerb facing their landmark: look that way
+                float look = CityBuilder.InsidePatch(at) && gm.City.facings.TryGetValue(place, out var f) ? f.eulerAngles.y : yaw;
+                p.Teleport(at + Vector3.up * 0.3f, Quaternion.Euler(0, look + 180f, 0));
+                cc.target = p.transform; cc.targetBody = null; cc.yaw = look; cc.pitch = pitch; cc.distance = dist;
                 yield return Seconds(1.2f);
                 Shot($"96_{name}");
             }
-            // the river promenade from a bridge
-            p.Teleport(gm.City.places["Bridge3"] + new Vector3(0, 0.3f, 0), Quaternion.identity);
+            // the river promenade from a bridge over the Gombak
+            var bridge = Vector3.zero;
+            foreach (var kv in gm.City.places) if (kv.Key.StartsWith("Bridge")) { bridge = kv.Value; break; }
+            p.Teleport(bridge + new Vector3(0, 0.3f, 0), Quaternion.identity);
             cc.yaw = 0f; cc.pitch = 12f; cc.distance = 10f;
             yield return Seconds(1.2f);
             Shot("96_river_promenade");
+        }
+
+        /// <summary>Every place a mission sends you to can be driven to from every other one, both ways
+        /// (one-way streets, roundabouts, flyovers and the joins between the real-KL streets and the grid).</summary>
+        [UnityTest]
+        public IEnumerator MissionPlacesConnect()
+        {
+            GameState.Ephemeral = true;
+            GameState.Data = new SaveData();
+            GameManager.ForceLevel = 1;
+            SceneManager.LoadScene("KampungRun");
+            yield return Frames(20);
+            var gm = GameManager.I;
+            Skip();
+            var roads = gm.City.roads;
+            var keys = new[] { "HomeYard", "Surau", "Padang", "Mamak", "ChowKit", "Masjid", "Dataran", "PasarSeni", "Pasar", "Merdeka118",
+                               "Towers", "KLTower", "BukitBintang", "KLSentral", "MasjidNegara", "TuguNegara", "Brickfields" };
+            var missing = new System.Collections.Generic.List<string>();
+            float longest = 0f;
+            string longestPair = "";
+            foreach (var a in keys)
+                foreach (var b in keys)
+                {
+                    if (a == b) continue;
+                    Assert.IsTrue(gm.City.places.ContainsKey(a), $"no place {a}");
+                    var path = roads.Path(roads.Nearest(gm.City.places[a]), roads.Nearest(gm.City.places[b]));
+                    if (path == null) { missing.Add($"{a}->{b}"); continue; }
+                    float len = 0f;
+                    for (int i = 1; i < path.Count; i++) len += Vector3.Distance(path[i - 1].pos, path[i].pos);
+                    if (len > longest) { longest = len; longestPair = $"{a}->{b}"; }
+                }
+            Debug.Log($"[Routes] {keys.Length * (keys.Length - 1) - missing.Count} of {keys.Length * (keys.Length - 1)} drives connect; longest {longestPair} {longest:F0} m" +
+                      (missing.Count > 0 ? "; missing " + string.Join(", ", missing) : ""));
+            Assert.IsEmpty(missing, "places you can't drive between: " + string.Join(", ", missing));
         }
 
         /// <summary>Downtown KL is busy (the crowd follows the player around the city blocks) while the
@@ -767,7 +901,7 @@ namespace KampungRun.Tests
             yield return Frames(30);
             var gm = GameManager.I;
             Skip();
-            gm.pedestrianCount = 100; gm.cityNear = 24f; gm.crowdCap = 240;     // WebGL desktop settings
+            gm.pedestrianCount = 80; gm.kampungDensity = 0.0045f; gm.cityDensity = 0.05f; gm.crowdCap = 170;     // WebGL desktop settings
             var p = gm.Player;
             var cc = ChaseCamera.I;
             int Near(Vector3 at)
@@ -778,9 +912,10 @@ namespace KampungRun.Tests
             }
             var spots = new[]
             {
-                ("brickfields", new Vector3(CityBuilder.RoadX(5), 0.3f, CityBuilder.RoadZ(1)), true),
-                ("chowkit", new Vector3(CityBuilder.RoadX(4), 0.3f, CityBuilder.RoadZ(4)), true),
-                ("kampung", new Vector3(CityBuilder.RoadX(1), 0.3f, CityBuilder.RoadZ(3)), false),
+                ("dataran", gm.City.places["Dataran"] + Vector3.up * 0.2f, true),
+                ("petaling", gm.City.places["Pasar"] + Vector3.up * 0.2f, true),
+                ("chowkit", gm.City.places["ChowKit"] + Vector3.up * 0.2f, true),
+                ("kampung", new Vector3(CityBuilder.RoadX(9), 0.3f, CityBuilder.RoadZ(17)), false),
             };
             int city = 99, kampung = 0;
             foreach (var (name, at, isCity) in spots)
@@ -811,8 +946,9 @@ namespace KampungRun.Tests
             var gm = GameManager.I;
             Skip();
             var p = gm.Player;
-            // no traffic: a car ramming the test car mid-measurement throws the reading
+            // no traffic and no crowd: a car ramming the test car, or a pedestrian caught under it, throws the reading
             gm.trafficCount = 0;
+            gm.cityDensity = 0f;
             foreach (var t in Object.FindObjectsByType<Vehicle>(FindObjectsSortMode.None)) Object.Destroy(t.gameObject);
             var worst = "";
             float worstGap = 9f;
@@ -822,7 +958,9 @@ namespace KampungRun.Tests
                 yield return Frames(2);
                 foreach (var id in new[] { "myvi", "saga", "kancil", "van", "hilux", "teksi", "polis" })
                 {
-                    var start = new Vector3(CityBuilder.RoadX(1) + 2.5f, 0.6f, CityBuilder.RoadZ(1) + 8f);
+                    var start = South(12, 1, 2.5f, 8f);
+                    foreach (var ped in new System.Collections.Generic.List<Pedestrian>(Pedestrian.All))
+                        if (ped && Vector3.Distance(ped.transform.position, start) < 15f) Object.Destroy(ped.gameObject);
                     p.Teleport(start + Vector3.right * 9f, Quaternion.identity);   // stand clear of where the car lands
                     yield return Frames(2);
                     var v = gm.SummonCar(id, start, Quaternion.identity);
@@ -858,7 +996,15 @@ namespace KampungRun.Tests
                         float g = RoofGap(v, crown[k], up, Vector3.Dot(headBone, up));
                         if (g < gap) { gap = g; at = crown[k]; }
                     }
-                    Debug.Log($"[ROOF] {cid} in {id}: {gap * 100f:F0} cm headroom at={v.transform.InverseTransformPoint(at)}");
+                    Debug.Log($"[ROOF] {cid} in {id}: {gap * 100f:F0} cm headroom at={v.transform.InverseTransformPoint(at)} state={StateName(p.GetComponentInChildren<Animator>())}");
+                    // where the body is, in the car's frame
+                    var an = p.GetComponentInChildren<Animator>();
+                    if (an && an.isHuman)
+                    {
+                        string Bone(HumanBodyBones hb) { var t = an.GetBoneTransform(hb); return t ? v.transform.InverseTransformPoint(t.position).ToString("F2") : "-"; }
+                        Debug.Log($"[ROOF]   {cid} bones: hips={Bone(HumanBodyBones.Hips)} head={Bone(HumanBodyBones.Head)} lfoot={Bone(HumanBodyBones.LeftFoot)} " +
+                                  $"model at {v.transform.InverseTransformPoint(an.transform.position):F2} scale={an.transform.lossyScale.y:F2}");
+                    }
                     // close-up of the roofline from the driver's side, level with the head
                     var cc = ChaseCamera.I;
                     cc.enabled = false;
@@ -893,8 +1039,8 @@ namespace KampungRun.Tests
             Skip();
             var p = gm.Player;
             var cc = ChaseCamera.I;
-            var at = CityBuilder.BlockCenter(4, 2) + new Vector3(-19f, 0.2f, 0);
-            var ped = PedestrianSpawner.Spawn(at, new Rect(at.x - 20, at.z - 20, 40, 40), gm.transform, "chr_townman");
+            var at = CityBuilder.BlockCenter(11, 2) + new Vector3(-CityBuilder.Block * 0.5f + 1.8f, 0.2f, 0);   // the west pavement
+            var ped = PedestrianSpawner.Spawn(at, Box(at, 20f), gm.transform, "chr_townman");
             ped.enabled = true;
             yield return Frames(3);
             var start = ped.transform.position;
@@ -928,14 +1074,17 @@ namespace KampungRun.Tests
             Skip();
             var p = gm.Player;
             var cc = ChaseCamera.I;
-            Assert.AreEqual(9, CityBuilder.NX);
+            Assert.AreEqual(18, CityBuilder.NX);
             foreach (var place in new[] { "BatuCaves", "TuguNegara", "Pavilion", "Merdeka118", "StadiumMerdeka", "TheanHou", "IstanaNegara", "Masjid" })
             {
                 Assert.IsTrue(gm.City.places.ContainsKey(place), $"{place} missing");
                 var at = gm.City.places[place];
-                p.Teleport(at + new Vector3(0, 0.2f, 2f), Quaternion.Euler(0, 180, 0));
+                // the real-KL places sit at the kerb facing their landmark; the outlying ones on the road north of it
+                bool real = CityBuilder.InsidePatch(at);
+                float yaw = real ? gm.City.facings[place].eulerAngles.y : 180f;
+                p.Teleport(at + (real ? Vector3.up * 0.2f : new Vector3(0, 0.2f, 2f)), Quaternion.Euler(0, yaw + 180f, 0));
                 cc.target = p.transform; cc.targetBody = null;
-                cc.yaw = place == "Masjid" ? 90f : 180f; cc.pitch = place == "Merdeka118" ? 22f : 14f;
+                cc.yaw = yaw; cc.pitch = place == "Merdeka118" ? 22f : 14f;
                 cc.distance = place == "Merdeka118" ? 40f : 24f;
                 yield return Seconds(1f);
                 Shot($"9_{place}");
@@ -944,7 +1093,7 @@ namespace KampungRun.Tests
 
         /// <summary>Drop a car on every road segment and bridge; it must settle on top of the
         /// visible road surface (y ~ 0), never half-sunk into it.</summary>
-        [UnityTest]
+        [UnityTest, Timeout(900000)]
         public IEnumerator CarsRideOnRoadSurface()
         {
             GameState.Ephemeral = true;
@@ -958,55 +1107,112 @@ namespace KampungRun.Tests
             for (int i = 0; i <= CityBuilder.NX; i++)
                 for (int k = 0; k <= CityBuilder.NZ; k++)
                 {
+                    // grid roads only run between cells that aren't the same real-KL district
+                    // (flyover spans are checked on their decks below, roundabouts on their ring)
+                    bool ns = k < CityBuilder.NZ && CityBuilder.NSRoad(i, k) && !CityBuilder.OnFlyover(true, i, k);
+                    bool ew = i < CityBuilder.NX && CityBuilder.EWRoad(k, i) && !CityBuilder.OnFlyover(false, i, k);
+                    bool junction = ns || ew || (k > 0 && CityBuilder.NSRoad(i, k - 1)) || (i > 0 && CityBuilder.EWRoad(k, i - 1));
+                    if (!junction) continue;
                     var n = new Vector3(CityBuilder.RoadX(i), 0, CityBuilder.RoadZ(k));
-                    spots.Add((n, 0f));                                                  // intersection
-                    foreach (float d in new[] { 9f, 27f, 45f })
+                    if (CityBuilder.IsRoundabout(i, k)) spots.Add((n + new Vector3(17.5f, 0.22f, 0f), 0f));   // on the ring (its deck is 0.22 up)
+                    else spots.Add((n, 0f));                                                                // intersection
+                    foreach (float d in new[] { 27f, 63f })
                     {
-                        if (i < CityBuilder.NX) spots.Add((n + new Vector3(d, 0, 2.5f), 90f));   // E-W segments (bridges too)
-                        if (k < CityBuilder.NZ) spots.Add((n + new Vector3(2.5f, 0, d), 0f));   // N-S segments
+                        if (ew) spots.Add((n + new Vector3(d, 0, 2.5f), 90f));   // E-W segments (bridges too)
+                        if (ns) spots.Add((n + new Vector3(2.5f, 0, d), 0f));   // N-S segments
                     }
                 }
+            int gridSpots = spots.Count;
+            // the real-KL streets: a spread of their graph nodes (flyover decks and ramps too), the car
+            // lined up with the street. Their surface is at the node's height.
+            var picked = new System.Collections.Generic.List<Vector3>();
+            foreach (var sp in spots) picked.Add(sp.p);          // (junctions on a patch's edge count as its nodes too)
+            foreach (var node in gm.City.roads.nodes)
+            {
+                if (node.links.Count == 0 || (!CityBuilder.InsidePatch(node.pos) && node.pos.y < 0.5f)) continue;
+                bool clash = false;
+                foreach (var q in picked) if ((q - node.pos).sqrMagnitude < 40f * 40f) { clash = true; break; }
+                if (clash) continue;
+                picked.Add(node.pos);
+                var dir = node.links[0].pos - node.pos; dir.y = 0;
+                spots.Add((node.pos, dir.sqrMagnitude > 0.01f ? Quaternion.LookRotation(dir).eulerAngles.y : 0f));
+            }
+            Debug.Log($"[Sink] {gridSpots} grid spots, {spots.Count - gridSpots} real-KL street spots");
             // clear traffic so no test car lands on a passing one
             foreach (var t in Object.FindObjectsByType<Vehicle>(FindObjectsSortMode.None)) Object.Destroy(t.gameObject);
             gm.enabled = false;
             yield return Frames(2);
             var bad = new System.Collections.Generic.List<string>();
-            var cars = new System.Collections.Generic.List<(Vehicle v, Vector3 at)>();
-            foreach (var s in spots)
+            var rides = new System.Collections.Generic.List<(float ride, Vector3 at)>();
+            int shots = 0;
+            // in batches: a thousand parked Sagas at once is a physics test of its own
+            for (int b0 = 0; b0 < spots.Count; b0 += 300)
             {
-                var v = VehicleSpawner.Spawn("saga", s.p + Vector3.up * 1.2f, Quaternion.Euler(0, s.yaw, 0), VehicleRole.Parked);
-                v.driver = null;
-                cars.Add((v, s.p));
+                var cars = new System.Collections.Generic.List<(Vehicle v, Vector3 at)>();
+                for (int j = b0; j < Mathf.Min(spots.Count, b0 + 300); j++)
+                {
+                    var s = spots[j];
+                    var v = VehicleSpawner.Spawn("saga", s.p + Vector3.up * 1.2f, Quaternion.Euler(0, s.yaw, 0), VehicleRole.Parked);
+                    v.driver = null;
+                    cars.Add((v, s.p));
+                }
+                yield return Seconds(2.5f);
+                foreach (var (v, at) in cars)
+                {
+                    // ride height over the surface right under where it came to rest
+                    var cp = v.transform.position;
+                    float ground = at.y;
+                    if (Physics.Raycast(cp + Vector3.up * 3f, Vector3.down, out var under, 12f, ~(1 << Layers.Vehicle), QueryTriggerInteraction.Ignore))
+                        ground = under.point.y;
+                    float ride = cp.y - ground;
+                    rides.Add((ride, at));
+                    if (Mathf.Abs(ride) > 0.08f && shots < 6)
+                    {
+                        // look at what it is perched on
+                        Debug.Log($"[Sink] off: {at} car at {v.transform.position} up={v.transform.up} moved {Vector3.Distance(new Vector3(at.x, 0, at.z), new Vector3(v.transform.position.x, 0, v.transform.position.z)):F1} m");
+                        var cam = Camera.main.transform;
+                        ChaseCamera.I.enabled = false;
+                        cam.position = v.transform.position + new Vector3(-7f, 4f, -7f);
+                        cam.LookAt(v.transform.position);
+                        Shot($"99_sink_{shots++}");
+                        ChaseCamera.I.enabled = true;
+                    }
+                }
+                foreach (var (v, at) in cars) Object.DestroyImmediate(v.gameObject);
+                yield return null;
             }
-            yield return Seconds(2.5f);
-            // every car should settle at the same ride height as on an ordinary road tile
-            var ys = cars.ConvertAll(c => c.v.transform.position.y);
+            // every car should settle at the same ride height above the street as on an ordinary road tile
+            var ys = rides.ConvertAll(c => c.ride);
             ys.Sort();
             float median = ys[ys.Count / 2], worst = ys[0];
-            foreach (var (v, at) in cars)
+            for (int ri = 0; ri < rides.Count; ri++)
             {
-                float y = v.transform.position.y;
-                Object.DestroyImmediate(v.gameObject);
-                if (Mathf.Abs(y - median) > 0.08f)
+                var (ride, at) = rides[ri];
+                // grid roads are flat; a real-KL street can leave a car a little tilted on a kerb or ramp foot
+                if (Mathf.Abs(ride - median) > (ri < gridSpots ? 0.08f : 0.15f))
                 {
                     string what = "";
                     foreach (var h in Physics.OverlapBox(at + Vector3.up * 1f, new Vector3(1.2f, 1f, 2.6f), Quaternion.identity, ~0,
                                  QueryTriggerInteraction.Ignore))
                         what += $" [{h.transform.root.name}/{h.transform.parent?.name}/{h.name} {h.GetType().Name} top={h.bounds.max.y:F2}]";
-                    bad.Add($"{at} y={y:F2}{what}");
+                    // and what the car came to rest on
+                    if (Physics.Raycast(at + Vector3.up * (ride + 3f), Vector3.down, out var rest, ride + 6f, ~(1 << Layers.Vehicle), QueryTriggerInteraction.Ignore))
+                        what += $" resting on {rest.collider.transform.parent?.name}/{rest.collider.name} at y={rest.point.y:F2}";
+                    bad.Add($"{at} ride={ride:F2}{what}");
                 }
             }
-            // and at speed: flat out along the whole E-W avenue (over the bridge). Ride height
-            // must hold at top speed - downforce used to bottom the suspension out.
+            // and at speed: flat out along the whole E-W avenue north of the old town (over both
+            // rivers). Ride height must hold at top speed - downforce used to bottom the suspension out.
             foreach (var id in new[] { "saga", "basmini", "bike" })
             {
-                var start = new Vector3(CityBuilder.RoadX(0) + 8f, 0.6f, CityBuilder.RoadZ(3) + 2.5f);
+                int avenue = CityBuilder.Layout.north_row;
+                var start = new Vector3(CityBuilder.RoadX(0) + 8f, 0.6f, CityBuilder.RoadZ(avenue) + 2.5f);
                 var car = VehicleSpawner.Spawn(id, start, Quaternion.Euler(0, 90, 0), VehicleRole.Player);
                 car.driver = new ScriptedDriver();
                 yield return Seconds(1f);                                  // settle from the drop
                 float restY = car.transform.position.y, minY = 9f, minX = 0f, topSpeed = 0f;
                 float endX = CityBuilder.RoadX(CityBuilder.NX) - 8f, t0 = Time.time;
-                while (car.transform.position.x < endX && Time.time - t0 < 30f * CityBuilder.WorldScale)
+                while (car.transform.position.x < endX && Time.time - t0 < 60f * CityBuilder.WorldScale)
                 {
                     var cp = car.transform.position;
                     if (cp.y < minY) { minY = cp.y; minX = cp.x; }
@@ -1018,7 +1224,7 @@ namespace KampungRun.Tests
                 if (car.transform.position.x < endX - 1f) bad.Add($"{id} didn't make it across the map");
                 Object.DestroyImmediate(car.gameObject);
             }
-            Debug.Log($"[Sink] {cars.Count} spots, median y={median:F2}, worst y={worst:F2}, off={bad.Count}\n" + string.Join("\n", bad));
+            Debug.Log($"[Sink] {rides.Count} spots, median ride={median:F2}, worst={worst:F2}, off={bad.Count}\n" + string.Join("\n", bad));
             Assert.IsEmpty(bad, "cars sink into the road at: " + string.Join("; ", bad));
         }
 
@@ -1051,7 +1257,7 @@ namespace KampungRun.Tests
             Assert.Less(Mathf.Abs(p.transform.position.y - y0), 1.5f, "player not grounded");
 
             // punch a pedestrian placed right in front of us
-            var ped = PedestrianSpawner.Spawn(p.transform.position + p.transform.forward * 1.1f, new Rect(p.transform.position.x - 20, p.transform.position.z - 20, 40, 40), gm.transform);
+            var ped = PedestrianSpawner.Spawn(p.transform.position + p.transform.forward * 1.1f, Box(p.transform.position, 20f), gm.transform);
             yield return Frames(3);
             var pedStart = ped.transform.position;
             p.DebugPunch(3);
@@ -1098,8 +1304,9 @@ namespace KampungRun.Tests
             var cc = ChaseCamera.I;
             var pivot = new GameObject("pivot").transform;
             pivot.position = new Vector3(0, 0, 0);
-            cc.target = pivot; cc.targetBody = null; cc.distance = 330f; cc.pitch = 50f; cc.yaw = 20f;
-            RenderSettings.fogEndDistance = 1200f; RenderSettings.fogStartDistance = 900f;
+            cc.target = pivot; cc.targetBody = null; cc.distance = 1300f; cc.pitch = 50f; cc.yaw = 20f;
+            Camera.main.farClipPlane = 4000f;
+            RenderSettings.fogEndDistance = 3500f; RenderSettings.fogStartDistance = 2500f;
             yield return Frames(3);
             Shot("05_map_overview");
             cc.distance = 90f; cc.pitch = 15f; cc.yaw = 60f;

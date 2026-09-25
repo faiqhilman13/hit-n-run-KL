@@ -26,18 +26,19 @@ RED, TEAL, YELLOW, INK, WHITE = (216, 50, 42), (19, 144, 143), (255, 214, 58), (
 
 # (shot folder, first frame, last frame (None = all), caption, landmark stamp)
 SHOTS = [
-    ("01_cruise", 0, None, "Drive a Myvi through KL (badly)", None),
-    ("02_drift", 0, None, "Drift it. Smoke it. Skid it.", None),
+    ("00_aerial", 0, None, "The real KL - rebuilt from the map", None),
+    ("01_cruise", 0, None, "Up the flyover in a Myvi", None),
+    ("02_drift", 0, None, "Drift round the bulatan", None),
     ("03_lineup", 0, None, "Myvi  -  Saga  -  Kancil  -  Alphard  -  Hilux  -  Kapcai", None),
     ("04_door", 0, None, "Doors swing. Drivers sit. Everything bounces.", None),
     ("05_bop", 0, None, "Bop the pakciks - they always get back up", None),
-    ("06_kapcai", 0, None, "Weave through traffic on a kapcai", None),
+    ("06_kapcai", 0, None, "Weave under the flyovers on a kapcai", None),
     ("07_batu", 0, None, None, "BATU CAVES"),
     ("08_merdeka118", 0, None, None, "MERDEKA 118"),
     ("09_klcc", 0, 54, None, "KLCC"),
-    ("10_theanhou", 0, None, None, "THEAN HOU"),
+    ("10_masjidnegara", 0, None, None, "MASJID NEGARA"),
     ("11_jamek", 0, None, None, "MASJID JAMEK"),
-    ("12_istana", 0, None, None, "ISTANA NEGARA"),
+    ("12_kltower", 0, None, None, "MENARA KL"),
     ("13_night", 0, None, "Day to night", None),
 ]
 TITLE_S, END_S = 2.6, 4.2

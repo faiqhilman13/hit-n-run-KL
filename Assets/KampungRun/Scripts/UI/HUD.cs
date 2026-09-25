@@ -60,7 +60,10 @@ namespace KampungRun
 
         // menu
         GameObject _menuPanel;
-        Text _menuTitle, _menuHint;
+        Text _menuTitle, _menuHint, _footnote;
+
+        /// <summary>A small line in the bottom corner (map data credit on the title screen); null clears it.</summary>
+        public void Footnote(string text) { if (_footnote) _footnote.text = text ?? ""; }
         readonly List<Text> _menuItems = new List<Text>();
         List<string> _menuOptions;
         Action<int> _menuPick;
@@ -235,6 +238,8 @@ namespace KampungRun
             _prompt = Label("Prompt", _root, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 150), new Vector2(900, 40), 26, Paper, TextAnchor.MiddleCenter, true);
             _district = Label("District", _root, new Vector2(0, 0), new Vector2(0, 0), new Vector2(30, 272), new Vector2(600, 50), 34, Paper, TextAnchor.LowerLeft, true);
             _toast = Label("Toast", _root, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -210), new Vector2(900, 40), 26, Gold, TextAnchor.MiddleCenter, true);
+            _footnote = Label("Footnote", _root, new Vector2(1, 0), new Vector2(1, 0), new Vector2(-14, 8), new Vector2(700, 24), 15, Ink, TextAnchor.LowerRight, false);
+            _footnote.text = "";
 
             // speedo + car health (bottom-right)
             var sp = Panel("Speedo", _root, new Vector2(1, 0), new Vector2(1, 0), new Vector2(-24, 24), new Vector2(220, 86), Paper);
@@ -300,7 +305,7 @@ namespace KampungRun
             _mapCam.targetTexture = rt;
             _mapCam.clearFlags = CameraClearFlags.SolidColor;
             _mapCam.backgroundColor = new Color(0.9f, 0.87f, 0.78f);
-            _mapCam.farClipPlane = 800f;
+            _mapCam.farClipPlane = 1000f;
             _mapCam.cullingMask = ~((1 << Layers.Character) | (1 << Layers.Pickup));
             _mapCam.depth = -10;
             var data = UnityEngine.Rendering.Universal.CameraExtensions.GetUniversalAdditionalCameraData(_mapCam);
@@ -316,7 +321,7 @@ namespace KampungRun
             if (!on) return;
             var cam = Camera.main;
             float yaw = cam ? cam.transform.eulerAngles.y : 0f;
-            _mapCam.transform.SetPositionAndRotation(p.Focus + Vector3.up * 200f, Quaternion.Euler(90f, yaw, 0f));
+            _mapCam.transform.SetPositionAndRotation(new Vector3(p.Focus.x, 600f, p.Focus.z), Quaternion.Euler(90f, yaw, 0f));   // above Merdeka 118
             _mapCam.orthographicSize = p.Driving ? 150f : 85f;
             float heading = p.Driving ? p.vehicle.transform.eulerAngles.y : p.transform.eulerAngles.y;
             _mapPlayer.localRotation = Quaternion.Euler(0, 0, -(heading - yaw));

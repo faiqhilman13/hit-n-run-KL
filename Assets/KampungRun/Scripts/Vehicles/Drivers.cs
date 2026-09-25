@@ -68,6 +68,7 @@ namespace KampungRun
     public abstract class AIDriver : IDriver
     {
         protected float stuckTime, reverseTime;
+        protected static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
         public float speedScale = 1f;
         public bool avoid = true;
 
@@ -136,20 +137,32 @@ namespace KampungRun
                     if (d > best) { best = d; _to = l; }
                 }
             }
-            Vector3 flatPos = v.transform.position; flatPos.y = 0;
-            float segLen = Vector3.Distance(_from.pos, _to.pos);
-            float t = Mathf.Clamp01(Vector3.Dot(flatPos - _from.pos, (_to.pos - _from.pos).normalized) / segLen);
-            // look-ahead on the lane
-            Vector3 target = _roads.LanePoint(_from.pos, _to.pos, Mathf.Min(1f, t + 12f / segLen));
-            if ((flatPos - _to.pos).magnitude < 10f)
+            // everything in plan: flyover decks are just higher nodes
+            Vector3 flatPos = Flat(v.transform.position), from = Flat(_from.pos), to = Flat(_to.pos);
+            float segLen = Mathf.Max(0.5f, Vector3.Distance(from, to));
+            float t = Mathf.Clamp01(Vector3.Dot(flatPos - from, (to - from).normalized) / segLen);
+            bool twoWay = RoadNetwork.TwoWay(_from, _to);
+            // look-ahead on the lane (into the next street once this one is nearly done)
+            Vector3 target = _roads.LanePoint(from, to, Mathf.Min(1f, t + 12f / segLen), twoWay);
+            float arrive = _to.junction ? 9f : 6f;
+            if ((flatPos - to).magnitude < arrive || t >= 0.999f)
             {
                 var next = _roads.NextFrom(_to, _from);
                 _from = _to;
                 _to = next;
-                target = _roads.LanePoint(_from.pos, _to.pos, 0.25f);
+                from = Flat(_from.pos); to = Flat(_to.pos);
+                target = _roads.LanePoint(from, to, 0.35f, RoadNetwork.TwoWay(_from, _to));
             }
-            float nearEnd = Vector3.Distance(flatPos, _to.pos);
-            float speed = nearEnd < 20f ? cruise * 0.6f : cruise;
+            // ease off for intersections and sharp bends, not every bend node on a curving street
+            float nearEnd = Vector3.Distance(flatPos, to);
+            float speed = cruise;
+            if (nearEnd < 20f && _to.junction) speed = cruise * 0.6f;
+            else if (nearEnd < 14f && _to.links.Count > 0)
+            {
+                var after = _to.links[0] == _from && _to.links.Count > 1 ? _to.links[1] : _to.links[0];
+                float turn = Vector3.Angle(to - from, Flat(after.pos) - to);
+                if (turn > 35f) speed = cruise * 0.65f;
+            }
             SteerTo(v, target, speed, out throttle, out steer, out handbrake);
         }
     }
@@ -182,16 +195,20 @@ namespace KampungRun
 
         public override void Drive(Vehicle v, out float throttle, out float steer, out bool handbrake)
         {
-            var flat = v.transform.position; flat.y = 0;
-            if (_to == null) { _from = _roads.Nearest(flat); _to = PickAway(_from, null); }
-            if ((flat - _to.pos).magnitude < 11f)
+            var flat = Flat(v.transform.position);
+            if (_to == null) { _from = _roads.Nearest(v.transform.position); _to = PickAway(_from, null); }
+            if ((flat - Flat(_to.pos)).magnitude < 11f)
             {
                 var next = PickAway(_to, _from);
                 _from = _to;
                 _to = next;
             }
-            var target = _roads.LanePoint(_from.pos, _to.pos, 0.85f);
-            float d = PlayerController.I ? Vector3.Distance(PlayerController.I.Focus, flat) : 100f;
+            // look a little way down the street (patch streets bend every few metres)
+            Vector3 a = Flat(_from.pos), b = Flat(_to.pos);
+            float len = Mathf.Max(0.5f, Vector3.Distance(a, b));
+            float t = Mathf.Clamp01(Vector3.Dot(flat - a, (b - a) / len) / len + 10f / len);
+            var target = _roads.LanePoint(a, b, t, RoadNetwork.TwoWay(_from, _to));
+            float d = PlayerController.I ? Vector3.Distance(Flat(PlayerController.I.Focus), flat) : 100f;
             SteerTo(v, target, d < 40f ? cruise * 1.15f : cruise, out throttle, out steer, out handbrake);
         }
 
@@ -203,7 +220,7 @@ namespace KampungRun
             foreach (var l in at.links)
             {
                 if (l == prev && at.links.Count > 1) continue;
-                float score = Vector3.Distance(l.pos, p) + Random.Range(0f, 40f);
+                float score = Vector3.Distance(Flat(l.pos), Flat(p)) + Random.Range(0f, 40f);
                 if (score > bestScore) { bestScore = score; best = l; }
             }
             return best ?? at;

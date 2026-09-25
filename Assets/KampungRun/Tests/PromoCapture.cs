@@ -27,13 +27,6 @@ namespace KampungRun.Tests
         string _dir;
         int _n;
 
-        class Drv : IDriver
-        {
-            public float throttle = 1f, steer;
-            public bool handbrake;
-            public void Drive(Vehicle v, out float t, out float s, out bool hb) { t = throttle; s = steer; hb = handbrake; }
-        }
-
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
         static void Skip() { HUD.I.DebugSkipDialogue(); GameInput.Locked = false; }
 
@@ -83,10 +76,17 @@ namespace KampungRun.Tests
             yield return Frames(10);
         }
 
-        void ClearLane(float z, float halfWidth)
+        /// <summary>Where a real-KL landmark stands (its model's footprint centre, at street level) and how tall it is.</summary>
+        static Vector3 Landmark(string name, out float height)
         {
-            foreach (var v in Object.FindObjectsByType<Vehicle>(FindObjectsSortMode.None))
-                if (v.role == VehicleRole.Traffic && Mathf.Abs(v.transform.position.z - z) < halfWidth) Object.Destroy(v.gameObject);
+            var go = GameObject.Find("Landmark_" + name);
+            height = 0f;
+            if (!go) { Debug.LogWarning($"[Promo] no landmark {name}"); return Vector3.zero; }
+            var rs = go.GetComponentsInChildren<Renderer>();
+            var b = rs[0].bounds;
+            foreach (var r in rs) b.Encapsulate(r.bounds);
+            height = b.size.y;
+            return new Vector3(b.center.x, 0f, b.center.z);
         }
 
         Transform Pivot(Vector3 at)
@@ -122,7 +122,7 @@ namespace KampungRun.Tests
             var cc = ChaseCamera.I;
             foreach (var id in new[] { "myvi", "hilux" })
             {
-                var at = CityBuilder.BlockCenter(0, 1) + new Vector3(0f, 0.9f, 0f);      // the open padang
+                var at = GameManager.I.City.places["Padang"] + new Vector3(0f, 0.9f, 0f);      // the open padang
                 foreach (var t in Object.FindObjectsByType<Vehicle>(FindObjectsSortMode.None))
                     if (Vector3.Distance(t.transform.position, at) < 25f) Object.Destroy(t.gameObject);
                 var car = VehicleSpawner.Spawn(id, at, Quaternion.Euler(0, 0, 0), VehicleRole.Parked);
@@ -158,6 +158,99 @@ namespace KampungRun.Tests
             Time.captureFramerate = 0;
         }
 
+        /// <summary>
+        /// Drives a real road route the way the traffic AI steers, so a promo drive stays on the street
+        /// instead of ending in a lamp post. The director can pull the handbrake mid-shot.
+        /// </summary>
+        class RoadDrv : IDriver
+        {
+            public readonly RouteDriver route;
+            public bool handbrake;
+            public RoadDrv(List<Vector3> pts, float speed, int next) { route = new RouteDriver(pts, speed) { arriveRadius = 7f, index = next }; }
+            public void Drive(Vehicle v, out float t, out float s, out bool hb)
+            {
+                route.Drive(v, out t, out s, out hb);
+                if (handbrake) { hb = true; t = Mathf.Max(t, 0.5f); }
+            }
+        }
+
+        static Vector3 J(int i, int k) => GameManager.I.City.roads.Nearest(new Vector3(CityBuilder.RoadX(i), 0f, CityBuilder.RoadZ(k)), true).pos;
+
+        /// <summary>The point `along` metres down a route, the way it faces there and the index of the point after it.</summary>
+        static Vector3 Along(List<Vector3> pts, float along, out Vector3 fwd, out int next)
+        {
+            float acc = 0f;
+            for (int i = 1; i < pts.Count; i++)
+            {
+                float seg = Vector3.Distance(pts[i - 1], pts[i]);
+                if (acc + seg >= along)
+                {
+                    fwd = pts[i] - pts[i - 1]; fwd.y = 0; fwd.Normalize();
+                    next = i;
+                    return Vector3.Lerp(pts[i - 1], pts[i], (along - acc) / Mathf.Max(seg, 0.01f));
+                }
+                acc += seg;
+            }
+            fwd = Vector3.forward; next = pts.Count - 1;
+            return pts[pts.Count - 1];
+        }
+
+        /// <summary>How far down a route its first raised point (the foot of a flyover) is.</summary>
+        static float RampAlong(List<Vector3> pts)
+        {
+            float acc = 0f;
+            for (int i = 1; i < pts.Count; i++)
+            {
+                acc += Vector3.Distance(pts[i - 1], pts[i]);
+                if (pts[i].y > 0.5f) return acc;
+            }
+            return acc * 0.5f;
+        }
+
+        /// <summary>A route resampled every 4 m with a sideways sine on it: lane to lane on a kapcai.</summary>
+        static List<Vector3> Weave(List<Vector3> pts, float amp, float wavelength)
+        {
+            var o = new List<Vector3>();
+            float acc = 0f;
+            for (int i = 1; i < pts.Count; i++)
+            {
+                var a = pts[i - 1]; var b = pts[i];
+                var d = b - a; d.y = 0;
+                float len = d.magnitude;
+                if (len < 0.01f) continue;
+                var left = new Vector3(-d.z, 0, d.x) / len;
+                for (float s = 0f; s < len; s += 4f, acc += 4f)
+                    o.Add(Vector3.Lerp(a, b, s / len) + left * Mathf.Sin(acc / wavelength * Mathf.PI * 2f) * amp);
+            }
+            o.Add(pts[pts.Count - 1]);
+            return o;
+        }
+
+        /// <summary>No traffic anywhere near the route (a promo drive never meets anyone head-on).</summary>
+        static void ClearRoute(List<Vector3> pts, float radius, Vehicle keep)
+        {
+            foreach (var v in Object.FindObjectsByType<Vehicle>(FindObjectsSortMode.None))
+            {
+                if (v == keep || v.role != VehicleRole.Traffic) continue;
+                foreach (var q in pts)
+                    if ((v.transform.position - q).sqrMagnitude < radius * radius) { Object.Destroy(v.gameObject); break; }
+            }
+        }
+
+        /// <summary>Put the player in a car `along` metres down a route, driving it at `speed`.</summary>
+        IEnumerator DriveRoute(string car, List<Vector3> pts, float along, float speed, System.Action<Vehicle, RoadDrv> ready)
+        {
+            var gm = GameManager.I;
+            var at = Along(pts, along, out var fwd, out int next);
+            ClearRoute(pts, 16f, null);
+            var v = gm.SummonCar(car, at + Vector3.up * 0.6f, Quaternion.LookRotation(fwd));
+            yield return Frames(12);
+            gm.Player.EnterVehicle(v, true);
+            var d = new RoadDrv(pts, speed, next);
+            v.driver = d;
+            ready(v, d);
+        }
+
         [UnityTest]
         public IEnumerator RecordPromo()
         {
@@ -169,36 +262,73 @@ namespace KampungRun.Tests
             var gm = GameManager.I;
             var p = gm.Player;
             var cc = ChaseCamera.I;
-            float laneZ = CityBuilder.RoadZ(3) + 2.5f;
-            ClearLane(CityBuilder.RoadZ(3), 8f);
+            var roads = gm.City.roads;
 
-            // --- 1. cruise: a red Myvi down the avenue, weaving a little
-            var myvi = gm.SummonCar("myvi", new Vector3(CityBuilder.RoadX(3) + 6f, 0.6f, laneZ), Quaternion.Euler(0, 90, 0));
-            yield return Frames(15);
-            p.EnterVehicle(myvi, true);
-            var drv = new Drv();
-            myvi.driver = drv;
-            cc.distance = 6.5f;
-            cc.SnapBehind();
-            yield return Frames(45);                                     // get up to speed off camera
-            yield return Shot("01_cruise", 4.2f, t => drv.steer = Mathf.Sin(t * Mathf.PI * 2f) * 0.18f);
-
-            // --- 2. drift: handbrake flick, smoke and skid marks
-            cc.pitch = 20f;
-            yield return Shot("02_drift", 3.0f, t =>
+            // --- 0. the real KL from the air: over Masjid Jamek where the rivers meet, on toward Merdeka 118
             {
-                drv.steer = t < 0.55f ? 1f : -0.5f;
-                drv.handbrake = t > 0.08f && t < 0.6f;
-                drv.throttle = 1f;
-            });
-            drv.handbrake = false;
-            p.ExitVehicle(false, true);
-            Object.Destroy(myvi.gameObject);
-            yield return Frames(3);
+                var jamek = Landmark("MasjidJamek", out _);
+                var m118 = Landmark("Merdeka118", out float m118H);
+                cc.enabled = false;
+                var cam = Camera.main.transform;
+                float fs = RenderSettings.fogStartDistance, fe = RenderSettings.fogEndDistance;
+                RenderSettings.fogStartDistance = fs * 2.5f; RenderSettings.fogEndDistance = fe * 2.5f;
+                Vector3 a0 = jamek + new Vector3(-230f, 175f, 190f), a1 = jamek + new Vector3(70f, 150f, -40f);
+                Vector3 l0 = jamek, l1 = m118 + Vector3.up * m118H * 0.18f;
+                yield return Shot("00_aerial", 5.5f, t =>
+                {
+                    float e = t * t * (3f - 2f * t);
+                    cam.position = Vector3.Lerp(a0, a1, e);
+                    cam.LookAt(Vector3.Lerp(l0, l1, e));
+                });
+                RenderSettings.fogStartDistance = fs; RenderSettings.fogEndDistance = fe;
+                cc.enabled = true;
+            }
 
-            // --- 3. showroom dolly along the Malaysian cars
+            // --- 1. cruise: a red Myvi up the Jalan Kuching flyover (it follows the road, like traffic does)
+            {
+                var route = roads.Route(new List<Vector3> { J(3, 14), J(3, 19) });
+                Vehicle myvi = null; RoadDrv drv = null;
+                yield return DriveRoute("myvi", route, 100f, 17f, (v, d) => { myvi = v; drv = d; });
+                cc.distance = 6.5f; cc.pitch = 12f;
+                cc.SnapBehind();
+                yield return Frames(40);                                     // get up to speed off camera
+                yield return Shot("01_cruise", 5.5f, t => ClearRoute(route, 16f, myvi));
+                p.ExitVehicle(false, true);
+                Object.Destroy(myvi.gameObject);
+                yield return Frames(3);
+            }
+
+            // --- 2. drift round a bulatan: handbrake pulses on the ring, smoke and skid marks
+            {
+                var hub = new Vector3(CityBuilder.RoadX(10), 0f, CityBuilder.RoadZ(1));
+                var route = roads.Route(new List<Vector3> { J(10, 0), hub + new Vector3(0f, 0.22f, -17.5f), hub + new Vector3(-17.5f, 0.22f, 0f),
+                                                            hub + new Vector3(0f, 0.22f, 17.5f), J(11, 1) });
+                Debug.Log($"[Promo] drift route {route.Count} points from {route[0]} to {route[route.Count - 1]}");
+                Vehicle car = null; RoadDrv drv = null;
+                yield return DriveRoute("myvi", route, 72f, 13f, (v, d) => { car = v; drv = d; });
+                cc.distance = 8f; cc.pitch = 22f;
+                cc.SnapBehind();
+                yield return Frames(24);
+                float ringT = 0f;
+                yield return Shot("02_drift", 5.5f, t =>
+                {
+                    ClearRoute(route, 16f, car);
+                    var flat = car.transform.position - hub; flat.y = 0;
+                    bool onRing = flat.magnitude < 23f;
+                    if (onRing) ringT += 1f / FPS;
+                    drv.handbrake = onRing && ringT % 0.9f < 0.45f;
+                    cc.pitch = 22f;
+                });
+                drv.handbrake = false;
+                Debug.Log($"[Promo] drift ended at {car.transform.position} (ring centre {hub})");
+                p.ExitVehicle(false, true);
+                Object.Destroy(car.gameObject);
+                yield return Frames(3);
+            }
+
+            // --- 3. showroom dolly along the Malaysian cars (under the Sungai Besi flyover)
             var ids = new[] { "myvi", "saga", "kancil", "van", "hilux", "kapcai", "teksi", "polis" };
-            var row = new Vector3(CityBuilder.RoadX(4) + 2.5f, 0.6f, CityBuilder.RoadZ(2) + 5f);
+            var row = new Vector3(CityBuilder.RoadX(12) + 2.5f, 0.6f, CityBuilder.RoadZ(2) + 12f);
             foreach (var t in Object.FindObjectsByType<Vehicle>(FindObjectsSortMode.None))
                 if (Vector3.Distance(t.transform.position, row) < 60f) Object.Destroy(t.gameObject);
             var parked = new List<Vehicle>();
@@ -238,8 +368,8 @@ namespace KampungRun.Tests
             yield return Frames(3);
 
             // --- 5. bopping: jab, jab, big one, kick - they topple and get back up
-            var bopAt = CityBuilder.BlockCenter(4, 3) + new Vector3(-CityBuilder.Block * 0.5f + 1.8f, 0.2f, 4f);   // the west sidewalk
-            var ped = PedestrianSpawner.Spawn(bopAt, new Rect(bopAt.x - 20, bopAt.z - 20, 40, 40), gm.transform, "chr_pakcik");
+            var bopAt = CityBuilder.BlockCenter(11, 3) + new Vector3(-CityBuilder.Block * 0.5f + 1.8f, 0.2f, 4f);   // the west sidewalk
+            var ped = PedestrianSpawner.Spawn(bopAt, WalkZone.FromRect(new Rect(bopAt.x - 20, bopAt.z - 20, 40, 40), 0f), gm.transform, "chr_pakcik");
             p.Teleport(bopAt - Vector3.forward * 1.1f, Quaternion.LookRotation(Vector3.forward));
             cc.target = p.transform; cc.targetBody = null;
             cc.distance = 4.6f; cc.pitch = 8f; cc.yaw = 60f;
@@ -262,51 +392,54 @@ namespace KampungRun.Tests
             });
             if (ped) Object.Destroy(ped.gameObject);
 
-            // --- 6. kapcai weaving between lanes, leaning into every turn
-            float bikeZ = CityBuilder.RoadZ(4) + 6f;                         // room to weave across the lanes
-            ClearLane(CityBuilder.RoadZ(4), 8f);
-            var bike = gm.SummonCar("kapcai", new Vector3(CityBuilder.RoadX(3) + 6f, 0.6f, bikeZ), Quaternion.Euler(0, 90, 0));
-            yield return Frames(15);
-            p.EnterVehicle(bike, true);
-            var bd = new Drv { throttle = 0.9f };
-            bike.driver = bd;
-            cc.distance = 4.8f; cc.pitch = 10f;
-            cc.SnapBehind();
-            yield return Frames(40);
-            yield return Shot("06_kapcai", 4.0f, t => bd.steer = Mathf.Sin(t * Mathf.PI * 4f) * 0.34f);   // lane to lane, not onto the kerb
-            p.ExitVehicle(false, true);
-            Object.Destroy(bike.gameObject);
+            // --- 6. kapcai weaving lane to lane down a Chow Kit street, under the Jalan Kuching flyover
+            {
+                var route = Weave(roads.Route(new List<Vector3> { J(0, 16), J(6, 16) }), 1.3f, 30f);
+                Vehicle bike = null; RoadDrv drv = null;
+                yield return DriveRoute("kapcai", route, 288f, 14f, (v, d) => { bike = v; drv = d; });
+                cc.distance = 4.8f; cc.pitch = 10f;
+                cc.SnapBehind();
+                yield return Frames(40);
+                yield return Shot("06_kapcai", 4.5f, t => ClearRoute(route, 14f, bike));
+                p.ExitVehicle(false, true);
+                Object.Destroy(bike.gameObject);
+            }
 
-            // --- 7. landmarks fly-arounds (landmark blocks face +Z; their place marker is on the road in front)
+            // --- 7. landmarks fly-arounds. The outlying landmark blocks face +Z with their place marker on
+            // the road in front; the real-KL ones are framed on their models.
             const float L = CityBuilder.LandmarkScale;                                   // landmarks are laid out and scaled by this
             Vector3 C(string place, float back = 24.5f) => gm.City.places[place] - new Vector3(0, 0, back * L);
             p.Teleport(CityBuilder.BlockCenter(0, 0) + Vector3.up * 0.3f, Quaternion.identity);   // out of shot (on the map)
             yield return Orbit("07_batu", C("BatuCaves") + new Vector3(0, 0, 16f * L), 3.0f, 30f * L, 14f, 150f, 50f, 7f * L);
-            yield return Orbit("08_merdeka118", C("Merdeka118"), 3.0f, 120f * L, 2f, 200f, -40f, 55f * L);
-            yield return Orbit("09_klcc", gm.City.places["Towers"] + new Vector3(0, 0, 21f * L), 3.0f, 150f * L, 16f, 215f, 40f, 75f * L);
-            yield return Orbit("10_theanhou", C("TheanHou"), 2.6f, 38f * L, 12f, 145f, 45f, 7f * L);
-            yield return Orbit("11_jamek", gm.City.places["Masjid"] + new Vector3(18f * L, 0, 0), 2.6f, 36f * L, 10f, 60f, 45f, 6f * L);
-            yield return Orbit("12_istana", C("IstanaNegara"), 2.6f, 40f * L, 10f, 205f, -45f, 7f * L);
+            var m118b = Landmark("Merdeka118", out float m118Hb);
+            yield return Orbit("08_merdeka118", m118b, 3.0f, m118Hb * 0.62f, 2f, 200f, -40f, m118Hb * 0.3f);
+            var klcc = Landmark("Petronas", out float klccH);
+            yield return Orbit("09_klcc", klcc, 3.0f, klccH * 0.95f, 16f, 215f, 40f, klccH * 0.35f);
+            var negara = Landmark("MasjidNegara", out float negaraH);
+            yield return Orbit("10_masjidnegara", negara, 2.8f, 120f, 20f, 150f, 45f, negaraH * 0.25f);
+            var jamekB = Landmark("MasjidJamek", out float jamekH);
+            yield return Orbit("11_jamek", jamekB, 2.6f, 60f, 12f, 60f, 45f, jamekH * 0.4f);
+            var tower = Landmark("KLTower", out float towerH);
+            yield return Orbit("12_kltower", tower, 2.8f, towerH * 0.75f, 4f, 240f, -40f, towerH * 0.34f);
 
-            // ================================================================ night, Adik's Kancil
+            // ================================================================ night, Adik's Kancil over the Jalan Ampang flyover
             yield return LoadLevel(4);
             gm = GameManager.I;
             p = gm.Player;
             cc = ChaseCamera.I;
-            ClearLane(CityBuilder.RoadZ(3), 8f);
-            var kancil = gm.SummonCar("kancil", new Vector3(CityBuilder.RoadX(3) + 6f, 0.6f, laneZ), Quaternion.Euler(0, 90, 0));
-            yield return Frames(15);
-            p.EnterVehicle(kancil, true);
-            var kd = new Drv();
-            kancil.driver = kd;
-            cc.distance = 6f; cc.pitch = 10f;
-            cc.SnapBehind();
-            yield return Frames(45);
-            yield return Shot("13_night", 3.5f, t =>
             {
-                kd.steer = t > 0.55f && t < 0.8f ? 0.9f : 0f;
-                kd.handbrake = t > 0.6f && t < 0.78f;
-            });
+                var route = gm.City.roads.Route(new List<Vector3> { J(11, 15), J(14, 15), J(16, 15), J(18, 15) });   // over the flyover, not round it
+                Debug.Log($"[Promo] night route {route.Count} points from {route[0]} to {route[route.Count - 1]}");
+                Vehicle kancil = null; RoadDrv drv = null;
+                // (the avenue goes round Bukit Nanas first: start just short of the flyover, whatever the way there)
+                yield return DriveRoute("kancil", route, RampAlong(route) - 25f, 15f, (v, d) => { kancil = v; drv = d; });
+                cc.distance = 6f; cc.pitch = 10f;
+                cc.SnapBehind();
+                yield return Frames(45);
+                Debug.Log($"[Promo] night start {kancil.transform.position}");
+                yield return Shot("13_night", 4.5f, t => ClearRoute(route, 16f, kancil));
+                Debug.Log($"[Promo] night end {kancil.transform.position}");
+            }
 
             Time.captureFramerate = 0;
             _rt.Release();

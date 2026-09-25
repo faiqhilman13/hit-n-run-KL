@@ -19,16 +19,22 @@ namespace KampungRun
         Vector3 _baseLocal;
         float _offset;
 
-        void Awake()
+        void Awake() => Bind();
+
+        /// <summary>Find the posed model and its hips (again, after the character has been swapped).</summary>
+        void Bind()
         {
             var a = GetComponentInChildren<Animator>();
-            if (a && a.isHuman) _hips = a.GetBoneTransform(HumanBodyBones.Hips);
+            _hips = a && a.isHuman ? a.GetBoneTransform(HumanBodyBones.Hips) : null;
             _model = a ? a.transform : null;          // the posed model (moved up/down as a whole)
             if (_model) _baseLocal = _model.localPosition;
+            _offset = 0f;
         }
 
         void LateUpdate()
         {
+            // the player swaps bodies between levels (and costumes): follow the new one
+            if (!_model || !_hips) Bind();
             if (!_model || !_hips) return;
             float want = 0f;
             if (seat && weight > 0.001f)

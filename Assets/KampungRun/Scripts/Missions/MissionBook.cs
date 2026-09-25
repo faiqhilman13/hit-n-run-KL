@@ -29,7 +29,13 @@ namespace KampungRun
 
         static Vector3 P(string key) => _city.places.TryGetValue(key, out var p) ? p : Vector3.zero;
         static Line L(string who, string text) => new Line(who, text);
-        static Vector3 N(int i, int k) => new Vector3(CityBuilder.RoadX(i), 0.3f, CityBuilder.RoadZ(k));
+        /// <summary>A spot on the pavement by a place (in the real-KL districts places sit at the kerb),
+        /// optionally a few metres along it.</summary>
+        static Vector3 Walk(Vector3 p, float along = 0f) => CityBuilder.InsidePatch(p) ? _city.Sidewalk(p, along) : p;
+        /// <summary>The street by a named place: race checkpoints and chase routes run along the roads.</summary>
+        static Vector3 Rd(string key) => _city.roads.Nearest(P(key), true).pos;
+        /// <summary>The grid crossroads of north-south road i and east-west road k.</summary>
+        static Vector3 J(int i, int k) => _city.roads.Nearest(new Vector3(CityBuilder.RoadX(i), 0f, CityBuilder.RoadZ(k)), true).pos;
 
         static readonly Dictionary<string, Color> Black = new Dictionary<string, Color>
         {
@@ -114,21 +120,21 @@ namespace KampungRun
             Npc("tokketua", "Tok Ketua", "chr_pakcik", P("Surau"), 180, "Assalamualaikum. Kampung kita ni makin pelik sejak MegaMaju datang.");
             Npc("anneh", "Anneh Mamak", "chr_townman", P("MamakCounter"), 0, "Teh tarik satu? Roti canai kosong? Boleh boss!",
                 new Dictionary<string, Color> { ["BatikBlue"] = new Color(0.95f, 0.95f, 0.92f), ["Pants"] = new Color(0.35f, 0.4f, 0.6f) });
-            Npc("auntypasar", "Aunty Pasar", "chr_townaunty", P("Pasar") + new Vector3(-12, 0, 0), 90, "Murah murah! Sayur segar!");
-            Npc("inspektor", "Inspektor Rosli", "chr_polis", P("Dataran"), 180, "Saya perhatikan kamu. Jangan buat kacau di KL.");
+            Npc("auntypasar", "Aunty Pasar", "chr_townaunty", Walk(P("Pasar"), -10f), 90, "Murah murah! Sayur segar!");
+            Npc("inspektor", "Inspektor Rosli", "chr_polis", Walk(P("Dataran")), 180, "Saya perhatikan kamu. Jangan buat kacau di KL.");
             Npc("matrempit", "Mat Rempit", "chr_along", P("Padang") + new Vector3(0, 0, -18), 0, "Weh, nak lumba ke tak?",
                 new Dictionary<string, Color> { ["TshirtRed"] = new Color(0.15f, 0.15f, 0.18f), ["Shorts"] = new Color(0.25f, 0.4f, 0.8f) });
-            Npc("pakciktaksi", "Pakcik Teksi", "chr_pakcik", P("Dataran") + new Vector3(6, 0, 4), 180, "Teksi, teksi! Meter? Tak payah la meter.",
+            Npc("pakciktaksi", "Pakcik Teksi", "chr_pakcik", Walk(P("Dataran"), 8f), 180, "Teksi, teksi! Meter? Tak payah la meter.",
                 new Dictionary<string, Color> { ["White"] = new Color(0.8f, 0.3f, 0.25f) });
-            Npc("profkassim", "Prof. Kassim", "chr_pakcik", P("KLTower"), 180, "Menurut kajian saya... sesuatu tak kena dengan cendol itu.",
+            Npc("profkassim", "Prof. Kassim", "chr_pakcik", Walk(P("KLTower")), 180, "Menurut kajian saya... sesuatu tak kena dengan cendol itu.",
                 new Dictionary<string, Color> { ["White"] = new Color(0.97f, 0.97f, 0.97f), ["Sarong"] = new Color(0.4f, 0.4f, 0.45f), ["Songkok"] = new Color(0.8f, 0.8f, 0.8f) });
-            Npc("rival", "Joe Bintang", "chr_along", P("BukitBintang"), 90, "Kau? Lawan aku? Hahaha.",
+            Npc("rival", "Joe Bintang", "chr_along", Walk(P("BukitBintang")), 90, "Kau? Lawan aku? Hahaha.",
                 new Dictionary<string, Color> { ["TshirtRed"] = new Color(0.95f, 0.85f, 0.2f), ["Shorts"] = new Color(0.1f, 0.1f, 0.1f) });
             // Chow Kit regulars (Tahap 5 cast, from the KL handoff)
             Npc("mei", "Mei", "chr_mei", ck + new Vector3(-4, 0, 3), 90, "Mee hailam, kopi peng, semua ada!");
             Npc("ravi", "Ravi", "chr_ravi", ck + new Vector3(5, 0, -3), 270, "Semua aku kira. Semua.");
             if (player != "aiman") Npc("aiman", "Aiman", "chr_aiman", ck + new Vector3(0, 0, 6), 180, "Order lagi? Jom!");
-            if (level == 4) Npc("datuk", "Datuk Mega", "chr_datukmega", P("Towers"), 180, "Hmph.");
+            if (level == 4) Npc("datuk", "Datuk Mega", "chr_datukmega", Walk(P("Towers"), 5f), 180, "Hmph.");
         }
 
         // ------------------------------------------------------------------ Tahap 1
@@ -188,13 +194,13 @@ namespace KampungRun
                    L("", "TAHAP 1 SELESAI... tapi misteri Cendol Ajaib baru bermula.")),
                 new GetInCarObjective("Naik kereta"),
                 new FollowObjective("Ikut van hitam, jangan sampai hilang!", "van",
-                    new List<Vector3> { N(2, 4), N(4, 4), N(4, 2), N(5, 2), N(5, 3) }, 80f),
-                new DestroyObjective("Van tu nampak kita! Rosakkan van tu!", "van", N(5, 3), 100, 1.1f, 17f),
+                    new List<Vector3> { J(9, 16), Rd("Masjid"), Rd("Dataran"), Rd("PasarSeni") }, 80f),
+                new DestroyObjective("Van tu nampak kita! Rosakkan van tu!", "van", Rd("PasarSeni"), 100, 1.1f, 17f),
                 new CollectObjective("Ambil tin cendol yang tercicir", "Prop_CendolCrate", new List<Vector3> { P("PasarSeni") + Vector3.up * 0.3f }),
                 new GoToObjective(P("HomeYard"), "Bawa balik ke rumah", 0)));
 
             b.race = RaceMission("Lumba Kampung", "matrempit", 60,
-                new List<Vector3> { N(1, 1), N(4, 1), N(4, 3), N(1, 3) }, 2, "kancil", "teksi", "kereta");
+                new List<Vector3> { J(8, 14), J(10, 14), J(10, 17), J(8, 17) }, 2, "kancil", "teksi", "kereta");
             return b;
         }
 
@@ -227,7 +233,7 @@ namespace KampungRun
                    L("Along", "Wah, besarnya. Macam mana nak masuk?")),
                 new GetInCarObjective("Naik kereta"),
                 new FollowObjective("Ikut teksi tu", "teksi",
-                    new List<Vector3> { N(3, 3), N(3, 5), N(5, 5), N(5, 6) }, 80f),
+                    new List<Vector3> { Rd("Mamak"), J(11, 17), Rd("Towers") }, 80f),
                 new GoToObjective(P("Towers"), "Intai Menara Kembar", 0)));
 
             b.story.Add(M("Bubur Lambuk", "tokketua", 100,
@@ -251,7 +257,7 @@ namespace KampungRun
                     L("Pak Mat", "Cen... cendol... eh? TEH TARIK!"))));
 
             b.race = RaceMission("Teksi Rush", "pakciktaksi", 80,
-                new List<Vector3> { N(3, 4), N(6, 4), N(6, 1), N(3, 1) }, 2, "teksi", "teksi", "kancil");
+                new List<Vector3> { Rd("Dataran"), Rd("Masjid"), Rd("Pasar"), Rd("PasarSeni") }, 2, "teksi", "teksi", "kancil");
             return b;
         }
 
@@ -269,7 +275,7 @@ namespace KampungRun
                 Ls(L("Joe Bintang", "Hmph. Okay, okay. Ada saintis gila dekat Menara KL, Prof. Kassim. Dia tahu semua."),
                    L("Along", "Terima kasih, 'champion'.")),
                 new GetInCarObjective("Naik kereta"),
-                new RaceObjective("Menang perlumbaan!", new List<Vector3> { N(6, 1), N(6, 5), N(4, 5), N(4, 1) }, 1, "saga_rempit", "saga_rempit")));
+                new RaceObjective("Menang perlumbaan!", new List<Vector3> { Rd("BukitBintang"), J(14, 14), Rd("Towers"), J(18, 14) }, 1, "saga_rempit", "saga_rempit")));
 
             b.story.Add(M("Hantar Adik Mengaji", "maksom", 75,
                 Ls(L("Mak Som", "Along, hantar Adik pergi mengaji dekat surau. Lepas tu jemput dia di padang."),
@@ -304,7 +310,7 @@ namespace KampungRun
                 new DestroyObjective("Rosakkan van pemancar!", "van", P("BukitBintang"), 160, 1.5f, 21f)));
 
             b.race = RaceMission("Lumba Jambatan", "matrempit", 100,
-                new List<Vector3> { N(1, 0), N(4, 0), N(4, 6), N(1, 6) }, 1, "saga_rempit", "kancil", "van");
+                new List<Vector3> { J(7, 15), J(11, 15), J(11, 18), J(7, 18) }, 1, "saga_rempit", "kancil", "van");
             return b;
         }
 
@@ -360,7 +366,7 @@ namespace KampungRun
                     L("Datuk Mega", "Mustahil... dikalahkan oleh... budak tadika..."))));
 
             b.race = RaceMission("Lumba Malam KL", "rival", 150,
-                new List<Vector3> { N(3, 0), N(7, 0), N(7, 6), N(3, 6) }, 2, "polis", "limo", "saga_rempit");
+                new List<Vector3> { Rd("Towers"), Rd("KLTower"), Rd("Merdeka118"), Rd("BukitBintang") }, 1, "polis", "limo", "saga_rempit");
             return b;
         }
 
@@ -399,7 +405,7 @@ namespace KampungRun
                 Ls(L("Aiman", "Gudang dekat Pasar Seni. Penuh peti 'CENDOL AJAIB 2.0'. Datuk Mega ada peminat rupanya.")),
                 new GetInCarObjective("Naik motor"),
                 new FollowObjective("Ikut van Ekspres, jangan terlepas", "van",
-                    new List<Vector3> { N(3, 5), N(3, 3), N(4, 3), N(4, 2) }, 70f),
+                    new List<Vector3> { Rd("ChowKit"), J(7, 14), Rd("Masjid"), Rd("PasarSeni") }, 70f),
                 new GoToObjective(P("PasarSeni"), "Intai gudang Pasar Seni", 0)));
 
             b.story.Add(M("Burung Kamera Pasar", "ravi", 100,
@@ -422,17 +428,26 @@ namespace KampungRun
                     L("Mei", "Aiman, kau memang penghantar paling laju di KL."))));
 
             b.race = RaceMission("Lumba Penghantar", "matrempit", 120,
-                new List<Vector3> { N(2, 5), N(5, 5), N(5, 3), N(2, 3) }, 2, "bike", "kancil", "teksi");
+                new List<Vector3> { J(1, 16), J(4, 16), J(4, 18), J(1, 18) }, 2, "bike", "kancil", "teksi");
             return b;
         }
 
         static Mission RaceMission(string title, string giver, int reward, List<Vector3> cps, int laps, params string[] rivals)
         {
+            // the start line: on the street the course comes in by, 30 m before the first checkpoint
+            var lead = _city.roads.Route(new List<Vector3> { cps[cps.Count - 1], cps[0] });
+            var start = lead[0];
+            float back = 0f;
+            for (int i = lead.Count - 1; i > 0; i--)
+            {
+                back += Vector3.Distance(lead[i], lead[i - 1]);
+                if (back >= 30f) { start = Vector3.Lerp(lead[i - 1], lead[i], (back - 30f) / Mathf.Max(0.01f, Vector3.Distance(lead[i], lead[i - 1]))); break; }
+            }
             var m = M(title, giver, reward,
                 Ls(L("", $"{title}: {cps.Count} checkpoint, {laps} pusingan. Menang tempat pertama!")),
                 Ls(L("", "Juara jalanan KL!")),
                 new GetInCarObjective("Naik kereta untuk berlumba"),
-                new GoToObjective(cps[cps.Count - 1] + (cps[0] - cps[cps.Count - 1]).normalized * 20f, "Pergi ke garisan mula", 0, true, 10f),
+                new GoToObjective(start, "Pergi ke garisan mula", 0, true, 10f),
                 new RaceObjective("Menang perlumbaan!", cps, laps, rivals));
             m.isRace = true;
             return m;

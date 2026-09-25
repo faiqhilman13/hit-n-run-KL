@@ -76,7 +76,7 @@ namespace KampungRun
         readonly float _radius;
         readonly bool _needCar;
         public GoToObjective(Vector3 pos, string text, float time = 0, bool needCar = false, float radius = 7f)
-        { _pos = pos; this.text = text; timeLimit = time; _needCar = needCar; _radius = radius; }
+        { _pos = pos; this.text = text; timeLimit = time; _needCar = needCar; _radius = needCar ? Mathf.Max(radius, 9f) : radius; }   // a car pulls up at the kerb, not on it
         public override Vector3? Target => _pos;
 
         public override bool Tick(MissionManager m, float dt)
@@ -164,7 +164,13 @@ namespace KampungRun
         public override void Begin(MissionManager m)
         {
             var node = GameManager.I.City.roads.Nearest(_spawn);
-            target = VehicleSpawner.Spawn(_car, node.pos + Vector3.up * 0.6f, Quaternion.identity, VehicleRole.MissionTarget, m.transform);
+            var face = Quaternion.identity;
+            if (node.links.Count > 0)
+            {
+                var dir = node.links[0].pos - node.pos; dir.y = 0;
+                if (dir.sqrMagnitude > 0.01f) face = Quaternion.LookRotation(dir);
+            }
+            target = VehicleSpawner.Spawn(_car, node.pos + Vector3.up * 0.6f, face, VehicleRole.MissionTarget, m.transform);
             if (_paint != null) ModelFactory.Recolor(target.gameObject, _paint);
             target.maxHealth = target.health = target.maxHealth * _healthMult;
             target.noEnter = true;
@@ -185,7 +191,7 @@ namespace KampungRun
     public class FollowObjective : Objective
     {
         readonly string _car;
-        readonly List<Vector3> _route;
+        readonly List<Vector3> _stops;
         readonly float _maxDist;
         readonly Dictionary<string, Color> _paint;
         Vehicle _target;
@@ -193,22 +199,24 @@ namespace KampungRun
         float _lostTime;
         bool _started;
 
-        public FollowObjective(string text, string car, List<Vector3> route, float maxDist = 70f, Dictionary<string, Color> paint = null)
-        { this.text = text; _car = car; _route = route; _maxDist = maxDist; _paint = paint; }
+        /// <param name="stops">where the car goes; it drives the streets between them</param>
+        public FollowObjective(string text, string car, List<Vector3> stops, float maxDist = 70f, Dictionary<string, Color> paint = null)
+        { this.text = text; _car = car; _stops = stops; _maxDist = maxDist; _paint = paint; }
 
         public override Vector3? Target => _target ? _target.transform.position : (Vector3?)null;
         public override string Progress => _lostTime > 0 ? $"HILANG! {Mathf.CeilToInt(5f - _lostTime)}" : null;
 
         public override void Begin(MissionManager m)
         {
-            var start = _route[0];
-            var dir = (_route.Count > 1 ? _route[1] - start : Vector3.forward);
+            var route = GameManager.I.City.roads.Route(_stops);
+            var start = route[0];
+            var dir = (route.Count > 1 ? route[1] - start : Vector3.forward);
             dir.y = 0;
             _target = VehicleSpawner.Spawn(_car, start + Vector3.up * 0.6f, Quaternion.LookRotation(dir), VehicleRole.MissionTarget, m.transform);
             if (_paint != null) ModelFactory.Recolor(_target.gameObject, _paint);
             _target.noEnter = true;
             _target.maxHealth = _target.health = 9999f;
-            _driver = new RouteDriver(_route.GetRange(1, _route.Count - 1), 13f);
+            _driver = new RouteDriver(route.GetRange(1, route.Count - 1), 13f);
             // rubber band: slow down if the player falls behind
             _driver.speedOverride = () =>
             {
@@ -244,6 +252,7 @@ namespace KampungRun
         readonly string[] _rivals;
         readonly List<Vehicle> _opponents = new List<Vehicle>();
         readonly List<RouteDriver> _drivers = new List<RouteDriver>();
+        readonly List<List<int>> _marks = new List<List<int>>();    // per rival: where each checkpoint falls on its route
         int _next;
         int _total;
 
@@ -255,33 +264,69 @@ namespace KampungRun
 
         public override void Begin(MissionManager m)
         {
+            var roads = GameManager.I.City.roads;
             _total = _checkpoints.Count * _laps;
-            var full = new List<Vector3>();
-            for (int l = 0; l < _laps; l++) full.AddRange(_checkpoints);
+            // line the rivals up on the street behind the start, the way the course comes in
+            var lead = roads.Route(new List<Vector3> { _checkpoints[_checkpoints.Count - 1], _checkpoints[0] });
             var start = P.Focus;
-            var fwd = (_checkpoints[0] - start); fwd.y = 0; fwd.Normalize();
-            var side = Vector3.Cross(Vector3.up, fwd);
+            int at = 0;
+            for (int j = 1; j < lead.Count; j++)
+                if ((lead[j] - start).sqrMagnitude < (lead[at] - start).sqrMagnitude) at = j;
             for (int i = 0; i < _rivals.Length; i++)
             {
-                var pos = start + side * (i % 2 == 0 ? -4.5f : 4.5f) - fwd * (6f + i * 5f) + Vector3.up * 0.6f;
+                var pos = Back(lead, at, 8f + i * 7f, out var fwd);
+                pos += Vector3.Cross(Vector3.up, fwd) * (i % 2 == 0 ? -1.3f : 1.3f) + Vector3.up * 0.6f;
                 var v = VehicleSpawner.Spawn(_rivals[i], pos, Quaternion.LookRotation(fwd), VehicleRole.MissionTarget, m.transform);
                 v.noEnter = true;
-                var d = new RouteDriver(new List<Vector3>(full), 15f + i * 1.5f) { arriveRadius = 10f };
+                var stops = new List<Vector3> { pos };
+                for (int l = 0; l < _laps; l++) stops.AddRange(_checkpoints);
+                var marks = new List<int>();
+                var d = new RouteDriver(roads.Route(stops, false, marks, 1.2f + (i % 2) * 2f), 15f + i * 1.5f) { arriveRadius = 8f };
                 // rubber-band the AI so races stay close
                 var vv = v;
                 float f = 1f + 0.04f * i;
+                int ri = _marks.Count;
                 d.speedOverride = () =>
                 {
                     float gap = Vector3.Distance(vv.transform.position, P.Focus);
-                    bool ahead = d.index > _next || (d.index == _next && Dist(vv.transform.position) < Dist(P.Focus));
+                    int done = Passed(ri);
+                    bool ahead = done > _next || (done == _next && Dist(vv.transform.position) < Dist(P.Focus));
                     return (ahead ? (gap > 40 ? 13f : 18f) : (gap > 40 ? 30f : 22f)) * f;
                 };
                 v.driver = d;
                 _opponents.Add(v);
                 _drivers.Add(d);
+                _marks.Add(marks);
             }
             SamanMeter.I.suppressed = true;
             m.RaceBeacons(_checkpoints);
+        }
+
+        /// <summary>The point dist metres back along a route from index i, and the way it faces.</summary>
+        static Vector3 Back(List<Vector3> route, int i, float dist, out Vector3 fwd)
+        {
+            fwd = Vector3.forward;
+            if (route.Count < 2) return route.Count > 0 ? route[0] : Vector3.zero;
+            i = Mathf.Clamp(i, 1, route.Count - 1);
+            while (true)
+            {
+                var seg = route[i] - route[i - 1];
+                seg.y = 0;
+                float len = seg.magnitude;
+                if (len > 0.01f) fwd = seg / len;
+                if (dist <= len || i == 1) return route[i] - fwd * Mathf.Min(dist, len);
+                dist -= len;
+                i--;
+            }
+        }
+
+        /// <summary>How many checkpoints rival i has been through.</summary>
+        int Passed(int i)
+        {
+            int n = 0;
+            var marks = _marks[i];
+            while (n < marks.Count && marks[n] < _drivers[i].index) n++;
+            return n;
         }
 
         float Dist(Vector3 p) => _next < _total ? Vector3.Distance(p, _checkpoints[_next % _checkpoints.Count]) : 0;
@@ -293,7 +338,8 @@ namespace KampungRun
             for (int i = 0; i < _drivers.Count; i++)
             {
                 if (!_opponents[i]) continue;
-                float them = _drivers[i].index * 10000f - (_drivers[i].index < _total ? Vector3.Distance(_opponents[i].transform.position, _checkpoints[_drivers[i].index % _checkpoints.Count]) : 0);
+                int done = Passed(i);
+                float them = done * 10000f - (done < _total ? Vector3.Distance(_opponents[i].transform.position, _checkpoints[done % _checkpoints.Count]) : 0);
                 if (them > me) place++;
             }
             return place;

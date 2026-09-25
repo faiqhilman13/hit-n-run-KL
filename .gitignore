@@ -50,3 +50,15 @@ __pycache__/
 /Tools/promo_frames/
 /Tools/promo_out/
 /Tools/_*.jpg
+
+# ---- real-KL map pipeline (Tools/klmap): the generated patches in Resources/KLMap are committed; the inputs
+#      are fetched again by fetch_osm.py / fetch_extra.py, and the satellite reference (Esri World Imagery,
+#      used only to eyeball the layout) must never be redistributed
+/Tools/klmap/tiles/
+/Tools/klmap/*.jpg
+/Tools/klmap/*.png
+/Tools/klmap/kl_osm*.json
+/Tools/klmap/out/
+/Tools/klmap/fix_p*.py
+/Tools/klmap/probe.py
+/Tools/klmap/probe[0-9].py

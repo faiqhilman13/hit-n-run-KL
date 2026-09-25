@@ -61,3 +61,5 @@ Progress saves in your browser.
 **Genre:** Action
 
 > Made with Unity and Blender. All characters, buildings and signs are original. The game is not affiliated with any TV show, game or real business.
+>
+> The streets, rivers and buildings round the big landmarks are built from map data © OpenStreetMap contributors (ODbL, openstreetmap.org/copyright).
