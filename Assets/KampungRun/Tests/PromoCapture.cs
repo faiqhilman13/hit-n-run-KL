@@ -30,7 +30,7 @@ namespace KampungRun.Tests
         static IEnumerator Frames(int n) { for (int i = 0; i < n; i++) yield return null; }
         static void Skip() { HUD.I.DebugSkipDialogue(); GameInput.Locked = false; }
 
-        void Grab()
+        void Grab(string file = null)
         {
             var cam = Camera.main;
             var req = new UniversalRenderPipeline.SingleCameraRequest { destination = _rt };
@@ -41,7 +41,7 @@ namespace KampungRun.Tests
             _tex.ReadPixels(new Rect(0, 0, W, H), 0, 0);
             _tex.Apply(false);
             RenderTexture.active = prev;
-            File.WriteAllBytes(Path.Combine(_dir, $"{_n++:D5}.jpg"), _tex.EncodeToJPG(93));
+            File.WriteAllBytes(Path.Combine(_dir, file ?? $"{_n++:D5}.jpg"), _tex.EncodeToJPG(93));
         }
 
         /// <summary>PROMO_ONLY=01_family,07_police re-records just those shots (the rest still play, unrecorded, so every shot starts the same way).</summary>
@@ -104,18 +104,30 @@ namespace KampungRun.Tests
             return t;
         }
 
+        /// <summary>
+        /// Fly round a landmark. The camera is placed directly: the chase camera's wall check would pull it in
+        /// against the landmark itself (that turned the KLCC shot into one tower wall). The haze is pushed back
+        /// past the landmark for the shot.
+        /// </summary>
         IEnumerator Orbit(string name, Vector3 focus, float seconds, float dist, float pitch, float yaw0, float sweep, float height = 0f)
         {
             var cc = ChaseCamera.I;
-            var piv = Pivot(focus + Vector3.up * height);
-            cc.target = piv; cc.targetBody = null; cc.height = 0f;
-            cc.distance = dist; cc.pitch = pitch; cc.yaw = yaw0;
-            cc.SnapBehind();
-            cc.yaw = yaw0;
+            cc.enabled = false;
+            var cam = Camera.main.transform;
+            var piv = focus + Vector3.up * height;
+            float fs = RenderSettings.fogStartDistance, fe = RenderSettings.fogEndDistance;
+            float k = Mathf.Max(1f, dist * 1.1f / fs);
+            RenderSettings.fogStartDistance = fs * k; RenderSettings.fogEndDistance = fe * k;
+            void Place(float t)
+            {
+                cam.position = piv + Quaternion.Euler(pitch, yaw0 + sweep * t, 0) * Vector3.back * dist;
+                cam.rotation = Quaternion.LookRotation(piv - cam.position);
+            }
+            Place(0f);
             yield return Frames(3);
-            yield return Shot(name, seconds, t => { cc.yaw = yaw0 + sweep * t; cc.pitch = pitch; cc.distance = dist; });
-            Object.Destroy(piv.gameObject);
-            cc.height = 1.6f;
+            yield return Shot(name, seconds, Place);
+            RenderSettings.fogStartDistance = fs; RenderSettings.fogEndDistance = fe;
+            cc.enabled = true;
         }
 
         /// <summary>Frame-by-frame look at getting in and out of a car (for checking the motion).</summary>
@@ -163,6 +175,120 @@ namespace KampungRun.Tests
                 Object.Destroy(car.gameObject);
                 yield return Frames(3);
             }
+            Time.captureFramerate = 0;
+        }
+
+        /// <summary>Sits still with the wheel turned (for looking at the driver's hands).</summary>
+        class HoldDrv : IDriver
+        {
+            public float steer;
+            public void Drive(Vehicle v, out float t, out float s, out bool hb) { t = 0f; s = steer; hb = true; }
+        }
+
+        /// <summary>
+        /// Close-ups of drivers' hands on the steering wheel in every car (Tools/promo_frames/x_hands): through the
+        /// windscreen, from the promo's tracking camera, and with the body hidden (_x) for a clear look; with the
+        /// sitting clip's own arms (clip), gripping at a few clock positions (g95/g90/g85), and turned right.
+        /// </summary>
+        [UnityTest, Timeout(900000)]
+        public IEnumerator RecordDriverHands()
+        {
+            _rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };
+            _tex = new Texture2D(W, H, TextureFormat.RGB24, false);
+            yield return LoadLevel(1);
+            var gm = GameManager.I;
+            var p = gm.Player;
+            _dir = Path.Combine(Root, "x_hands");
+            if (Directory.Exists(_dir)) Directory.Delete(_dir, true);
+            Directory.CreateDirectory(_dir);
+            ChaseCamera.I.enabled = false;
+            var cam = Camera.main.transform;
+            var at = gm.City.places["Padang"] + new Vector3(0f, 0.9f, 0f);      // the open padang
+            // HANDS_WHO / HANDS_CARS narrow it down while tuning
+            string Env(string k, string d) => string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(k)) ? d : System.Environment.GetEnvironmentVariable(k);
+            foreach (var who in Env("HANDS_WHO", "pakmat,maksom,adik").Split(','))
+            {
+                if (who != "pakmat") p.SetCharacter(who);
+                foreach (var id in Env("HANDS_CARS", "saga,myvi,kancil,kereta,hilux,limo,polis,teksi").Split(','))
+                {
+                    foreach (var t in Object.FindObjectsByType<Vehicle>(FindObjectsSortMode.None))
+                        if (Vector3.Distance(t.transform.position, at) < 25f) Object.Destroy(t.gameObject);
+                    var car = VehicleSpawner.Spawn(id, at, Quaternion.identity, VehicleRole.Parked);
+                    yield return Frames(20);
+                    p.EnterVehicle(car, true);
+                    var hold = new HoldDrv();
+                    car.driver = hold;
+                    yield return Frames(15);
+                    car.Body.constraints = RigidbodyConstraints.FreezeAll;                 // it drifts off the padang otherwise
+                    var wheel = ModelFactory.Find(car.gameObject, "SteeringWheel");
+                    if (!wheel)
+                    {
+                        Debug.LogWarning($"[Hands] {id}: no steering wheel");
+                        p.ExitVehicle(false, true);
+                        Object.Destroy(car.gameObject);
+                        yield return Frames(3);
+                        continue;
+                    }
+                    var ct = car.transform;
+                    var body = new List<Renderer>();
+                    foreach (var r in car.GetComponentsInChildren<Renderer>())                // (the driver sits in the car's hierarchy)
+                        if (r.enabled && !r.transform.IsChildOf(wheel) && !r.transform.IsChildOf(p.transform)) body.Add(r);
+                    void View(string view)
+                    {
+                        bool xray = view.EndsWith("_x");
+                        foreach (var r in body) r.enabled = !xray;
+                        var hub = wheel.position;
+                        cam.position = view.StartsWith("front") ? hub + ct.forward * 1.25f + ct.up * 0.3f + ct.right * 0.25f
+                                     : view.StartsWith("side") ? hub + ct.right * 1.35f + ct.up * 0.15f - ct.forward * 0.3f
+                                     : hub + ct.forward * 3.4f + ct.right * 1.6f + ct.up * 0.45f;           // the promo's tracking camera
+                        cam.rotation = Quaternion.LookRotation(hub - ct.forward * 0.15f - cam.position);
+                    }
+                    var variants = new[] { ("clip", false, 9f, 0f), ("g95", true, 9.5f, 0f), ("g90", true, 9f, 0f), ("g85", true, 8.5f, 0f), ("right", true, 9f, 1f) };
+                    var restRot = wheel.rotation;
+                    foreach (var (tag, grip, clock, steer) in variants)
+                    {
+                        SeatFit.GripWheel = grip;
+                        SeatFit.GripClock = clock;
+                        hold.steer = steer;
+                        yield return Frames(25);
+                        if (tag == "g90") restRot = wheel.rotation;
+                        if (tag == "right")
+                        {
+                            // which way did the wheel (its bottom spoke) and the hands go? (car-local: +x = the driver's right)
+                            var an = p.GetComponentInChildren<Animator>();
+                            var down = ct.InverseTransformDirection(wheel.rotation * Quaternion.Inverse(restRot) * -ct.up);
+                            Debug.Log($"[Hands] {who} {id} steer right: SteerVisual {car.SteerVisual:F2} bottom spoke now {down.ToString("F2")} " +
+                                      $"handL {ct.InverseTransformPoint(an.GetBoneTransform(HumanBodyBones.LeftHand).position).ToString("F2")} " +
+                                      $"handR {ct.InverseTransformPoint(an.GetBoneTransform(HumanBodyBones.RightHand).position).ToString("F2")} hub {ct.InverseTransformPoint(wheel.position).ToString("F2")}");
+                        }
+                        if (tag == "g90")
+                        {
+                            var an = p.GetComponentInChildren<Animator>();
+                            string L(Vector3 w) => ct.InverseTransformPoint(w).ToString("F2");
+                            string B(HumanBodyBones b) => an && an.isHuman && an.GetBoneTransform(b) ? L(an.GetBoneTransform(b).position) : "-";
+                            car.Visuals.WheelGrip(9f, 80f, out var gL, out _, out _);
+                            car.Visuals.WheelGrip(3f, 80f, out var gR, out _, out _);
+                            Debug.Log($"[Hands] {who} {id}: hub {L(wheel.position)} grips L {L(gL)} R {L(gR)} | seat {L(car.Visuals.Seat.position)} hips {B(HumanBodyBones.Hips)} " +
+                                      $"shoulders {B(HumanBodyBones.LeftUpperArm)} {B(HumanBodyBones.RightUpperArm)} elbows {B(HumanBodyBones.LeftLowerArm)} {B(HumanBodyBones.RightLowerArm)} " +
+                                      $"hands {B(HumanBodyBones.LeftHand)} {B(HumanBodyBones.RightHand)} head {B(HumanBodyBones.Head)}");
+                        }
+                        foreach (var view in new[] { "front", "front_x", "side_x", "promo" })
+                        {
+                            if (tag == "right" && view == "side_x") continue;
+                            View(view);
+                            yield return null;
+                            Grab($"{who}_{id}_{tag}_{view}.jpg");
+                        }
+                        foreach (var r in body) r.enabled = true;
+                    }
+                    SeatFit.GripWheel = true;
+                    SeatFit.GripClock = 9f;
+                    p.ExitVehicle(false, true);
+                    Object.Destroy(car.gameObject);
+                    yield return Frames(3);
+                }
+            }
+            ChaseCamera.I.enabled = true;
             Time.captureFramerate = 0;
         }
 
@@ -540,7 +666,9 @@ namespace KampungRun.Tests
                 var m118 = Landmark("Merdeka118", out float m118H);
                 yield return Orbit("10_merdeka118", m118, 2.8f, m118H * 0.62f, 2f, 200f, -40f, m118H * 0.3f);
                 var klcc = Landmark("Petronas", out float klccH);
-                yield return Orbit("11_klcc", klcc, 2.8f, klccH * 0.95f, 16f, 215f, 40f, klccH * 0.35f);
+                // both towers side by side: the shafts stand along the model's X (yawed 140), so look across that
+                // (yaw ~320), from over KLCC Park, pulled back far enough for the spires
+                yield return Orbit("11_klcc", klcc, 2.8f, klccH * 1.5f, 8f, 300f, 40f, klccH * 0.45f);
                 var jamek = Landmark("MasjidJamek", out float jamekH);
                 yield return Orbit("12_jamek", jamek, 2.6f, 60f, 12f, 60f, 45f, jamekH * 0.4f);
                 var negara = Landmark("MasjidNegara", out float negaraH);

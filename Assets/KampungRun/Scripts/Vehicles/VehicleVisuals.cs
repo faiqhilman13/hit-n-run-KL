@@ -31,7 +31,8 @@ namespace KampungRun
 
         Transform _wheel;          // steering wheel
         Quaternion _wheelRest;
-        Vector3 _wheelAxis;        // in the wheel's parent space
+        Vector3 _wheelAxis;        // in the wheel's parent space, pointing back at the driver
+        float _wheelRadius;        // of the rim, in world metres
 
         class Door
         {
@@ -103,6 +104,10 @@ namespace KampungRun
                 _wheelRest = _wheel.localRotation;
                 var a = axis ? axis.position - _wheel.position : _wheel.parent.forward;
                 _wheelAxis = _wheel.parent.InverseTransformDirection(a).normalized;
+                // the rim is the widest part of the wheel mesh: its centreline is 0.17 of its 0.188 m reach (kl_cars.py)
+                var mf = _wheel.GetComponent<MeshFilter>();
+                var ext = mf && mf.sharedMesh ? mf.sharedMesh.bounds.extents : Vector3.one * 0.188f;
+                _wheelRadius = Mathf.Max(ext.x, ext.y, ext.z) * Mathf.Abs(_wheel.lossyScale.x) * (0.17f / 0.188f);
             }
             foreach (var t in GetComponentsInChildren<Transform>(true))
             {
@@ -395,7 +400,7 @@ namespace KampungRun
                 _body.position = transform.TransformPoint(_bodyLocalPos + Vector3.up * (_heave + idle * 0.004f * Mathf.Sin(t * 33f)));
             }
             if (_wheel)
-                _wheel.localRotation = Quaternion.AngleAxis(-_v.SteerVisual * 140f, _wheelAxis) * _wheelRest;
+                _wheel.localRotation = Quaternion.AngleAxis(WheelTurn * WheelSpin, _wheelAxis) * _wheelRest;
             if (_orn)
                 _orn.localRotation = Quaternion.AngleAxis(_ornA.x, _orn.parent.InverseTransformDirection(transform.right)) *
                                      Quaternion.AngleAxis(_ornA.y, _orn.parent.InverseTransformDirection(transform.forward)) * _ornRest;
@@ -405,6 +410,34 @@ namespace KampungRun
         }
 
         public static void SetNight(bool night) => Night = night;
+
+        /// <summary>How far the steering wheel is turned: degrees clockwise as the driver sees it (steering right is +).</summary>
+        float WheelTurn => _v.SteerVisual * 140f;
+
+        /// <summary>
+        /// Which way AngleAxis about the (toward-the-driver) column turns the wheel clockwise for the driver: a
+        /// positive angle about an axis runs clockwise seen from the axis tip, and the driver sits at the tip.
+        /// </summary>
+        const float WheelSpin = 1f;
+
+        /// <summary>
+        /// Where a hand holds the steering wheel: `clock` is the spot on the rim as the driver sees it with the
+        /// wheel straight (9.5 = half past nine), turned with the wheel up to maxTurn degrees (past that the
+        /// hands slip round it). toDriver is the column axis pointing back at the driver, outward points from
+        /// the hub to the grip. False if the car has no steering wheel.
+        /// </summary>
+        public bool WheelGrip(float clock, float maxTurn, out Vector3 pos, out Vector3 toDriver, out Vector3 outward)
+        {
+            pos = toDriver = outward = Vector3.zero;
+            if (_wheel == null || _v == null) return false;
+            toDriver = _wheel.parent.TransformDirection(_wheelAxis).normalized;
+            var up = Vector3.ProjectOnPlane(transform.up, toDriver).normalized;
+            var right = Vector3.Cross(toDriver, up);                                       // the driver's right, on the rim plane
+            float a = (clock / 12f * 360f + Mathf.Clamp(WheelTurn, -maxTurn, maxTurn)) * Mathf.Deg2Rad;
+            outward = up * Mathf.Cos(a) + right * Mathf.Sin(a);
+            pos = _wheel.position + outward * _wheelRadius;
+            return true;
+        }
 
         void OnDestroy()
         {
