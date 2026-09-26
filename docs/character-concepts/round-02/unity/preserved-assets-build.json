@@ -1,0 +1,30 @@
+{
+    "utc": "2026-09-26T02:27:06.1265597Z",
+    "assets": [
+        {
+            "path": "Assets/Scenes/KampungRun.unity",
+            "before": "32-DA-07-B6-E5-85-F0-2F-01-C2-8B-E2-05-6E-AE-1D-A9-C7-0D-7B-4C-76-08-9C-67-E2-F9-A5-46-02-CF-90",
+            "after": "32-DA-07-B6-E5-85-F0-2F-01-C2-8B-E2-05-6E-AE-1D-A9-C7-0D-7B-4C-76-08-9C-67-E2-F9-A5-46-02-CF-90"
+        },
+        {
+            "path": "Assets/KampungRun/Animation/KL_Human.controller",
+            "before": "B5-9E-04-79-12-7B-D1-66-82-94-E8-5B-4A-BA-23-5C-00-2D-35-B4-4B-6A-4E-31-95-7C-C7-85-48-8E-A6-FF",
+            "after": "B5-9E-04-79-12-7B-D1-66-82-94-E8-5B-4A-BA-23-5C-00-2D-35-B4-4B-6A-4E-31-95-7C-C7-85-48-8E-A6-FF"
+        },
+        {
+            "path": "Assets/KampungRun/Scripts/Characters/SeatFit.cs",
+            "before": "BB-6C-E3-F5-A3-1A-B3-E9-BE-D4-C4-93-EE-ED-AA-FB-64-2D-28-CF-EF-04-09-AF-FD-AD-B5-9C-0A-3C-84-0E",
+            "after": "BB-6C-E3-F5-A3-1A-B3-E9-BE-D4-C4-93-EE-ED-AA-FB-64-2D-28-CF-EF-04-09-AF-FD-AD-B5-9C-0A-3C-84-0E"
+        },
+        {
+            "path": "Assets/KampungRun/Scripts/Vehicles/VehicleVisuals.cs",
+            "before": "84-5B-EF-45-6B-EF-25-95-BC-A2-29-D4-B3-C9-24-EA-CD-B4-89-CE-2A-89-A8-D6-8D-FF-05-A3-42-F0-DA-D9",
+            "after": "84-5B-EF-45-6B-EF-25-95-BC-A2-29-D4-B3-C9-24-EA-CD-B4-89-CE-2A-89-A8-D6-8D-FF-05-A3-42-F0-DA-D9"
+        },
+        {
+            "path": "Assets/KampungRun/Tests/PromoCapture.cs",
+            "before": "75-E1-37-DA-A2-20-74-5B-2D-64-1F-42-96-45-9A-6A-3F-A2-F0-25-B2-5E-52-A2-A1-9B-A1-65-FD-D0-C1-87",
+            "after": "75-E1-37-DA-A2-20-74-5B-2D-64-1F-42-96-45-9A-6A-3F-A2-F0-25-B2-5E-52-A2-A1-9B-A1-65-FD-D0-C1-87"
+        }
+    ]
+}

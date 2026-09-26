@@ -135,6 +135,18 @@ def character_lod(mesh_ob, arm, collection, asset_id, ratio=0.3):
 
 
 def build_character(asset_id):
+    # Human art is owned by the measured, refined pipeline. Keep this historical
+    # build entry point working so ordinary asset rebuilds cannot restore the
+    # superseded primitive cast. Vehicle/environment builders below are unchanged.
+    refined_dir = os.path.join(K.PROJECT, 'Tools', 'refined_characters')
+    if refined_dir not in sys.path:
+        sys.path.insert(0, refined_dir)
+    import build_characters as refined
+    return refined.build(asset_id, publish=True)
+
+
+def build_legacy_character(asset_id):
+    """Archived builder retained for source comparisons; not a delivery path."""
     builder, keys = CHARACTER_BUILDERS[asset_id]
     # the FBX exporter bakes *every* action in the file: drop earlier characters' clips
     for act in list(bpy.data.actions):

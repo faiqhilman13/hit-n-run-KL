@@ -1,0 +1,3054 @@
+{
+  "chr_pakmat": {
+    "asset": "chr_pakmat",
+    "name": "Pak Mat",
+    "prefix": "CH_PakMat",
+    "height_m": 1.66,
+    "m_per_px": 0.002730263157894737,
+    "canvas_px": [
+      512,
+      704
+    ],
+    "axis_col": 256,
+    "ground_row": 688,
+    "subject_height_px": 608,
+    "source_ground_row": 681,
+    "subject_frac": 0.8636363636363636,
+    "ground_frac": 0.022727272727272728,
+    "convention": "metres, Blender Z up, front -Y; front image +x = world +X; side faces image right, side +x = world -Y (az270)",
+    "front_landmarks": {
+      "crown": {
+        "source_px": [
+          216,
+          73
+        ],
+        "crop_px": [
+          256,
+          80
+        ],
+        "xz_m": [
+          0.0,
+          1.66
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "chin": {
+        "source_px": [
+          216,
+          261
+        ],
+        "crop_px": [
+          256,
+          268
+        ],
+        "xz_m": [
+          0.0,
+          1.146711
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "nose_tip": {
+        "source_px": [
+          216,
+          193
+        ],
+        "crop_px": [
+          256,
+          200
+        ],
+        "xz_m": [
+          0.0,
+          1.332368
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "pupil_left": {
+        "source_px": [
+          202,
+          167
+        ],
+        "crop_px": [
+          242,
+          174
+        ],
+        "xz_m": [
+          -0.038224,
+          1.403355
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "pupil_right": {
+        "source_px": [
+          236,
+          167
+        ],
+        "crop_px": [
+          276,
+          174
+        ],
+        "xz_m": [
+          0.054605,
+          1.403355
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "ear_left": {
+        "source_px": [
+          148,
+          187
+        ],
+        "crop_px": [
+          188,
+          194
+        ],
+        "xz_m": [
+          -0.185658,
+          1.34875
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "ear_right": {
+        "source_px": [
+          285,
+          187
+        ],
+        "crop_px": [
+          325,
+          194
+        ],
+        "xz_m": [
+          0.188388,
+          1.34875
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "shoulder_left": {
+        "source_px": [
+          128,
+          269
+        ],
+        "crop_px": [
+          168,
+          276
+        ],
+        "xz_m": [
+          -0.240263,
+          1.124868
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "shoulder_right": {
+        "source_px": [
+          304,
+          269
+        ],
+        "crop_px": [
+          344,
+          276
+        ],
+        "xz_m": [
+          0.240263,
+          1.124868
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "elbow_left": {
+        "source_px": [
+          93,
+          373
+        ],
+        "crop_px": [
+          133,
+          380
+        ],
+        "xz_m": [
+          -0.335822,
+          0.840921
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "elbow_right": {
+        "source_px": [
+          341,
+          373
+        ],
+        "crop_px": [
+          381,
+          380
+        ],
+        "xz_m": [
+          0.341283,
+          0.840921
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "wrist_left": {
+        "source_px": [
+          58,
+          444
+        ],
+        "crop_px": [
+          98,
+          451
+        ],
+        "xz_m": [
+          -0.431382,
+          0.647072
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "wrist_right": {
+        "source_px": [
+          374,
+          444
+        ],
+        "crop_px": [
+          414,
+          451
+        ],
+        "xz_m": [
+          0.431382,
+          0.647072
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "fingertip_left": {
+        "source_px": [
+          59,
+          504
+        ],
+        "crop_px": [
+          99,
+          511
+        ],
+        "xz_m": [
+          -0.428651,
+          0.483257
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "fingertip_right": {
+        "source_px": [
+          373,
+          505
+        ],
+        "crop_px": [
+          413,
+          512
+        ],
+        "xz_m": [
+          0.428651,
+          0.480526
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "shirt_hem": {
+        "source_px": [
+          216,
+          464
+        ],
+        "crop_px": [
+          256,
+          471
+        ],
+        "xz_m": [
+          0.0,
+          0.592467
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "waist": {
+        "source_px": [
+          216,
+          453
+        ],
+        "crop_px": [
+          256,
+          460
+        ],
+        "xz_m": [
+          0.0,
+          0.6225
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "sarong_hem": {
+        "source_px": [
+          216,
+          633
+        ],
+        "crop_px": [
+          256,
+          640
+        ],
+        "xz_m": [
+          0.0,
+          0.131053
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "ankle_left": {
+        "source_px": [
+          126,
+          641
+        ],
+        "crop_px": [
+          166,
+          648
+        ],
+        "xz_m": [
+          -0.245724,
+          0.109211
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "ankle_right": {
+        "source_px": [
+          298,
+          641
+        ],
+        "crop_px": [
+          338,
+          648
+        ],
+        "xz_m": [
+          0.223882,
+          0.109211
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "foot_left": {
+        "source_px": [
+          123,
+          674
+        ],
+        "crop_px": [
+          163,
+          681
+        ],
+        "xz_m": [
+          -0.253914,
+          0.019112
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "foot_right": {
+        "source_px": [
+          310,
+          674
+        ],
+        "crop_px": [
+          350,
+          681
+        ],
+        "xz_m": [
+          0.256645,
+          0.019112
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      }
+    },
+    "side_landmarks": {
+      "crown": {
+        "source_px": [
+          582,
+          73
+        ],
+        "crop_px": [
+          264,
+          80
+        ],
+        "yz_m": [
+          -0.021842,
+          1.66
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "forehead": {
+        "source_px": [
+          633,
+          127
+        ],
+        "crop_px": [
+          315,
+          134
+        ],
+        "yz_m": [
+          -0.161086,
+          1.512566
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "nose_tip": {
+        "source_px": [
+          668,
+          183
+        ],
+        "crop_px": [
+          350,
+          190
+        ],
+        "yz_m": [
+          -0.256645,
+          1.359671
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "chin": {
+        "source_px": [
+          640,
+          239
+        ],
+        "crop_px": [
+          322,
+          246
+        ],
+        "yz_m": [
+          -0.180197,
+          1.206776
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "nape": {
+        "source_px": [
+          538,
+          211
+        ],
+        "crop_px": [
+          220,
+          218
+        ],
+        "yz_m": [
+          0.098289,
+          1.283224
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "shoulder": {
+        "source_px": [
+          548,
+          264
+        ],
+        "crop_px": [
+          230,
+          271
+        ],
+        "yz_m": [
+          0.070987,
+          1.13852
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "elbow": {
+        "source_px": [
+          556,
+          376
+        ],
+        "crop_px": [
+          238,
+          383
+        ],
+        "yz_m": [
+          0.049145,
+          0.83273
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "wrist": {
+        "source_px": [
+          568,
+          448
+        ],
+        "crop_px": [
+          250,
+          455
+        ],
+        "yz_m": [
+          0.016382,
+          0.636151
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "fingertip": {
+        "source_px": [
+          571,
+          507
+        ],
+        "crop_px": [
+          253,
+          514
+        ],
+        "yz_m": [
+          0.008191,
+          0.475066
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "belly_front": {
+        "source_px": [
+          700,
+          404
+        ],
+        "crop_px": [
+          382,
+          411
+        ],
+        "yz_m": [
+          -0.344013,
+          0.756283
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "waist_front": {
+        "source_px": [
+          692,
+          451
+        ],
+        "crop_px": [
+          374,
+          458
+        ],
+        "yz_m": [
+          -0.322171,
+          0.627961
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "waist_back": {
+        "source_px": [
+          464,
+          450
+        ],
+        "crop_px": [
+          146,
+          457
+        ],
+        "yz_m": [
+          0.300329,
+          0.630691
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "hem_front": {
+        "source_px": [
+          674,
+          619
+        ],
+        "crop_px": [
+          356,
+          626
+        ],
+        "yz_m": [
+          -0.273026,
+          0.169276
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "hem_back": {
+        "source_px": [
+          470,
+          619
+        ],
+        "crop_px": [
+          152,
+          626
+        ],
+        "yz_m": [
+          0.283947,
+          0.169276
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "heel": {
+        "source_px": [
+          519,
+          674
+        ],
+        "crop_px": [
+          201,
+          681
+        ],
+        "yz_m": [
+          0.150164,
+          0.019112
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "toe": {
+        "source_px": [
+          654,
+          674
+        ],
+        "crop_px": [
+          336,
+          681
+        ],
+        "yz_m": [
+          -0.218421,
+          0.019112
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      }
+    },
+    "ratios": {
+      "face_height_to_total": 0.230263,
+      "face_width_to_total": 0.202303,
+      "head_with_hair_or_hat_height_to_total": 0.309211,
+      "head_with_hair_or_hat_width_to_total": 0.223684,
+      "ear_span_to_total": 0.256579,
+      "shoulder_outer_width_to_total": 0.314145,
+      "garment_hip_width_to_total": 0.376645,
+      "shoulder_height_to_total": 0.677632,
+      "elbow_height_to_total": 0.506579,
+      "wrist_height_to_total": 0.389803,
+      "fingertip_height_to_total": 0.291118,
+      "wrist_span_to_total": 0.519737,
+      "ankle_spacing_to_total": 0.282895,
+      "pupil_spacing_to_total": 0.055921,
+      "foot_center_spacing_to_total": 0.307566
+    },
+    "direct_spans_px": {
+      "head_span": [
+        155,
+        278
+      ],
+      "ear_span": [
+        138,
+        294
+      ],
+      "hair_span": [
+        147,
+        283
+      ],
+      "headgear_span": [
+        158,
+        272
+      ],
+      "shoulder_span": [
+        121,
+        312
+      ],
+      "hip_span": [
+        103,
+        332
+      ]
+    },
+    "direct_vertical_px": {
+      "top": 73,
+      "head_top": 121,
+      "chin": 261,
+      "floor": 681
+    },
+    "inferred": "Pelvis and knees concealed by sarong; infer pelvis z=0.77m and knees z=0.43m. Hat and skull depth taken from profile. Sarong is continuous in the source, not trousers; use skirt bones or broad blended weights. Back pattern placement is illustrative and not registered with the front.",
+    "mask_method": "Deterministic colour/contour threshold, connected components, one-pixel closing, manual source-space pale-fabric segmentation polygons, ground-line suppression and hole filling; no resizing among this asset's panels. About 1-2 px boundary uncertainty. Original source preserved.",
+    "views": {
+      "front": {
+        "source_box_px": [
+          20,
+          68,
+          408,
+          686
+        ],
+        "source_axis_x": 216,
+        "camera_az": 0,
+        "camera_el": 0,
+        "lens": 0,
+        "authority": "dimension guide; generated approximate orthographic",
+        "bbox_clean_px": [
+          72,
+          79,
+          440,
+          689
+        ],
+        "width_m": 1.0047368421052632,
+        "height_m": 1.6654605263157896,
+        "alpha_area": 136147
+      },
+      "side": {
+        "source_box_px": [
+          454,
+          68,
+          712,
+          686
+        ],
+        "source_axis_x": 574,
+        "camera_az": 270,
+        "camera_el": 0,
+        "lens": 0,
+        "authority": "dimension guide; generated approximate orthographic",
+        "bbox_clean_px": [
+          144,
+          79,
+          383,
+          689
+        ],
+        "width_m": 0.6525328947368422,
+        "height_m": 1.6654605263157896,
+        "alpha_area": 101857
+      },
+      "back": {
+        "source_box_px": [
+          759,
+          68,
+          1133,
+          686
+        ],
+        "source_axis_x": 947,
+        "camera_az": 180,
+        "camera_el": 0,
+        "lens": 0,
+        "authority": "dimension guide; generated approximate orthographic",
+        "bbox_clean_px": [
+          75,
+          84,
+          434,
+          687
+        ],
+        "width_m": 0.9801644736842106,
+        "height_m": 1.6463486842105264,
+        "alpha_area": 132288
+      },
+      "threequarter": {
+        "source_box_px": [
+          1164,
+          68,
+          1505,
+          686
+        ],
+        "source_axis_x": 1340,
+        "camera_az": -30,
+        "camera_el": 3,
+        "lens": 70,
+        "authority": "appearance only; never metric",
+        "bbox_clean_px": [
+          90,
+          79,
+          411,
+          689
+        ],
+        "width_m": 0.8764144736842105,
+        "height_m": 1.6654605263157896,
+        "alpha_area": 123898
+      }
+    }
+  },
+  "chr_maksom": {
+    "asset": "chr_maksom",
+    "name": "Mak Som",
+    "prefix": "CH_MakSom",
+    "height_m": 1.57,
+    "m_per_px": 0.0028237410071942446,
+    "canvas_px": [
+      512,
+      704
+    ],
+    "axis_col": 256,
+    "ground_row": 688,
+    "subject_height_px": 556,
+    "source_ground_row": 648,
+    "subject_frac": 0.7897727272727273,
+    "ground_frac": 0.022727272727272728,
+    "convention": "metres, Blender Z up, front -Y; front image +x = world +X; side faces image right, side +x = world -Y (az270)",
+    "front_landmarks": {
+      "crown": {
+        "source_px": [
+          207,
+          92
+        ],
+        "crop_px": [
+          256,
+          132
+        ],
+        "xz_m": [
+          0.0,
+          1.57
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "chin": {
+        "source_px": [
+          207,
+          237
+        ],
+        "crop_px": [
+          256,
+          277
+        ],
+        "xz_m": [
+          0.0,
+          1.160558
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "nose_tip": {
+        "source_px": [
+          207,
+          191
+        ],
+        "crop_px": [
+          256,
+          231
+        ],
+        "xz_m": [
+          0.0,
+          1.29045
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "pupil_left": {
+        "source_px": [
+          189,
+          170
+        ],
+        "crop_px": [
+          238,
+          210
+        ],
+        "xz_m": [
+          -0.050827,
+          1.349748
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "pupil_right": {
+        "source_px": [
+          230,
+          170
+        ],
+        "crop_px": [
+          279,
+          210
+        ],
+        "xz_m": [
+          0.064946,
+          1.349748
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "shoulder_left": {
+        "source_px": [
+          128,
+          267
+        ],
+        "crop_px": [
+          177,
+          307
+        ],
+        "xz_m": [
+          -0.223076,
+          1.075845
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "shoulder_right": {
+        "source_px": [
+          287,
+          267
+        ],
+        "crop_px": [
+          336,
+          307
+        ],
+        "xz_m": [
+          0.225899,
+          1.075845
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "elbow_left": {
+        "source_px": [
+          91,
+          360
+        ],
+        "crop_px": [
+          140,
+          400
+        ],
+        "xz_m": [
+          -0.327554,
+          0.813237
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "elbow_right": {
+        "source_px": [
+          327,
+          360
+        ],
+        "crop_px": [
+          376,
+          400
+        ],
+        "xz_m": [
+          0.338849,
+          0.813237
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "wrist_left": {
+        "source_px": [
+          62,
+          429
+        ],
+        "crop_px": [
+          111,
+          469
+        ],
+        "xz_m": [
+          -0.409442,
+          0.618399
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "wrist_right": {
+        "source_px": [
+          354,
+          429
+        ],
+        "crop_px": [
+          403,
+          469
+        ],
+        "xz_m": [
+          0.41509,
+          0.618399
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "fingertip_left": {
+        "source_px": [
+          58,
+          483
+        ],
+        "crop_px": [
+          107,
+          523
+        ],
+        "xz_m": [
+          -0.420737,
+          0.465917
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "fingertip_right": {
+        "source_px": [
+          356,
+          483
+        ],
+        "crop_px": [
+          405,
+          523
+        ],
+        "xz_m": [
+          0.420737,
+          0.465917
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "hijab_tip": {
+        "source_px": [
+          207,
+          331
+        ],
+        "crop_px": [
+          256,
+          371
+        ],
+        "xz_m": [
+          0.0,
+          0.895126
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "waist": {
+        "source_px": [
+          207,
+          397
+        ],
+        "crop_px": [
+          256,
+          437
+        ],
+        "xz_m": [
+          0.0,
+          0.708759
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "tunic_hem": {
+        "source_px": [
+          207,
+          501
+        ],
+        "crop_px": [
+          256,
+          541
+        ],
+        "xz_m": [
+          0.0,
+          0.41509
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "skirt_hem": {
+        "source_px": [
+          207,
+          616
+        ],
+        "crop_px": [
+          256,
+          656
+        ],
+        "xz_m": [
+          0.0,
+          0.09036
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "ankle_left": {
+        "source_px": [
+          139,
+          622
+        ],
+        "crop_px": [
+          188,
+          662
+        ],
+        "xz_m": [
+          -0.192014,
+          0.073417
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "ankle_right": {
+        "source_px": [
+          270,
+          622
+        ],
+        "crop_px": [
+          319,
+          662
+        ],
+        "xz_m": [
+          0.177896,
+          0.073417
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "foot_left": {
+        "source_px": [
+          137,
+          643
+        ],
+        "crop_px": [
+          186,
+          683
+        ],
+        "xz_m": [
+          -0.197662,
+          0.014119
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "foot_right": {
+        "source_px": [
+          273,
+          643
+        ],
+        "crop_px": [
+          322,
+          683
+        ],
+        "xz_m": [
+          0.186367,
+          0.014119
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      }
+    },
+    "side_landmarks": {
+      "crown": {
+        "source_px": [
+          589,
+          91
+        ],
+        "crop_px": [
+          267,
+          131
+        ],
+        "yz_m": [
+          -0.031061,
+          1.572824
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "forehead": {
+        "source_px": [
+          647,
+          129
+        ],
+        "crop_px": [
+          325,
+          169
+        ],
+        "yz_m": [
+          -0.194838,
+          1.465522
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "nose_tip": {
+        "source_px": [
+          668,
+          188
+        ],
+        "crop_px": [
+          346,
+          228
+        ],
+        "yz_m": [
+          -0.254137,
+          1.298921
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "chin": {
+        "source_px": [
+          648,
+          231
+        ],
+        "crop_px": [
+          326,
+          271
+        ],
+        "yz_m": [
+          -0.197662,
+          1.1775
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "nape": {
+        "source_px": [
+          571,
+          237
+        ],
+        "crop_px": [
+          249,
+          277
+        ],
+        "yz_m": [
+          0.019766,
+          1.160558
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "shoulder": {
+        "source_px": [
+          563,
+          267
+        ],
+        "crop_px": [
+          241,
+          307
+        ],
+        "yz_m": [
+          0.042356,
+          1.075845
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "elbow": {
+        "source_px": [
+          574,
+          355
+        ],
+        "crop_px": [
+          252,
+          395
+        ],
+        "yz_m": [
+          0.011295,
+          0.827356
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "wrist": {
+        "source_px": [
+          581,
+          424
+        ],
+        "crop_px": [
+          259,
+          464
+        ],
+        "yz_m": [
+          -0.008471,
+          0.632518
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "fingertip": {
+        "source_px": [
+          583,
+          483
+        ],
+        "crop_px": [
+          261,
+          523
+        ],
+        "yz_m": [
+          -0.014119,
+          0.465917
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "hijab_back": {
+        "source_px": [
+          489,
+          244
+        ],
+        "crop_px": [
+          167,
+          284
+        ],
+        "yz_m": [
+          0.251313,
+          1.140791
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "hijab_front": {
+        "source_px": [
+          676,
+          311
+        ],
+        "crop_px": [
+          354,
+          351
+        ],
+        "yz_m": [
+          -0.276727,
+          0.951601
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "waist_front": {
+        "source_px": [
+          669,
+          400
+        ],
+        "crop_px": [
+          347,
+          440
+        ],
+        "yz_m": [
+          -0.25696,
+          0.700288
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "waist_back": {
+        "source_px": [
+          499,
+          400
+        ],
+        "crop_px": [
+          177,
+          440
+        ],
+        "yz_m": [
+          0.223076,
+          0.700288
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "hem_front": {
+        "source_px": [
+          655,
+          614
+        ],
+        "crop_px": [
+          333,
+          654
+        ],
+        "yz_m": [
+          -0.217428,
+          0.096007
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "hem_back": {
+        "source_px": [
+          497,
+          614
+        ],
+        "crop_px": [
+          175,
+          654
+        ],
+        "yz_m": [
+          0.228723,
+          0.096007
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "heel": {
+        "source_px": [
+          528,
+          642
+        ],
+        "crop_px": [
+          206,
+          682
+        ],
+        "yz_m": [
+          0.141187,
+          0.016942
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "toe": {
+        "source_px": [
+          657,
+          642
+        ],
+        "crop_px": [
+          335,
+          682
+        ],
+        "yz_m": [
+          -0.223076,
+          0.016942
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      }
+    },
+    "ratios": {
+      "face_height_to_total": 0.223022,
+      "face_width_to_total": 0.214029,
+      "head_with_hair_or_hat_height_to_total": 0.260791,
+      "head_with_hair_or_hat_width_to_total": 0.267986,
+      "ear_span_to_total": 0.214029,
+      "shoulder_outer_width_to_total": 0.321942,
+      "garment_hip_width_to_total": 0.408273,
+      "shoulder_height_to_total": 0.685252,
+      "elbow_height_to_total": 0.517986,
+      "wrist_height_to_total": 0.393885,
+      "fingertip_height_to_total": 0.296763,
+      "wrist_span_to_total": 0.52518,
+      "ankle_spacing_to_total": 0.235612,
+      "pupil_spacing_to_total": 0.073741,
+      "foot_center_spacing_to_total": 0.244604
+    },
+    "direct_spans_px": {
+      "head_span": [
+        148,
+        267
+      ],
+      "ear_span": [
+        148,
+        267
+      ],
+      "hair_span": [
+        133,
+        282
+      ],
+      "headgear_span": [
+        133,
+        282
+      ],
+      "shoulder_span": [
+        118,
+        297
+      ],
+      "hip_span": [
+        93,
+        320
+      ]
+    },
+    "direct_vertical_px": {
+      "top": 92,
+      "head_top": 113,
+      "chin": 237,
+      "floor": 648
+    },
+    "inferred": "Scalp and ears hidden by tudung; infer a regular rounded skull and covered ears. Pelvis and knees hidden by long garments; use the source outer outline as dimensional authority. Tudung rear drape is much longer than its front drape and needs independent shoulder clearance. Floral print is illustrative, not UV correspondence.",
+    "mask_method": "Deterministic colour/contour threshold, connected components, one-pixel closing, manual source-space pale-fabric segmentation polygons, ground-line suppression and hole filling; no resizing among this asset's panels. About 1-2 px boundary uncertainty. Original source preserved.",
+    "views": {
+      "front": {
+        "source_box_px": [
+          28,
+          86,
+          389,
+          653
+        ],
+        "source_axis_x": 207,
+        "camera_az": 0,
+        "camera_el": 0,
+        "lens": 0,
+        "authority": "dimension guide; generated approximate orthographic",
+        "bbox_clean_px": [
+          87,
+          132,
+          426,
+          689
+        ],
+        "width_m": 0.9572482014388489,
+        "height_m": 1.5728237410071944,
+        "alpha_area": 118671
+      },
+      "side": {
+        "source_box_px": [
+          477,
+          86,
+          688,
+          653
+        ],
+        "source_axis_x": 578,
+        "camera_az": 270,
+        "camera_el": 0,
+        "lens": 0,
+        "authority": "dimension guide; generated approximate orthographic",
+        "bbox_clean_px": [
+          166,
+          130,
+          356,
+          689
+        ],
+        "width_m": 0.5365107913669065,
+        "height_m": 1.5784712230215827,
+        "alpha_area": 88252
+      },
+      "back": {
+        "source_box_px": [
+          765,
+          86,
+          1111,
+          653
+        ],
+        "source_axis_x": 938,
+        "camera_az": 180,
+        "camera_el": 0,
+        "lens": 0,
+        "authority": "dimension guide; generated approximate orthographic",
+        "bbox_clean_px": [
+          90,
+          130,
+          420,
+          687
+        ],
+        "width_m": 0.9318345323741007,
+        "height_m": 1.5728237410071944,
+        "alpha_area": 115498
+      },
+      "threequarter": {
+        "source_box_px": [
+          1172,
+          86,
+          1496,
+          653
+        ],
+        "source_axis_x": 1338,
+        "camera_az": -30,
+        "camera_el": 3,
+        "lens": 70,
+        "authority": "appearance only; never metric",
+        "bbox_clean_px": [
+          99,
+          131,
+          405,
+          689
+        ],
+        "width_m": 0.8640647482014389,
+        "height_m": 1.5756474820143884,
+        "alpha_area": 114259
+      }
+    }
+  },
+  "chr_along": {
+    "asset": "chr_along",
+    "name": "Along",
+    "prefix": "CH_Along",
+    "height_m": 1.64,
+    "m_per_px": 0.0026929392446633825,
+    "canvas_px": [
+      512,
+      704
+    ],
+    "axis_col": 256,
+    "ground_row": 688,
+    "subject_height_px": 609,
+    "source_ground_row": 677,
+    "subject_frac": 0.8650568181818182,
+    "ground_frac": 0.022727272727272728,
+    "convention": "metres, Blender Z up, front -Y; front image +x = world +X; side faces image right, side +x = world -Y (az270)",
+    "front_landmarks": {
+      "crown": {
+        "source_px": [
+          243,
+          68
+        ],
+        "crop_px": [
+          256,
+          79
+        ],
+        "xz_m": [
+          0.0,
+          1.64
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "chin": {
+        "source_px": [
+          243,
+          232
+        ],
+        "crop_px": [
+          256,
+          243
+        ],
+        "xz_m": [
+          0.0,
+          1.198358
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "nose_tip": {
+        "source_px": [
+          243,
+          192
+        ],
+        "crop_px": [
+          256,
+          203
+        ],
+        "xz_m": [
+          0.0,
+          1.306076
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "pupil_left": {
+        "source_px": [
+          229,
+          169
+        ],
+        "crop_px": [
+          242,
+          180
+        ],
+        "xz_m": [
+          -0.037701,
+          1.368013
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "pupil_right": {
+        "source_px": [
+          266,
+          169
+        ],
+        "crop_px": [
+          279,
+          180
+        ],
+        "xz_m": [
+          0.061938,
+          1.368013
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "ear_left": {
+        "source_px": [
+          193,
+          193
+        ],
+        "crop_px": [
+          206,
+          204
+        ],
+        "xz_m": [
+          -0.134647,
+          1.303383
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "ear_right": {
+        "source_px": [
+          292,
+          188
+        ],
+        "crop_px": [
+          305,
+          199
+        ],
+        "xz_m": [
+          0.131954,
+          1.316847
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "neck_base": {
+        "source_px": [
+          243,
+          259
+        ],
+        "crop_px": [
+          256,
+          270
+        ],
+        "xz_m": [
+          0.0,
+          1.125649
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "shoulder_left": {
+        "source_px": [
+          189,
+          272
+        ],
+        "crop_px": [
+          202,
+          283
+        ],
+        "xz_m": [
+          -0.145419,
+          1.09064
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "shoulder_right": {
+        "source_px": [
+          296,
+          272
+        ],
+        "crop_px": [
+          309,
+          283
+        ],
+        "xz_m": [
+          0.142726,
+          1.09064
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "elbow_left": {
+        "source_px": [
+          163,
+          356
+        ],
+        "crop_px": [
+          176,
+          367
+        ],
+        "xz_m": [
+          -0.215435,
+          0.864433
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "elbow_right": {
+        "source_px": [
+          321,
+          356
+        ],
+        "crop_px": [
+          334,
+          367
+        ],
+        "xz_m": [
+          0.210049,
+          0.864433
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "wrist_left": {
+        "source_px": [
+          137,
+          422
+        ],
+        "crop_px": [
+          150,
+          433
+        ],
+        "xz_m": [
+          -0.285452,
+          0.6867
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "wrist_right": {
+        "source_px": [
+          349,
+          422
+        ],
+        "crop_px": [
+          362,
+          433
+        ],
+        "xz_m": [
+          0.285452,
+          0.6867
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "fingertip_left": {
+        "source_px": [
+          134,
+          487
+        ],
+        "crop_px": [
+          147,
+          498
+        ],
+        "xz_m": [
+          -0.29353,
+          0.511658
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "fingertip_right": {
+        "source_px": [
+          350,
+          487
+        ],
+        "crop_px": [
+          363,
+          498
+        ],
+        "xz_m": [
+          0.288144,
+          0.511658
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "waist": {
+        "source_px": [
+          243,
+          432
+        ],
+        "crop_px": [
+          256,
+          443
+        ],
+        "xz_m": [
+          0.0,
+          0.65977
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "crotch": {
+        "source_px": [
+          243,
+          465
+        ],
+        "crop_px": [
+          256,
+          476
+        ],
+        "xz_m": [
+          0.0,
+          0.570903
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "shorts_hem": {
+        "source_px": [
+          243,
+          526
+        ],
+        "crop_px": [
+          256,
+          537
+        ],
+        "xz_m": [
+          0.0,
+          0.406634
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "knee_left": {
+        "source_px": [
+          193,
+          549
+        ],
+        "crop_px": [
+          206,
+          560
+        ],
+        "xz_m": [
+          -0.134647,
+          0.344696
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "knee_right": {
+        "source_px": [
+          292,
+          549
+        ],
+        "crop_px": [
+          305,
+          560
+        ],
+        "xz_m": [
+          0.131954,
+          0.344696
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "ankle_left": {
+        "source_px": [
+          192,
+          605
+        ],
+        "crop_px": [
+          205,
+          616
+        ],
+        "xz_m": [
+          -0.13734,
+          0.193892
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "ankle_right": {
+        "source_px": [
+          292,
+          605
+        ],
+        "crop_px": [
+          305,
+          616
+        ],
+        "xz_m": [
+          0.131954,
+          0.193892
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "foot_left": {
+        "source_px": [
+          173,
+          670
+        ],
+        "crop_px": [
+          186,
+          681
+        ],
+        "xz_m": [
+          -0.188506,
+          0.018851
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "foot_right": {
+        "source_px": [
+          313,
+          670
+        ],
+        "crop_px": [
+          326,
+          681
+        ],
+        "xz_m": [
+          0.188506,
+          0.018851
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      }
+    },
+    "side_landmarks": {
+      "crown": {
+        "source_px": [
+          582,
+          68
+        ],
+        "crop_px": [
+          259,
+          79
+        ],
+        "yz_m": [
+          -0.008079,
+          1.64
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "forehead": {
+        "source_px": [
+          639,
+          141
+        ],
+        "crop_px": [
+          316,
+          152
+        ],
+        "yz_m": [
+          -0.161576,
+          1.443415
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "nose_tip": {
+        "source_px": [
+          663,
+          189
+        ],
+        "crop_px": [
+          340,
+          200
+        ],
+        "yz_m": [
+          -0.226207,
+          1.314154
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "chin": {
+        "source_px": [
+          635,
+          227
+        ],
+        "crop_px": [
+          312,
+          238
+        ],
+        "yz_m": [
+          -0.150805,
+          1.211823
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "nape": {
+        "source_px": [
+          566,
+          226
+        ],
+        "crop_px": [
+          243,
+          237
+        ],
+        "yz_m": [
+          0.035008,
+          1.214516
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "shoulder": {
+        "source_px": [
+          573,
+          269
+        ],
+        "crop_px": [
+          250,
+          280
+        ],
+        "yz_m": [
+          0.016158,
+          1.098719
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "elbow": {
+        "source_px": [
+          576,
+          356
+        ],
+        "crop_px": [
+          253,
+          367
+        ],
+        "yz_m": [
+          0.008079,
+          0.864433
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "wrist": {
+        "source_px": [
+          582,
+          424
+        ],
+        "crop_px": [
+          259,
+          435
+        ],
+        "yz_m": [
+          -0.008079,
+          0.681314
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "fingertip": {
+        "source_px": [
+          582,
+          486
+        ],
+        "crop_px": [
+          259,
+          497
+        ],
+        "yz_m": [
+          -0.008079,
+          0.514351
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "waist_front": {
+        "source_px": [
+          636,
+          428
+        ],
+        "crop_px": [
+          313,
+          439
+        ],
+        "yz_m": [
+          -0.153498,
+          0.670542
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "waist_back": {
+        "source_px": [
+          538,
+          428
+        ],
+        "crop_px": [
+          215,
+          439
+        ],
+        "yz_m": [
+          0.110411,
+          0.670542
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "shorts_front": {
+        "source_px": [
+          626,
+          520
+        ],
+        "crop_px": [
+          303,
+          531
+        ],
+        "yz_m": [
+          -0.126568,
+          0.422791
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "shorts_back": {
+        "source_px": [
+          540,
+          520
+        ],
+        "crop_px": [
+          217,
+          531
+        ],
+        "yz_m": [
+          0.105025,
+          0.422791
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "knee": {
+        "source_px": [
+          575,
+          548
+        ],
+        "crop_px": [
+          252,
+          559
+        ],
+        "yz_m": [
+          0.010772,
+          0.347389
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "ankle": {
+        "source_px": [
+          568,
+          605
+        ],
+        "crop_px": [
+          245,
+          616
+        ],
+        "yz_m": [
+          0.029622,
+          0.193892
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "heel": {
+        "source_px": [
+          530,
+          671
+        ],
+        "crop_px": [
+          207,
+          682
+        ],
+        "yz_m": [
+          0.131954,
+          0.016158
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "toe": {
+        "source_px": [
+          661,
+          671
+        ],
+        "crop_px": [
+          338,
+          682
+        ],
+        "yz_m": [
+          -0.220821,
+          0.016158
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      }
+    },
+    "ratios": {
+      "face_height_to_total": 0.190476,
+      "face_width_to_total": 0.141215,
+      "head_with_hair_or_hat_height_to_total": 0.269294,
+      "head_with_hair_or_hat_width_to_total": 0.275862,
+      "ear_span_to_total": 0.200328,
+      "shoulder_outer_width_to_total": 0.213465,
+      "garment_hip_width_to_total": 0.216749,
+      "shoulder_height_to_total": 0.665025,
+      "elbow_height_to_total": 0.527094,
+      "wrist_height_to_total": 0.418719,
+      "fingertip_height_to_total": 0.311987,
+      "wrist_span_to_total": 0.348112,
+      "ankle_spacing_to_total": 0.164204,
+      "pupil_spacing_to_total": 0.060755,
+      "foot_center_spacing_to_total": 0.229885
+    },
+    "direct_spans_px": {
+      "head_span": [
+        198,
+        284
+      ],
+      "ear_span": [
+        181,
+        303
+      ],
+      "hair_span": [
+        157,
+        325
+      ],
+      "headgear_span": [
+        157,
+        325
+      ],
+      "shoulder_span": [
+        177,
+        307
+      ],
+      "hip_span": [
+        176,
+        308
+      ]
+    },
+    "direct_vertical_px": {
+      "top": 68,
+      "head_top": 116,
+      "chin": 232,
+      "floor": 677
+    },
+    "inferred": "Hair curls differ among views; preserve total crown volume and silhouette, not one-to-one curl placement. Back shorts pockets need plausible thickness. Hidden hip joint and pelvis depth inferred within shorts. Along's right wristband appears on image-left in front, image-right in back; preserve anatomical right.",
+    "mask_method": "Deterministic colour/contour threshold, connected components, one-pixel closing, manual source-space pale-fabric segmentation polygons, ground-line suppression and hole filling; no resizing among this asset's panels. About 1-2 px boundary uncertainty. Original source preserved.",
+    "views": {
+      "front": {
+        "source_box_px": [
+          104,
+          63,
+          383,
+          682
+        ],
+        "source_axis_x": 243,
+        "camera_az": 0,
+        "camera_el": 0,
+        "lens": 0,
+        "authority": "dimension guide; generated approximate orthographic",
+        "bbox_clean_px": [
+          128,
+          78,
+          384,
+          688
+        ],
+        "width_m": 0.6893924466338259,
+        "height_m": 1.6426929392446634,
+        "alpha_area": 83502
+      },
+      "side": {
+        "source_box_px": [
+          497,
+          63,
+          681,
+          682
+        ],
+        "source_axis_x": 579,
+        "camera_az": 270,
+        "camera_el": 0,
+        "lens": 0,
+        "authority": "dimension guide; generated approximate orthographic",
+        "bbox_clean_px": [
+          182,
+          78,
+          345,
+          688
+        ],
+        "width_m": 0.43894909688013134,
+        "height_m": 1.6426929392446634,
+        "alpha_area": 54209
+      },
+      "back": {
+        "source_box_px": [
+          773,
+          63,
+          1054,
+          682
+        ],
+        "source_axis_x": 911,
+        "camera_az": 180,
+        "camera_el": 0,
+        "lens": 0,
+        "authority": "dimension guide; generated approximate orthographic",
+        "bbox_clean_px": [
+          126,
+          78,
+          387,
+          688
+        ],
+        "width_m": 0.7028571428571428,
+        "height_m": 1.6426929392446634,
+        "alpha_area": 82013
+      },
+      "threequarter": {
+        "source_box_px": [
+          1171,
+          63,
+          1414,
+          682
+        ],
+        "source_axis_x": 1291,
+        "camera_az": -30,
+        "camera_el": 3,
+        "lens": 70,
+        "authority": "appearance only; never metric",
+        "bbox_clean_px": [
+          143,
+          79,
+          369,
+          689
+        ],
+        "width_m": 0.6086042692939244,
+        "height_m": 1.6426929392446634,
+        "alpha_area": 81944
+      }
+    }
+  },
+  "chr_adik": {
+    "asset": "chr_adik",
+    "name": "Adik",
+    "prefix": "CH_Adik",
+    "height_m": 1.12,
+    "m_per_px": 0.001947826086956522,
+    "canvas_px": [
+      512,
+      704
+    ],
+    "axis_col": 256,
+    "ground_row": 688,
+    "subject_height_px": 575,
+    "source_ground_row": 679,
+    "subject_frac": 0.8167613636363636,
+    "ground_frac": 0.022727272727272728,
+    "convention": "metres, Blender Z up, front -Y; front image +x = world +X; side faces image right, side +x = world -Y (az270)",
+    "front_landmarks": {
+      "crown": {
+        "source_px": [
+          206,
+          104
+        ],
+        "crop_px": [
+          256,
+          113
+        ],
+        "xz_m": [
+          0.0,
+          1.12
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "chin": {
+        "source_px": [
+          206,
+          329
+        ],
+        "crop_px": [
+          256,
+          338
+        ],
+        "xz_m": [
+          0.0,
+          0.681739
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "nose_tip": {
+        "source_px": [
+          206,
+          272
+        ],
+        "crop_px": [
+          256,
+          281
+        ],
+        "xz_m": [
+          0.0,
+          0.792765
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "pupil_left": {
+        "source_px": [
+          173,
+          249
+        ],
+        "crop_px": [
+          223,
+          258
+        ],
+        "xz_m": [
+          -0.064278,
+          0.837565
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "pupil_right": {
+        "source_px": [
+          241,
+          249
+        ],
+        "crop_px": [
+          291,
+          258
+        ],
+        "xz_m": [
+          0.068174,
+          0.837565
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "ear_left": {
+        "source_px": [
+          100,
+          264
+        ],
+        "crop_px": [
+          150,
+          273
+        ],
+        "xz_m": [
+          -0.20647,
+          0.808348
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "ear_right": {
+        "source_px": [
+          312,
+          263
+        ],
+        "crop_px": [
+          362,
+          272
+        ],
+        "xz_m": [
+          0.20647,
+          0.810296
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "pigtail_left": {
+        "source_px": [
+          60,
+          229
+        ],
+        "crop_px": [
+          110,
+          238
+        ],
+        "xz_m": [
+          -0.284383,
+          0.876522
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "pigtail_right": {
+        "source_px": [
+          354,
+          229
+        ],
+        "crop_px": [
+          404,
+          238
+        ],
+        "xz_m": [
+          0.288278,
+          0.876522
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "shoulder_left": {
+        "source_px": [
+          146,
+          357
+        ],
+        "crop_px": [
+          196,
+          366
+        ],
+        "xz_m": [
+          -0.11687,
+          0.6272
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "shoulder_right": {
+        "source_px": [
+          267,
+          357
+        ],
+        "crop_px": [
+          317,
+          366
+        ],
+        "xz_m": [
+          0.118817,
+          0.6272
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "elbow_left": {
+        "source_px": [
+          109,
+          433
+        ],
+        "crop_px": [
+          159,
+          442
+        ],
+        "xz_m": [
+          -0.188939,
+          0.479165
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "elbow_right": {
+        "source_px": [
+          301,
+          433
+        ],
+        "crop_px": [
+          351,
+          442
+        ],
+        "xz_m": [
+          0.185043,
+          0.479165
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "wrist_left": {
+        "source_px": [
+          80,
+          477
+        ],
+        "crop_px": [
+          130,
+          486
+        ],
+        "xz_m": [
+          -0.245426,
+          0.393461
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "wrist_right": {
+        "source_px": [
+          329,
+          477
+        ],
+        "crop_px": [
+          379,
+          486
+        ],
+        "xz_m": [
+          0.239583,
+          0.393461
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "fingertip_left": {
+        "source_px": [
+          68,
+          532
+        ],
+        "crop_px": [
+          118,
+          541
+        ],
+        "xz_m": [
+          -0.2688,
+          0.28633
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "fingertip_right": {
+        "source_px": [
+          341,
+          532
+        ],
+        "crop_px": [
+          391,
+          541
+        ],
+        "xz_m": [
+          0.262957,
+          0.28633
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "waist": {
+        "source_px": [
+          206,
+          440
+        ],
+        "crop_px": [
+          256,
+          449
+        ],
+        "xz_m": [
+          0.0,
+          0.46553
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "dress_hem": {
+        "source_px": [
+          206,
+          568
+        ],
+        "crop_px": [
+          256,
+          577
+        ],
+        "xz_m": [
+          0.0,
+          0.216209
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "knee_left": {
+        "source_px": [
+          158,
+          591
+        ],
+        "crop_px": [
+          208,
+          600
+        ],
+        "xz_m": [
+          -0.093496,
+          0.171409
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "knee_right": {
+        "source_px": [
+          259,
+          591
+        ],
+        "crop_px": [
+          309,
+          600
+        ],
+        "xz_m": [
+          0.103235,
+          0.171409
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "ankle_left": {
+        "source_px": [
+          154,
+          640
+        ],
+        "crop_px": [
+          204,
+          649
+        ],
+        "xz_m": [
+          -0.101287,
+          0.075965
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "ankle_right": {
+        "source_px": [
+          260,
+          640
+        ],
+        "crop_px": [
+          310,
+          649
+        ],
+        "xz_m": [
+          0.105183,
+          0.075965
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "foot_left": {
+        "source_px": [
+          144,
+          673
+        ],
+        "crop_px": [
+          194,
+          682
+        ],
+        "xz_m": [
+          -0.120765,
+          0.011687
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "foot_right": {
+        "source_px": [
+          266,
+          673
+        ],
+        "crop_px": [
+          316,
+          682
+        ],
+        "xz_m": [
+          0.11687,
+          0.011687
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      }
+    },
+    "side_landmarks": {
+      "crown": {
+        "source_px": [
+          579,
+          108
+        ],
+        "crop_px": [
+          270,
+          117
+        ],
+        "yz_m": [
+          -0.02727,
+          1.112209
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "forehead": {
+        "source_px": [
+          669,
+          178
+        ],
+        "crop_px": [
+          360,
+          187
+        ],
+        "yz_m": [
+          -0.202574,
+          0.975861
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "nose_tip": {
+        "source_px": [
+          680,
+          268
+        ],
+        "crop_px": [
+          371,
+          277
+        ],
+        "yz_m": [
+          -0.224,
+          0.800557
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "chin": {
+        "source_px": [
+          645,
+          325
+        ],
+        "crop_px": [
+          336,
+          334
+        ],
+        "yz_m": [
+          -0.155826,
+          0.68953
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "nape": {
+        "source_px": [
+          557,
+          312
+        ],
+        "crop_px": [
+          248,
+          321
+        ],
+        "yz_m": [
+          0.015583,
+          0.714852
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "shoulder": {
+        "source_px": [
+          561,
+          360
+        ],
+        "crop_px": [
+          252,
+          369
+        ],
+        "yz_m": [
+          0.007791,
+          0.621357
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "elbow": {
+        "source_px": [
+          561,
+          440
+        ],
+        "crop_px": [
+          252,
+          449
+        ],
+        "yz_m": [
+          0.007791,
+          0.46553
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "wrist": {
+        "source_px": [
+          565,
+          483
+        ],
+        "crop_px": [
+          256,
+          492
+        ],
+        "yz_m": [
+          -0.0,
+          0.381774
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "fingertip": {
+        "source_px": [
+          565,
+          535
+        ],
+        "crop_px": [
+          256,
+          544
+        ],
+        "yz_m": [
+          -0.0,
+          0.280487
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "waist_front": {
+        "source_px": [
+          636,
+          440
+        ],
+        "crop_px": [
+          327,
+          449
+        ],
+        "yz_m": [
+          -0.138296,
+          0.46553
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "waist_back": {
+        "source_px": [
+          511,
+          440
+        ],
+        "crop_px": [
+          202,
+          449
+        ],
+        "yz_m": [
+          0.105183,
+          0.46553
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "hem_front": {
+        "source_px": [
+          670,
+          567
+        ],
+        "crop_px": [
+          361,
+          576
+        ],
+        "yz_m": [
+          -0.204522,
+          0.218157
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "hem_back": {
+        "source_px": [
+          478,
+          567
+        ],
+        "crop_px": [
+          169,
+          576
+        ],
+        "yz_m": [
+          0.169461,
+          0.218157
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "knee": {
+        "source_px": [
+          558,
+          591
+        ],
+        "crop_px": [
+          249,
+          600
+        ],
+        "yz_m": [
+          0.013635,
+          0.171409
+        ],
+        "status": "joint centre estimated under garment"
+      },
+      "ankle": {
+        "source_px": [
+          559,
+          639
+        ],
+        "crop_px": [
+          250,
+          648
+        ],
+        "yz_m": [
+          0.011687,
+          0.077913
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "heel": {
+        "source_px": [
+          524,
+          671
+        ],
+        "crop_px": [
+          215,
+          680
+        ],
+        "yz_m": [
+          0.079861,
+          0.015583
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      },
+      "toe": {
+        "source_px": [
+          647,
+          671
+        ],
+        "crop_px": [
+          338,
+          680
+        ],
+        "yz_m": [
+          -0.159722,
+          0.015583
+        ],
+        "status": "visually measured landmark (~2px precision)"
+      }
+    },
+    "ratios": {
+      "face_height_to_total": 0.309565,
+      "face_width_to_total": 0.328696,
+      "head_with_hair_or_hat_height_to_total": 0.391304,
+      "head_with_hair_or_hat_width_to_total": 0.586087,
+      "ear_span_to_total": 0.413913,
+      "shoulder_outer_width_to_total": 0.241739,
+      "garment_hip_width_to_total": 0.368696,
+      "shoulder_height_to_total": 0.56,
+      "elbow_height_to_total": 0.427826,
+      "wrist_height_to_total": 0.351304,
+      "fingertip_height_to_total": 0.255652,
+      "wrist_span_to_total": 0.433043,
+      "ankle_spacing_to_total": 0.184348,
+      "pupil_spacing_to_total": 0.118261,
+      "foot_center_spacing_to_total": 0.212174
+    },
+    "direct_spans_px": {
+      "head_span": [
+        111,
+        300
+      ],
+      "ear_span": [
+        87,
+        325
+      ],
+      "hair_span": [
+        38,
+        375
+      ],
+      "headgear_span": [
+        96,
+        316
+      ],
+      "shoulder_span": [
+        137,
+        276
+      ],
+      "hip_span": [
+        99,
+        311
+      ]
+    },
+    "direct_vertical_px": {
+      "top": 104,
+      "head_top": 151,
+      "chin": 329,
+      "floor": 679
+    },
+    "inferred": "Side hair top is 4 px below front; keep front height and treat this as a sheet discrepancy. Rear dress hem and side flare vary; front width wins, side depth guides volume. Pelvis/crotch hidden by dress; use child body beneath a continuous skirt with cloth bones. Hair ties and sandal straps differ slightly among panels.",
+    "mask_method": "Deterministic colour/contour threshold, connected components, one-pixel closing, manual source-space pale-fabric segmentation polygons, ground-line suppression and hole filling; no resizing among this asset's panels. About 1-2 px boundary uncertainty. Original source preserved.",
+    "views": {
+      "front": {
+        "source_box_px": [
+          28,
+          99,
+          387,
+          684
+        ],
+        "source_axis_x": 206,
+        "camera_az": 0,
+        "camera_el": 0,
+        "lens": 0,
+        "authority": "dimension guide; generated approximate orthographic",
+        "bbox_clean_px": [
+          87,
+          112,
+          427,
+          689
+        ],
+        "width_m": 0.6622608695652175,
+        "height_m": 1.1238956521739132,
+        "alpha_area": 116377
+      },
+      "side": {
+        "source_box_px": [
+          440,
+          99,
+          694,
+          684
+        ],
+        "source_axis_x": 565,
+        "camera_az": 270,
+        "camera_el": 0,
+        "lens": 0,
+        "authority": "dimension guide; generated approximate orthographic",
+        "bbox_clean_px": [
+          141,
+          115,
+          374,
+          687
+        ],
+        "width_m": 0.4538434782608696,
+        "height_m": 1.1141565217391305,
+        "alpha_area": 84789
+      },
+      "back": {
+        "source_box_px": [
+          751,
+          99,
+          1112,
+          684
+        ],
+        "source_axis_x": 933,
+        "camera_az": 180,
+        "camera_el": 0,
+        "lens": 0,
+        "authority": "dimension guide; generated approximate orthographic",
+        "bbox_clean_px": [
+          84,
+          116,
+          427,
+          688
+        ],
+        "width_m": 0.6681043478260871,
+        "height_m": 1.1141565217391305,
+        "alpha_area": 112406
+      },
+      "threequarter": {
+        "source_box_px": [
+          1132,
+          99,
+          1485,
+          684
+        ],
+        "source_axis_x": 1314,
+        "camera_az": -30,
+        "camera_el": 3,
+        "lens": 70,
+        "authority": "appearance only; never metric",
+        "bbox_clean_px": [
+          86,
+          115,
+          414,
+          689
+        ],
+        "width_m": 0.6388869565217392,
+        "height_m": 1.1180521739130436,
+        "alpha_area": 113947
+      }
+    }
+  }
+}

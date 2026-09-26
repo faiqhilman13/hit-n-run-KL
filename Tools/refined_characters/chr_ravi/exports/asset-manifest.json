@@ -1,0 +1,49 @@
+{
+  "asset": "chr_ravi",
+  "height_m": 1.76,
+  "mesh_height_m": 1.76,
+  "triangles": 66688,
+  "lod1_triangles": 18672,
+  "bones": 23,
+  "clips": [
+    "chr_ravi|_tpose",
+    "chr_ravi|idle",
+    "chr_ravi|walk",
+    "chr_ravi|run",
+    "chr_ravi|panic",
+    "chr_ravi|jump",
+    "chr_ravi|punch",
+    "chr_ravi|kick",
+    "chr_ravi|ride",
+    "chr_ravi|mount",
+    "chr_ravi|dismount",
+    "chr_ravi|sit",
+    "chr_ravi|knockdown",
+    "chr_ravi|hit",
+    "chr_ravi|wave"
+  ],
+  "shape_keys": [
+    "Basis",
+    "Grin",
+    "Alarm",
+    "Determined",
+    "Blink"
+  ],
+  "bounds_m": [
+    1.844408392906189,
+    0.4492622911930084,
+    1.7599999904632568
+  ],
+  "palette": "kl_character_palette.png",
+  "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_ravi\\chr_ravi_master.blend",
+  "export": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_ravi\\exports\\chr_ravi.fbx",
+  "rig_contract": "Existing Unity Humanoid, T pose, 23 bones, metre scale, +Z Unity forward",
+  "inferred": [
+    "occluded anatomy",
+    "garment interior",
+    "finger depth",
+    "NPC adaptations from approved family style"
+  ],
+  "material_contract": "sRGB base color palette, alpha gloss metadata, no directional light baked; smooth vertex normals",
+  "reference_status": "Candidate reconstruction; consult measured review deviations before acceptance"
+}

@@ -1,0 +1,49 @@
+{
+  "asset": "chr_along",
+  "height_m": 1.64,
+  "mesh_height_m": 1.64,
+  "triangles": 74866,
+  "lod1_triangles": 20961,
+  "bones": 23,
+  "clips": [
+    "chr_along|_tpose",
+    "chr_along|idle",
+    "chr_along|walk",
+    "chr_along|run",
+    "chr_along|panic",
+    "chr_along|jump",
+    "chr_along|punch",
+    "chr_along|kick",
+    "chr_along|ride",
+    "chr_along|mount",
+    "chr_along|dismount",
+    "chr_along|sit",
+    "chr_along|knockdown",
+    "chr_along|hit",
+    "chr_along|wave"
+  ],
+  "shape_keys": [
+    "Basis",
+    "Grin",
+    "Alarm",
+    "Determined",
+    "Blink"
+  ],
+  "bounds_m": [
+    1.4798083305358887,
+    0.4376209080219269,
+    1.6399999856948853
+  ],
+  "palette": "kl_character_palette.png",
+  "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_along\\chr_along_master.blend",
+  "export": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_along\\exports\\chr_along.fbx",
+  "rig_contract": "Existing Unity Humanoid, T pose, 23 bones, metre scale, +Z Unity forward",
+  "inferred": [
+    "occluded anatomy",
+    "garment interior",
+    "finger depth",
+    "NPC adaptations from approved family style"
+  ],
+  "material_contract": "sRGB base color palette, alpha gloss metadata, no directional light baked; smooth vertex normals",
+  "reference_status": "Candidate reconstruction; consult measured review deviations before acceptance"
+}

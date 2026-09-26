@@ -1,0 +1,2657 @@
+{
+  "passed": true,
+  "assets": [
+    {
+      "asset": "chr_pakmat",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_pakmat_LOD0",
+          "vertices": 39441,
+          "triangles": 76484,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 40028,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_pakmat_LOD1",
+          "vertices": 11857,
+          "triangles": 21415,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 15431,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.66,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakmat\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakmat\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_pakmat_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ],
+        "chr_pakmat_LOD1": []
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakmat\\exports\\chr_pakmat.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_pakmat|chr_pakmat|chr_pakmat|_tpose",
+        "chr_pakmat|chr_pakmat|chr_pakmat|dismount",
+        "chr_pakmat|chr_pakmat|chr_pakmat|hit",
+        "chr_pakmat|chr_pakmat|chr_pakmat|idle",
+        "chr_pakmat|chr_pakmat|chr_pakmat|jump",
+        "chr_pakmat|chr_pakmat|chr_pakmat|kick",
+        "chr_pakmat|chr_pakmat|chr_pakmat|knockdown",
+        "chr_pakmat|chr_pakmat|chr_pakmat|mount",
+        "chr_pakmat|chr_pakmat|chr_pakmat|panic",
+        "chr_pakmat|chr_pakmat|chr_pakmat|punch",
+        "chr_pakmat|chr_pakmat|chr_pakmat|ride",
+        "chr_pakmat|chr_pakmat|chr_pakmat|run",
+        "chr_pakmat|chr_pakmat|chr_pakmat|sit",
+        "chr_pakmat|chr_pakmat|chr_pakmat|walk",
+        "chr_pakmat|chr_pakmat|chr_pakmat|wave",
+        "Key|chr_pakmat|chr_pakmat|_tpose",
+        "Key|chr_pakmat|chr_pakmat|dismount",
+        "Key|chr_pakmat|chr_pakmat|hit",
+        "Key|chr_pakmat|chr_pakmat|idle",
+        "Key|chr_pakmat|chr_pakmat|jump",
+        "Key|chr_pakmat|chr_pakmat|kick",
+        "Key|chr_pakmat|chr_pakmat|knockdown",
+        "Key|chr_pakmat|chr_pakmat|mount",
+        "Key|chr_pakmat|chr_pakmat|panic",
+        "Key|chr_pakmat|chr_pakmat|punch",
+        "Key|chr_pakmat|chr_pakmat|ride",
+        "Key|chr_pakmat|chr_pakmat|run",
+        "Key|chr_pakmat|chr_pakmat|sit",
+        "Key|chr_pakmat|chr_pakmat|walk",
+        "Key|chr_pakmat|chr_pakmat|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    },
+    {
+      "asset": "chr_maksom",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_maksom_LOD1",
+          "vertices": 12334,
+          "triangles": 22178,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 15868,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_maksom_LOD0",
+          "vertices": 40916,
+          "triangles": 79208,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 41188,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.57,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_maksom\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_maksom\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_maksom_LOD1": [],
+        "chr_maksom_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_maksom\\exports\\chr_maksom.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_maksom|chr_maksom|chr_maksom|_tpose",
+        "chr_maksom|chr_maksom|chr_maksom|dismount",
+        "chr_maksom|chr_maksom|chr_maksom|hit",
+        "chr_maksom|chr_maksom|chr_maksom|idle",
+        "chr_maksom|chr_maksom|chr_maksom|jump",
+        "chr_maksom|chr_maksom|chr_maksom|kick",
+        "chr_maksom|chr_maksom|chr_maksom|knockdown",
+        "chr_maksom|chr_maksom|chr_maksom|mount",
+        "chr_maksom|chr_maksom|chr_maksom|panic",
+        "chr_maksom|chr_maksom|chr_maksom|punch",
+        "chr_maksom|chr_maksom|chr_maksom|ride",
+        "chr_maksom|chr_maksom|chr_maksom|run",
+        "chr_maksom|chr_maksom|chr_maksom|sit",
+        "chr_maksom|chr_maksom|chr_maksom|walk",
+        "chr_maksom|chr_maksom|chr_maksom|wave",
+        "Key|chr_maksom|chr_maksom|_tpose",
+        "Key|chr_maksom|chr_maksom|dismount",
+        "Key|chr_maksom|chr_maksom|hit",
+        "Key|chr_maksom|chr_maksom|idle",
+        "Key|chr_maksom|chr_maksom|jump",
+        "Key|chr_maksom|chr_maksom|kick",
+        "Key|chr_maksom|chr_maksom|knockdown",
+        "Key|chr_maksom|chr_maksom|mount",
+        "Key|chr_maksom|chr_maksom|panic",
+        "Key|chr_maksom|chr_maksom|punch",
+        "Key|chr_maksom|chr_maksom|ride",
+        "Key|chr_maksom|chr_maksom|run",
+        "Key|chr_maksom|chr_maksom|sit",
+        "Key|chr_maksom|chr_maksom|walk",
+        "Key|chr_maksom|chr_maksom|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    },
+    {
+      "asset": "chr_along",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_along_LOD1",
+          "vertices": 10745,
+          "triangles": 20961,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 17035,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_along_LOD0",
+          "vertices": 37763,
+          "triangles": 74866,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 45516,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.64,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_along\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_along\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_along_LOD1": [],
+        "chr_along_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_along\\exports\\chr_along.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_along|chr_along|chr_along|_tpose",
+        "chr_along|chr_along|chr_along|dismount",
+        "chr_along|chr_along|chr_along|hit",
+        "chr_along|chr_along|chr_along|idle",
+        "chr_along|chr_along|chr_along|jump",
+        "chr_along|chr_along|chr_along|kick",
+        "chr_along|chr_along|chr_along|knockdown",
+        "chr_along|chr_along|chr_along|mount",
+        "chr_along|chr_along|chr_along|panic",
+        "chr_along|chr_along|chr_along|punch",
+        "chr_along|chr_along|chr_along|ride",
+        "chr_along|chr_along|chr_along|run",
+        "chr_along|chr_along|chr_along|sit",
+        "chr_along|chr_along|chr_along|walk",
+        "chr_along|chr_along|chr_along|wave",
+        "Key|chr_along|chr_along|_tpose",
+        "Key|chr_along|chr_along|dismount",
+        "Key|chr_along|chr_along|hit",
+        "Key|chr_along|chr_along|idle",
+        "Key|chr_along|chr_along|jump",
+        "Key|chr_along|chr_along|kick",
+        "Key|chr_along|chr_along|knockdown",
+        "Key|chr_along|chr_along|mount",
+        "Key|chr_along|chr_along|panic",
+        "Key|chr_along|chr_along|punch",
+        "Key|chr_along|chr_along|ride",
+        "Key|chr_along|chr_along|run",
+        "Key|chr_along|chr_along|sit",
+        "Key|chr_along|chr_along|walk",
+        "Key|chr_along|chr_along|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    },
+    {
+      "asset": "chr_adik",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_adik_LOD0",
+          "vertices": 34467,
+          "triangles": 68126,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 35050,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_adik_LOD1",
+          "vertices": 9895,
+          "triangles": 19074,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 13897,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.12,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_adik\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_adik\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_adik_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ],
+        "chr_adik_LOD1": []
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_adik\\exports\\chr_adik.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_adik|chr_adik|chr_adik|_tpose",
+        "chr_adik|chr_adik|chr_adik|dismount",
+        "chr_adik|chr_adik|chr_adik|hit",
+        "chr_adik|chr_adik|chr_adik|idle",
+        "chr_adik|chr_adik|chr_adik|jump",
+        "chr_adik|chr_adik|chr_adik|kick",
+        "chr_adik|chr_adik|chr_adik|knockdown",
+        "chr_adik|chr_adik|chr_adik|mount",
+        "chr_adik|chr_adik|chr_adik|panic",
+        "chr_adik|chr_adik|chr_adik|punch",
+        "chr_adik|chr_adik|chr_adik|ride",
+        "chr_adik|chr_adik|chr_adik|run",
+        "chr_adik|chr_adik|chr_adik|sit",
+        "chr_adik|chr_adik|chr_adik|walk",
+        "chr_adik|chr_adik|chr_adik|wave",
+        "Key|chr_adik|chr_adik|_tpose",
+        "Key|chr_adik|chr_adik|dismount",
+        "Key|chr_adik|chr_adik|hit",
+        "Key|chr_adik|chr_adik|idle",
+        "Key|chr_adik|chr_adik|jump",
+        "Key|chr_adik|chr_adik|kick",
+        "Key|chr_adik|chr_adik|knockdown",
+        "Key|chr_adik|chr_adik|mount",
+        "Key|chr_adik|chr_adik|panic",
+        "Key|chr_adik|chr_adik|punch",
+        "Key|chr_adik|chr_adik|ride",
+        "Key|chr_adik|chr_adik|run",
+        "Key|chr_adik|chr_adik|sit",
+        "Key|chr_adik|chr_adik|walk",
+        "Key|chr_adik|chr_adik|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    },
+    {
+      "asset": "chr_townman",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_townman_LOD1",
+          "vertices": 11901,
+          "triangles": 21667,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 17129,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_townman_LOD0",
+          "vertices": 39828,
+          "triangles": 77396,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 45245,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.7,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townman\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townman\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_townman_LOD1": [],
+        "chr_townman_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townman\\exports\\chr_townman.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_townman|chr_townman|chr_townman|_tpose",
+        "chr_townman|chr_townman|chr_townman|dismount",
+        "chr_townman|chr_townman|chr_townman|hit",
+        "chr_townman|chr_townman|chr_townman|idle",
+        "chr_townman|chr_townman|chr_townman|jump",
+        "chr_townman|chr_townman|chr_townman|kick",
+        "chr_townman|chr_townman|chr_townman|knockdown",
+        "chr_townman|chr_townman|chr_townman|mount",
+        "chr_townman|chr_townman|chr_townman|panic",
+        "chr_townman|chr_townman|chr_townman|punch",
+        "chr_townman|chr_townman|chr_townman|ride",
+        "chr_townman|chr_townman|chr_townman|run",
+        "chr_townman|chr_townman|chr_townman|sit",
+        "chr_townman|chr_townman|chr_townman|walk",
+        "chr_townman|chr_townman|chr_townman|wave",
+        "Key|chr_townman|chr_townman|_tpose",
+        "Key|chr_townman|chr_townman|dismount",
+        "Key|chr_townman|chr_townman|hit",
+        "Key|chr_townman|chr_townman|idle",
+        "Key|chr_townman|chr_townman|jump",
+        "Key|chr_townman|chr_townman|kick",
+        "Key|chr_townman|chr_townman|knockdown",
+        "Key|chr_townman|chr_townman|mount",
+        "Key|chr_townman|chr_townman|panic",
+        "Key|chr_townman|chr_townman|punch",
+        "Key|chr_townman|chr_townman|ride",
+        "Key|chr_townman|chr_townman|run",
+        "Key|chr_townman|chr_townman|sit",
+        "Key|chr_townman|chr_townman|walk",
+        "Key|chr_townman|chr_townman|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    },
+    {
+      "asset": "chr_townaunty",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_townaunty_LOD1",
+          "vertices": 12327,
+          "triangles": 22161,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 15778,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_townaunty_LOD0",
+          "vertices": 40888,
+          "triangles": 79152,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 41160,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.56,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townaunty\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townaunty\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_townaunty_LOD1": [],
+        "chr_townaunty_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townaunty\\exports\\chr_townaunty.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_townaunty|chr_townaunty|chr_townaunty|_tpose",
+        "chr_townaunty|chr_townaunty|chr_townaunty|dismount",
+        "chr_townaunty|chr_townaunty|chr_townaunty|hit",
+        "chr_townaunty|chr_townaunty|chr_townaunty|idle",
+        "chr_townaunty|chr_townaunty|chr_townaunty|jump",
+        "chr_townaunty|chr_townaunty|chr_townaunty|kick",
+        "chr_townaunty|chr_townaunty|chr_townaunty|knockdown",
+        "chr_townaunty|chr_townaunty|chr_townaunty|mount",
+        "chr_townaunty|chr_townaunty|chr_townaunty|panic",
+        "chr_townaunty|chr_townaunty|chr_townaunty|punch",
+        "chr_townaunty|chr_townaunty|chr_townaunty|ride",
+        "chr_townaunty|chr_townaunty|chr_townaunty|run",
+        "chr_townaunty|chr_townaunty|chr_townaunty|sit",
+        "chr_townaunty|chr_townaunty|chr_townaunty|walk",
+        "chr_townaunty|chr_townaunty|chr_townaunty|wave",
+        "Key|chr_townaunty|chr_townaunty|_tpose",
+        "Key|chr_townaunty|chr_townaunty|dismount",
+        "Key|chr_townaunty|chr_townaunty|hit",
+        "Key|chr_townaunty|chr_townaunty|idle",
+        "Key|chr_townaunty|chr_townaunty|jump",
+        "Key|chr_townaunty|chr_townaunty|kick",
+        "Key|chr_townaunty|chr_townaunty|knockdown",
+        "Key|chr_townaunty|chr_townaunty|mount",
+        "Key|chr_townaunty|chr_townaunty|panic",
+        "Key|chr_townaunty|chr_townaunty|punch",
+        "Key|chr_townaunty|chr_townaunty|ride",
+        "Key|chr_townaunty|chr_townaunty|run",
+        "Key|chr_townaunty|chr_townaunty|sit",
+        "Key|chr_townaunty|chr_townaunty|walk",
+        "Key|chr_townaunty|chr_townaunty|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    },
+    {
+      "asset": "chr_pakcik",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_pakcik_LOD0",
+          "vertices": 33417,
+          "triangles": 66044,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 33972,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_pakcik_LOD1",
+          "vertices": 9573,
+          "triangles": 18491,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 13690,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.63,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakcik\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakcik\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_pakcik_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ],
+        "chr_pakcik_LOD1": []
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakcik\\exports\\chr_pakcik.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_pakcik|chr_pakcik|chr_pakcik|_tpose",
+        "chr_pakcik|chr_pakcik|chr_pakcik|dismount",
+        "chr_pakcik|chr_pakcik|chr_pakcik|hit",
+        "chr_pakcik|chr_pakcik|chr_pakcik|idle",
+        "chr_pakcik|chr_pakcik|chr_pakcik|jump",
+        "chr_pakcik|chr_pakcik|chr_pakcik|kick",
+        "chr_pakcik|chr_pakcik|chr_pakcik|knockdown",
+        "chr_pakcik|chr_pakcik|chr_pakcik|mount",
+        "chr_pakcik|chr_pakcik|chr_pakcik|panic",
+        "chr_pakcik|chr_pakcik|chr_pakcik|punch",
+        "chr_pakcik|chr_pakcik|chr_pakcik|ride",
+        "chr_pakcik|chr_pakcik|chr_pakcik|run",
+        "chr_pakcik|chr_pakcik|chr_pakcik|sit",
+        "chr_pakcik|chr_pakcik|chr_pakcik|walk",
+        "chr_pakcik|chr_pakcik|chr_pakcik|wave",
+        "Key|chr_pakcik|chr_pakcik|_tpose",
+        "Key|chr_pakcik|chr_pakcik|dismount",
+        "Key|chr_pakcik|chr_pakcik|hit",
+        "Key|chr_pakcik|chr_pakcik|idle",
+        "Key|chr_pakcik|chr_pakcik|jump",
+        "Key|chr_pakcik|chr_pakcik|kick",
+        "Key|chr_pakcik|chr_pakcik|knockdown",
+        "Key|chr_pakcik|chr_pakcik|mount",
+        "Key|chr_pakcik|chr_pakcik|panic",
+        "Key|chr_pakcik|chr_pakcik|punch",
+        "Key|chr_pakcik|chr_pakcik|ride",
+        "Key|chr_pakcik|chr_pakcik|run",
+        "Key|chr_pakcik|chr_pakcik|sit",
+        "Key|chr_pakcik|chr_pakcik|walk",
+        "Key|chr_pakcik|chr_pakcik|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    },
+    {
+      "asset": "chr_kid",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_kid_LOD1",
+          "vertices": 8789,
+          "triangles": 16943,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 13043,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_kid_LOD0",
+          "vertices": 30623,
+          "triangles": 60512,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 33502,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.15,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_kid\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_kid\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_kid_LOD1": [],
+        "chr_kid_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_kid\\exports\\chr_kid.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_kid|chr_kid|chr_kid|_tpose",
+        "chr_kid|chr_kid|chr_kid|dismount",
+        "chr_kid|chr_kid|chr_kid|hit",
+        "chr_kid|chr_kid|chr_kid|idle",
+        "chr_kid|chr_kid|chr_kid|jump",
+        "chr_kid|chr_kid|chr_kid|kick",
+        "chr_kid|chr_kid|chr_kid|knockdown",
+        "chr_kid|chr_kid|chr_kid|mount",
+        "chr_kid|chr_kid|chr_kid|panic",
+        "chr_kid|chr_kid|chr_kid|punch",
+        "chr_kid|chr_kid|chr_kid|ride",
+        "chr_kid|chr_kid|chr_kid|run",
+        "chr_kid|chr_kid|chr_kid|sit",
+        "chr_kid|chr_kid|chr_kid|walk",
+        "chr_kid|chr_kid|chr_kid|wave",
+        "Key|chr_kid|chr_kid|_tpose",
+        "Key|chr_kid|chr_kid|dismount",
+        "Key|chr_kid|chr_kid|hit",
+        "Key|chr_kid|chr_kid|idle",
+        "Key|chr_kid|chr_kid|jump",
+        "Key|chr_kid|chr_kid|kick",
+        "Key|chr_kid|chr_kid|knockdown",
+        "Key|chr_kid|chr_kid|mount",
+        "Key|chr_kid|chr_kid|panic",
+        "Key|chr_kid|chr_kid|punch",
+        "Key|chr_kid|chr_kid|ride",
+        "Key|chr_kid|chr_kid|run",
+        "Key|chr_kid|chr_kid|sit",
+        "Key|chr_kid|chr_kid|walk",
+        "Key|chr_kid|chr_kid|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    },
+    {
+      "asset": "chr_polis",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_polis_LOD1",
+          "vertices": 9975,
+          "triangles": 19324,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 14248,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_polis_LOD0",
+          "vertices": 34879,
+          "triangles": 69020,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 35408,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.76,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_polis\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_polis\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_polis_LOD1": [],
+        "chr_polis_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_polis\\exports\\chr_polis.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_polis|chr_polis|chr_polis|_tpose",
+        "chr_polis|chr_polis|chr_polis|dismount",
+        "chr_polis|chr_polis|chr_polis|hit",
+        "chr_polis|chr_polis|chr_polis|idle",
+        "chr_polis|chr_polis|chr_polis|jump",
+        "chr_polis|chr_polis|chr_polis|kick",
+        "chr_polis|chr_polis|chr_polis|knockdown",
+        "chr_polis|chr_polis|chr_polis|mount",
+        "chr_polis|chr_polis|chr_polis|panic",
+        "chr_polis|chr_polis|chr_polis|punch",
+        "chr_polis|chr_polis|chr_polis|ride",
+        "chr_polis|chr_polis|chr_polis|run",
+        "chr_polis|chr_polis|chr_polis|sit",
+        "chr_polis|chr_polis|chr_polis|walk",
+        "chr_polis|chr_polis|chr_polis|wave",
+        "Key|chr_polis|chr_polis|_tpose",
+        "Key|chr_polis|chr_polis|dismount",
+        "Key|chr_polis|chr_polis|hit",
+        "Key|chr_polis|chr_polis|idle",
+        "Key|chr_polis|chr_polis|jump",
+        "Key|chr_polis|chr_polis|kick",
+        "Key|chr_polis|chr_polis|knockdown",
+        "Key|chr_polis|chr_polis|mount",
+        "Key|chr_polis|chr_polis|panic",
+        "Key|chr_polis|chr_polis|punch",
+        "Key|chr_polis|chr_polis|ride",
+        "Key|chr_polis|chr_polis|run",
+        "Key|chr_polis|chr_polis|sit",
+        "Key|chr_polis|chr_polis|walk",
+        "Key|chr_polis|chr_polis|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    },
+    {
+      "asset": "chr_datukmega",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_datukmega_LOD0",
+          "vertices": 39467,
+          "triangles": 78199,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 39980,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_datukmega_LOD1",
+          "vertices": 11267,
+          "triangles": 21894,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 15991,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.74,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_datukmega\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_datukmega\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_datukmega_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ],
+        "chr_datukmega_LOD1": []
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_datukmega\\exports\\chr_datukmega.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_datukmega|chr_datukmega|chr_datukmega|_tpose",
+        "chr_datukmega|chr_datukmega|chr_datukmega|dismount",
+        "chr_datukmega|chr_datukmega|chr_datukmega|hit",
+        "chr_datukmega|chr_datukmega|chr_datukmega|idle",
+        "chr_datukmega|chr_datukmega|chr_datukmega|jump",
+        "chr_datukmega|chr_datukmega|chr_datukmega|kick",
+        "chr_datukmega|chr_datukmega|chr_datukmega|knockdown",
+        "chr_datukmega|chr_datukmega|chr_datukmega|mount",
+        "chr_datukmega|chr_datukmega|chr_datukmega|panic",
+        "chr_datukmega|chr_datukmega|chr_datukmega|punch",
+        "chr_datukmega|chr_datukmega|chr_datukmega|ride",
+        "chr_datukmega|chr_datukmega|chr_datukmega|run",
+        "chr_datukmega|chr_datukmega|chr_datukmega|sit",
+        "chr_datukmega|chr_datukmega|chr_datukmega|walk",
+        "chr_datukmega|chr_datukmega|chr_datukmega|wave",
+        "Key|chr_datukmega|chr_datukmega|_tpose",
+        "Key|chr_datukmega|chr_datukmega|dismount",
+        "Key|chr_datukmega|chr_datukmega|hit",
+        "Key|chr_datukmega|chr_datukmega|idle",
+        "Key|chr_datukmega|chr_datukmega|jump",
+        "Key|chr_datukmega|chr_datukmega|kick",
+        "Key|chr_datukmega|chr_datukmega|knockdown",
+        "Key|chr_datukmega|chr_datukmega|mount",
+        "Key|chr_datukmega|chr_datukmega|panic",
+        "Key|chr_datukmega|chr_datukmega|punch",
+        "Key|chr_datukmega|chr_datukmega|ride",
+        "Key|chr_datukmega|chr_datukmega|run",
+        "Key|chr_datukmega|chr_datukmega|sit",
+        "Key|chr_datukmega|chr_datukmega|walk",
+        "Key|chr_datukmega|chr_datukmega|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    },
+    {
+      "asset": "chr_aiman",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_aiman_LOD0",
+          "vertices": 28177,
+          "triangles": 55608,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 28710,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_aiman_LOD1",
+          "vertices": 8084,
+          "triangles": 15569,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 11521,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.72,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_aiman\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_aiman\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_aiman_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ],
+        "chr_aiman_LOD1": []
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_aiman\\exports\\chr_aiman.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_aiman|chr_aiman|chr_aiman|_tpose",
+        "chr_aiman|chr_aiman|chr_aiman|dismount",
+        "chr_aiman|chr_aiman|chr_aiman|hit",
+        "chr_aiman|chr_aiman|chr_aiman|idle",
+        "chr_aiman|chr_aiman|chr_aiman|jump",
+        "chr_aiman|chr_aiman|chr_aiman|kick",
+        "chr_aiman|chr_aiman|chr_aiman|knockdown",
+        "chr_aiman|chr_aiman|chr_aiman|mount",
+        "chr_aiman|chr_aiman|chr_aiman|panic",
+        "chr_aiman|chr_aiman|chr_aiman|punch",
+        "chr_aiman|chr_aiman|chr_aiman|ride",
+        "chr_aiman|chr_aiman|chr_aiman|run",
+        "chr_aiman|chr_aiman|chr_aiman|sit",
+        "chr_aiman|chr_aiman|chr_aiman|walk",
+        "chr_aiman|chr_aiman|chr_aiman|wave",
+        "Key|chr_aiman|chr_aiman|_tpose",
+        "Key|chr_aiman|chr_aiman|dismount",
+        "Key|chr_aiman|chr_aiman|hit",
+        "Key|chr_aiman|chr_aiman|idle",
+        "Key|chr_aiman|chr_aiman|jump",
+        "Key|chr_aiman|chr_aiman|kick",
+        "Key|chr_aiman|chr_aiman|knockdown",
+        "Key|chr_aiman|chr_aiman|mount",
+        "Key|chr_aiman|chr_aiman|panic",
+        "Key|chr_aiman|chr_aiman|punch",
+        "Key|chr_aiman|chr_aiman|ride",
+        "Key|chr_aiman|chr_aiman|run",
+        "Key|chr_aiman|chr_aiman|sit",
+        "Key|chr_aiman|chr_aiman|walk",
+        "Key|chr_aiman|chr_aiman|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    },
+    {
+      "asset": "chr_mei",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_mei_LOD1",
+          "vertices": 9113,
+          "triangles": 17594,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 13131,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_mei_LOD0",
+          "vertices": 31805,
+          "triangles": 62836,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 32306,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.6,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_mei\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_mei\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_mei_LOD1": [],
+        "chr_mei_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_mei\\exports\\chr_mei.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_mei|chr_mei|chr_mei|_tpose",
+        "chr_mei|chr_mei|chr_mei|dismount",
+        "chr_mei|chr_mei|chr_mei|hit",
+        "chr_mei|chr_mei|chr_mei|idle",
+        "chr_mei|chr_mei|chr_mei|jump",
+        "chr_mei|chr_mei|chr_mei|kick",
+        "chr_mei|chr_mei|chr_mei|knockdown",
+        "chr_mei|chr_mei|chr_mei|mount",
+        "chr_mei|chr_mei|chr_mei|panic",
+        "chr_mei|chr_mei|chr_mei|punch",
+        "chr_mei|chr_mei|chr_mei|ride",
+        "chr_mei|chr_mei|chr_mei|run",
+        "chr_mei|chr_mei|chr_mei|sit",
+        "chr_mei|chr_mei|chr_mei|walk",
+        "chr_mei|chr_mei|chr_mei|wave",
+        "Key|chr_mei|chr_mei|_tpose",
+        "Key|chr_mei|chr_mei|dismount",
+        "Key|chr_mei|chr_mei|hit",
+        "Key|chr_mei|chr_mei|idle",
+        "Key|chr_mei|chr_mei|jump",
+        "Key|chr_mei|chr_mei|kick",
+        "Key|chr_mei|chr_mei|knockdown",
+        "Key|chr_mei|chr_mei|mount",
+        "Key|chr_mei|chr_mei|panic",
+        "Key|chr_mei|chr_mei|punch",
+        "Key|chr_mei|chr_mei|ride",
+        "Key|chr_mei|chr_mei|run",
+        "Key|chr_mei|chr_mei|sit",
+        "Key|chr_mei|chr_mei|walk",
+        "Key|chr_mei|chr_mei|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    },
+    {
+      "asset": "chr_ravi",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_ravi_LOD1",
+          "vertices": 9651,
+          "triangles": 18672,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 13624,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_ravi_LOD0",
+          "vertices": 33723,
+          "triangles": 66688,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 34258,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.76,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_ravi\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        },
+        {
+          "name": "kl_character_palette.001",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_ravi\\exports\\kl_character_palette.png",
+          "packed": false,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_ravi_LOD1": [],
+        "chr_ravi_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          1.0,
+          2.0
+        ],
+        "dismount": [
+          1.0,
+          19.0
+        ],
+        "hit": [
+          1.0,
+          17.0
+        ],
+        "idle": [
+          1.0,
+          97.0
+        ],
+        "jump": [
+          1.0,
+          23.0
+        ],
+        "kick": [
+          1.0,
+          17.0
+        ],
+        "knockdown": [
+          1.0,
+          53.0
+        ],
+        "mount": [
+          1.0,
+          19.0
+        ],
+        "panic": [
+          1.0,
+          13.0
+        ],
+        "punch": [
+          1.0,
+          15.0
+        ],
+        "ride": [
+          1.0,
+          25.0
+        ],
+        "run": [
+          1.0,
+          13.0
+        ],
+        "sit": [
+          1.0,
+          25.0
+        ],
+        "walk": [
+          1.0,
+          17.0
+        ],
+        "wave": [
+          1.0,
+          25.0
+        ]
+      },
+      "file": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_ravi\\exports\\chr_ravi.fbx",
+      "imported_action_count": 30,
+      "imported_action_names": [
+        "chr_ravi|chr_ravi|chr_ravi|_tpose",
+        "chr_ravi|chr_ravi|chr_ravi|dismount",
+        "chr_ravi|chr_ravi|chr_ravi|hit",
+        "chr_ravi|chr_ravi|chr_ravi|idle",
+        "chr_ravi|chr_ravi|chr_ravi|jump",
+        "chr_ravi|chr_ravi|chr_ravi|kick",
+        "chr_ravi|chr_ravi|chr_ravi|knockdown",
+        "chr_ravi|chr_ravi|chr_ravi|mount",
+        "chr_ravi|chr_ravi|chr_ravi|panic",
+        "chr_ravi|chr_ravi|chr_ravi|punch",
+        "chr_ravi|chr_ravi|chr_ravi|ride",
+        "chr_ravi|chr_ravi|chr_ravi|run",
+        "chr_ravi|chr_ravi|chr_ravi|sit",
+        "chr_ravi|chr_ravi|chr_ravi|walk",
+        "chr_ravi|chr_ravi|chr_ravi|wave",
+        "Key|chr_ravi|chr_ravi|_tpose",
+        "Key|chr_ravi|chr_ravi|dismount",
+        "Key|chr_ravi|chr_ravi|hit",
+        "Key|chr_ravi|chr_ravi|idle",
+        "Key|chr_ravi|chr_ravi|jump",
+        "Key|chr_ravi|chr_ravi|kick",
+        "Key|chr_ravi|chr_ravi|knockdown",
+        "Key|chr_ravi|chr_ravi|mount",
+        "Key|chr_ravi|chr_ravi|panic",
+        "Key|chr_ravi|chr_ravi|punch",
+        "Key|chr_ravi|chr_ravi|ride",
+        "Key|chr_ravi|chr_ravi|run",
+        "Key|chr_ravi|chr_ravi|sit",
+        "Key|chr_ravi|chr_ravi|walk",
+        "Key|chr_ravi|chr_ravi|wave"
+      ],
+      "clip_length_errors_frames": {
+        "_tpose": 0.0,
+        "dismount": 0.0,
+        "hit": 0.0,
+        "idle": 0.0,
+        "jump": 0.0,
+        "kick": 0.0,
+        "knockdown": 0.0,
+        "mount": 0.0,
+        "panic": 0.0,
+        "punch": 0.0,
+        "ride": 0.0,
+        "run": 0.0,
+        "sit": 0.0,
+        "walk": 0.0,
+        "wave": 0.0
+      },
+      "height_relative_error": 0.0
+    }
+  ]
+}

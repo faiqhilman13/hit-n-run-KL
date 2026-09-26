@@ -1,0 +1,13 @@
+# The live game exports are versioned once, under Assets/Models/KL.
+/chr_*/exports/*.fbx
+
+# Keep final evidence; retain development attempts locally without publishing them.
+*.log
+/review/*
+!/review/final/
+!/review/final-technical/
+/chr_*/review/*
+!/chr_*/review/final_world_comparison/
+/refs/family_latest_comparisons.*
+/refs/pants_probe/*
+!/refs/pants_probe/uniform_trouser_reports.json

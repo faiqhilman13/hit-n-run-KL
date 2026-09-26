@@ -1,0 +1,72 @@
+{
+  "idle": {
+    "frames": 96,
+    "loop": true,
+    "fps": 30
+  },
+  "walk": {
+    "frames": 16,
+    "loop": true,
+    "fps": 30
+  },
+  "run": {
+    "frames": 12,
+    "loop": true,
+    "fps": 30
+  },
+  "panic": {
+    "frames": 12,
+    "loop": true,
+    "fps": 30
+  },
+  "jump": {
+    "frames": 22,
+    "loop": false,
+    "fps": 30
+  },
+  "punch": {
+    "frames": 14,
+    "loop": false,
+    "fps": 30
+  },
+  "kick": {
+    "frames": 16,
+    "loop": false,
+    "fps": 30
+  },
+  "ride": {
+    "frames": 24,
+    "loop": true,
+    "fps": 30
+  },
+  "mount": {
+    "frames": 18,
+    "loop": false,
+    "fps": 30
+  },
+  "dismount": {
+    "frames": 18,
+    "loop": false,
+    "fps": 30
+  },
+  "sit": {
+    "frames": 24,
+    "loop": true,
+    "fps": 30
+  },
+  "knockdown": {
+    "frames": 52,
+    "loop": false,
+    "fps": 30
+  },
+  "hit": {
+    "frames": 16,
+    "loop": false,
+    "fps": 30
+  },
+  "wave": {
+    "frames": 24,
+    "loop": true,
+    "fps": 30
+  }
+}

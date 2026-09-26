@@ -1,0 +1,49 @@
+{
+  "asset": "chr_aiman",
+  "height_m": 1.72,
+  "mesh_height_m": 1.72,
+  "triangles": 55608,
+  "lod1_triangles": 15569,
+  "bones": 23,
+  "clips": [
+    "chr_aiman|_tpose",
+    "chr_aiman|idle",
+    "chr_aiman|walk",
+    "chr_aiman|run",
+    "chr_aiman|panic",
+    "chr_aiman|jump",
+    "chr_aiman|punch",
+    "chr_aiman|kick",
+    "chr_aiman|ride",
+    "chr_aiman|mount",
+    "chr_aiman|dismount",
+    "chr_aiman|sit",
+    "chr_aiman|knockdown",
+    "chr_aiman|hit",
+    "chr_aiman|wave"
+  ],
+  "shape_keys": [
+    "Basis",
+    "Grin",
+    "Alarm",
+    "Determined",
+    "Blink"
+  ],
+  "bounds_m": [
+    1.4798083305358887,
+    0.39054277539253235,
+    1.7200000286102295
+  ],
+  "palette": "kl_character_palette.png",
+  "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_aiman\\chr_aiman_master.blend",
+  "export": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_aiman\\exports\\chr_aiman.fbx",
+  "rig_contract": "Existing Unity Humanoid, T pose, 23 bones, metre scale, +Z Unity forward",
+  "inferred": [
+    "occluded anatomy",
+    "garment interior",
+    "finger depth",
+    "NPC adaptations from approved family style"
+  ],
+  "material_contract": "sRGB base color palette, alpha gloss metadata, no directional light baked; smooth vertex normals",
+  "reference_status": "Candidate reconstruction; consult measured review deviations before acceptance"
+}

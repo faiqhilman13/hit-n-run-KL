@@ -1,0 +1,152 @@
+{
+  "metric": "world-registered; no crop, translation or independent rescale",
+  "stage": "blockout",
+  "iou": 0.882627,
+  "reference_pixels": 88252,
+  "model_pixels": 81704,
+  "reference_only_pct": 9.7131,
+  "model_only_pct_of_reference": 2.2934,
+  "reference_bbox_px": [
+    166,
+    130,
+    356,
+    689
+  ],
+  "model_bbox_px": [
+    152,
+    132,
+    357,
+    688
+  ],
+  "height_error_m": -0.008471,
+  "height_error_pct": -0.5367,
+  "top_error_m": -0.005647,
+  "sole_error_m": 0.002824,
+  "width_error_m": 0.042356,
+  "centroid_offset_m": [
+    -0.010162,
+    -0.036111
+  ],
+  "width_bands": [
+    {
+      "band": 1,
+      "row": 157,
+      "z_m": 1.499406,
+      "reference_width_px": 114,
+      "model_width_px": 76,
+      "difference_m": -0.107302,
+      "difference_fraction_reference_height": -0.068345,
+      "occupied_reference_px": 114,
+      "occupied_model_px": 76
+    },
+    {
+      "band": 2,
+      "row": 213,
+      "z_m": 1.341277,
+      "reference_width_px": 150,
+      "model_width_px": 141,
+      "difference_m": -0.025414,
+      "difference_fraction_reference_height": -0.016187,
+      "occupied_reference_px": 150,
+      "occupied_model_px": 141
+    },
+    {
+      "band": 3,
+      "row": 269,
+      "z_m": 1.183147,
+      "reference_width_px": 162,
+      "model_width_px": 120,
+      "difference_m": -0.118597,
+      "difference_fraction_reference_height": -0.07554,
+      "occupied_reference_px": 162,
+      "occupied_model_px": 120
+    },
+    {
+      "band": 4,
+      "row": 325,
+      "z_m": 1.025018,
+      "reference_width_px": 180,
+      "model_width_px": 168,
+      "difference_m": -0.033885,
+      "difference_fraction_reference_height": -0.021583,
+      "occupied_reference_px": 180,
+      "occupied_model_px": 168
+    },
+    {
+      "band": 5,
+      "row": 381,
+      "z_m": 0.866888,
+      "reference_width_px": 169,
+      "model_width_px": 198,
+      "difference_m": 0.081888,
+      "difference_fraction_reference_height": 0.052158,
+      "occupied_reference_px": 169,
+      "occupied_model_px": 177
+    },
+    {
+      "band": 6,
+      "row": 436,
+      "z_m": 0.711583,
+      "reference_width_px": 171,
+      "model_width_px": 170,
+      "difference_m": -0.002824,
+      "difference_fraction_reference_height": -0.001799,
+      "occupied_reference_px": 171,
+      "occupied_model_px": 170
+    },
+    {
+      "band": 7,
+      "row": 492,
+      "z_m": 0.553453,
+      "reference_width_px": 178,
+      "model_width_px": 173,
+      "difference_m": -0.014119,
+      "difference_fraction_reference_height": -0.008993,
+      "occupied_reference_px": 178,
+      "occupied_model_px": 173
+    },
+    {
+      "band": 8,
+      "row": 548,
+      "z_m": 0.395324,
+      "reference_width_px": 155,
+      "model_width_px": 160,
+      "difference_m": 0.014119,
+      "difference_fraction_reference_height": 0.008993,
+      "occupied_reference_px": 155,
+      "occupied_model_px": 160
+    },
+    {
+      "band": 9,
+      "row": 604,
+      "z_m": 0.237194,
+      "reference_width_px": 155,
+      "model_width_px": 164,
+      "difference_m": 0.025414,
+      "difference_fraction_reference_height": 0.016187,
+      "occupied_reference_px": 155,
+      "occupied_model_px": 164
+    },
+    {
+      "band": 10,
+      "row": 660,
+      "z_m": 0.079065,
+      "reference_width_px": 119,
+      "model_width_px": 101,
+      "difference_m": -0.050827,
+      "difference_fraction_reference_height": -0.032374,
+      "occupied_reference_px": 119,
+      "occupied_model_px": 101
+    }
+  ],
+  "criteria": {
+    "minimum_iou": 0.85,
+    "maximum_absolute_band_width_fraction": 0.05
+  },
+  "scope": "Silhouette criteria only; this does not prove facial landmark accuracy, material fidelity, topology or animation quality.",
+  "silhouette_criteria_pass": false,
+  "asset": "chr_maksom",
+  "view": "side",
+  "pose": "low-a",
+  "arm_lower_degrees": 68.0
+}

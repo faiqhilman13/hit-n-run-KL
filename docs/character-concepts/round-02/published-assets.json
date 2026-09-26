@@ -1,0 +1,97 @@
+{
+  "publishedUtc": "2026-09-26T02:24:40.6861977Z",
+  "characters": [
+    {
+      "asset": "chr_pakmat",
+      "sha256": "29E37F3E847CE976665FB430C075398A2C803CCD6525B8C72AD753C6EBBC61D6",
+      "guid": "guid: 8e9d9a1bffb16d04b956bb71774077a6",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakmat\\exports\\chr_pakmat.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_pakmat.fbx"
+    },
+    {
+      "asset": "chr_maksom",
+      "sha256": "A3232B1DDD7FC330E631F54399F4230191139BEB44EE1DDEC6BA73FC9431802B",
+      "guid": "guid: 5bf73675b56443e42bf638537e565df7",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_maksom\\exports\\chr_maksom.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_maksom.fbx"
+    },
+    {
+      "asset": "chr_along",
+      "sha256": "CC477884D2BF742DC9E39F75BC62B41E6ADBA5490D628281A1D5AE748E2FE839",
+      "guid": "guid: 21ee2bc7c925e8d45b3cf0084a10f928",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_along\\exports\\chr_along.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_along.fbx"
+    },
+    {
+      "asset": "chr_adik",
+      "sha256": "7E9A4DD96BDD2F955CBA7E9B7B76AC93E2FC0954711454839EA944C4576BC0AE",
+      "guid": "guid: 71cc736ca610def42add5e82643bc14d",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_adik\\exports\\chr_adik.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_adik.fbx"
+    },
+    {
+      "asset": "chr_townman",
+      "sha256": "1AB00AD8E99E1B6592BC8D6BF7A2D9B702DC3E52D32983858442FB9A76E8B387",
+      "guid": "guid: aed8ef313f8f900479190ea0f8ad4250",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townman\\exports\\chr_townman.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_townman.fbx"
+    },
+    {
+      "asset": "chr_townaunty",
+      "sha256": "2E638BE188DBBE5B117343066B364201807E9024556E0B6DFBC3D116BB03C4F4",
+      "guid": "guid: 3964fe57674f8e440af898ef2193d2d9",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townaunty\\exports\\chr_townaunty.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_townaunty.fbx"
+    },
+    {
+      "asset": "chr_pakcik",
+      "sha256": "35979DBA892A61EFCAF747D5A9EDD8F362278D960F1420F7E7B4A02FD858575A",
+      "guid": "guid: 83df9530c40a05249ad76105ec8b563d",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakcik\\exports\\chr_pakcik.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_pakcik.fbx"
+    },
+    {
+      "asset": "chr_kid",
+      "sha256": "C633AA65BF15F82140C9E36185DE29B282436D7EBF10DA283E7649C30A3C77A8",
+      "guid": "guid: dd04bfac22f5104458be793456b7878e",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_kid\\exports\\chr_kid.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_kid.fbx"
+    },
+    {
+      "asset": "chr_polis",
+      "sha256": "2F92DCAF81D5740209A08D03ABAAA870DBB850A91B25F557DF7CC350A0356F98",
+      "guid": "guid: f6b36b79e7be2d0479d9ea381f33ccbd",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_polis\\exports\\chr_polis.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_polis.fbx"
+    },
+    {
+      "asset": "chr_datukmega",
+      "sha256": "612BBBF2632700EC5596415637512D9FB506394E2AA5F1A599B39DB816ED2A15",
+      "guid": "guid: 2666758e509dba246b542369d7eaca10",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_datukmega\\exports\\chr_datukmega.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_datukmega.fbx"
+    },
+    {
+      "asset": "chr_aiman",
+      "sha256": "05146D2C6A08694F5CBBAD25675F71F9E2E059E2BDA5FF78DC70D1D1A290965B",
+      "guid": "guid: c79be04acebf91745b5cf93e72201700",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_aiman\\exports\\chr_aiman.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_aiman.fbx"
+    },
+    {
+      "asset": "chr_mei",
+      "sha256": "DDA0A694B1ED947374E0547359DC43C70640223810329DC36D08B2D40D2115E6",
+      "guid": "guid: e6379180c5321294297ec32ac068a2f3",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_mei\\exports\\chr_mei.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_mei.fbx"
+    },
+    {
+      "asset": "chr_ravi",
+      "sha256": "EC08C55A1B2D8589ACFED44858661F0354849F83AB7F482A8A2C885F699247B8",
+      "guid": "guid: b4d5dfa56e5718243987833fc0a25287",
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_ravi\\exports\\chr_ravi.fbx",
+      "published": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Assets\\Models\\KL\\chr_ravi.fbx"
+    }
+  ],
+  "paletteSha256": "0B5F2F71F2EEBBEC7F001259717608D7E6F2B2D069D0A376B2EDBF14FFD514C0"
+}

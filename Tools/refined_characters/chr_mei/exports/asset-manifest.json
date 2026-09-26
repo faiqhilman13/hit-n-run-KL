@@ -1,0 +1,49 @@
+{
+  "asset": "chr_mei",
+  "height_m": 1.6,
+  "mesh_height_m": 1.6,
+  "triangles": 62836,
+  "lod1_triangles": 17594,
+  "bones": 23,
+  "clips": [
+    "chr_mei|_tpose",
+    "chr_mei|idle",
+    "chr_mei|walk",
+    "chr_mei|run",
+    "chr_mei|panic",
+    "chr_mei|jump",
+    "chr_mei|punch",
+    "chr_mei|kick",
+    "chr_mei|ride",
+    "chr_mei|mount",
+    "chr_mei|dismount",
+    "chr_mei|sit",
+    "chr_mei|knockdown",
+    "chr_mei|hit",
+    "chr_mei|wave"
+  ],
+  "shape_keys": [
+    "Basis",
+    "Grin",
+    "Alarm",
+    "Determined",
+    "Blink"
+  ],
+  "bounds_m": [
+    1.6616082191467285,
+    0.4910328686237335,
+    1.600000023841858
+  ],
+  "palette": "kl_character_palette.png",
+  "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_mei\\chr_mei_master.blend",
+  "export": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_mei\\exports\\chr_mei.fbx",
+  "rig_contract": "Existing Unity Humanoid, T pose, 23 bones, metre scale, +Z Unity forward",
+  "inferred": [
+    "occluded anatomy",
+    "garment interior",
+    "finger depth",
+    "NPC adaptations from approved family style"
+  ],
+  "material_contract": "sRGB base color palette, alpha gloss metadata, no directional light baked; smooth vertex normals",
+  "reference_status": "Candidate reconstruction; consult measured review deviations before acceptance"
+}

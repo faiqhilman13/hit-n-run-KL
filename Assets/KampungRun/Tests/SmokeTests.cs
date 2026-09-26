@@ -404,7 +404,8 @@ namespace KampungRun.Tests
             var before = smr.sharedMaterial;
             ModelFactory.Recolor(p.gameObject, costume.swaps);
             Assert.AreNotSame(before, smr.sharedMaterial, "costume did not swap the material");
-            Assert.IsTrue(smr.sharedMaterial.GetTexture("_BaseMap").name.StartsWith("kl_palette~"), "costume did not repaint the palette");
+            Assert.IsTrue(KLPalette.IsKL(smr.sharedMaterial) &&
+                smr.sharedMaterial.GetTexture("_BaseMap") != before.GetTexture("_BaseMap"), "costume did not repaint the palette");
 
             var cc = ChaseCamera.I;
             var home = gm.City.places["Home"];
@@ -426,6 +427,8 @@ namespace KampungRun.Tests
             Shot("41_townsfolk_crowd");
             // the villain: frame him, not the player
             var datukAt = p.transform.position + p.transform.right * 4f;
+            if (Physics.Raycast(datukAt + Vector3.up * 2f, Vector3.down, out var pavement, 4f,
+                1 << Layers.World, QueryTriggerInteraction.Ignore)) datukAt.y = pavement.point.y;
             var datuk = NPC.Spawn("datuk_test", "Datuk Mega", "chr_datukmega", datukAt,
                 Quaternion.LookRotation(-p.transform.forward), gm.transform);
             p.Teleport(datukAt - p.transform.right * 6f - p.transform.forward * 3f, p.transform.rotation);
@@ -952,10 +955,18 @@ namespace KampungRun.Tests
             foreach (var t in Object.FindObjectsByType<Vehicle>(FindObjectsSortMode.None)) Object.Destroy(t.gameObject);
             var worst = "";
             float worstGap = 9f;
-            foreach (var cid in GameData.Characters.Keys)
+            var args = System.Environment.GetCommandLineArgs();
+            int idsArgument = System.Array.IndexOf(args, "-roofCharacterIds");
+            var characters = idsArgument >= 0 && idsArgument + 1 < args.Length ?
+                new System.Collections.Generic.List<string>(args[idsArgument + 1].Split(',')) :
+                new System.Collections.Generic.List<string>(GameData.Characters.Keys);
+            foreach (var cid in characters)
             {
+                Assert.IsTrue(GameData.Characters.ContainsKey(cid), $"Unknown roof-test character: {cid}");
                 p.SetCharacter(cid);
                 yield return Frames(2);
+                var characterAnimator = p.GetComponentInChildren<Animator>();
+                Vector3 authoredScale = characterAnimator.transform.localScale;
                 foreach (var id in new[] { "myvi", "saga", "kancil", "van", "hilux", "teksi", "polis" })
                 {
                     var start = South(12, 1, 2.5f, 8f);
@@ -977,6 +988,7 @@ namespace KampungRun.Tests
                     foreach (var smr in p.GetComponentsInChildren<SkinnedMeshRenderer>())
                     {
                         if (!smr.enabled || !smr.gameObject.activeInHierarchy || smr.name.Contains("LOD1")) continue;
+                        // Compensate renderer scale in the bake; the matrix applies it once.
                         smr.BakeMesh(baked, true);
                         var m = smr.transform.localToWorldMatrix;
                         foreach (var vert in baked.vertices)
@@ -989,6 +1001,7 @@ namespace KampungRun.Tests
                     Object.Destroy(baked);
                     var headBone = p.GetComponentInChildren<Animator>().GetBoneTransform(HumanBodyBones.Head).position;
                     var crown = verts.FindAll(w => Vector3.ProjectOnPlane(w - headBone, up).magnitude < 0.08f && Vector3.Dot(w - headBone, up) > 0f);
+                    Assert.Greater(crown.Count, 0, $"{cid} in {id}: no crown geometry was measured");
                     int step = Mathf.Max(1, crown.Count / 80);
                     float gap = 9f; Vector3 at = Vector3.zero;
                     for (int k = 0; k < crown.Count; k += step)
@@ -997,6 +1010,7 @@ namespace KampungRun.Tests
                         if (g < gap) { gap = g; at = crown[k]; }
                     }
                     Debug.Log($"[ROOF] {cid} in {id}: {gap * 100f:F0} cm headroom at={v.transform.InverseTransformPoint(at)} state={StateName(p.GetComponentInChildren<Animator>())}");
+                    Assert.Less(gap, 3f, $"{cid} in {id}: no roof found above the crown");
                     // where the body is, in the car's frame
                     var an = p.GetComponentInChildren<Animator>();
                     if (an && an.isHuman)
@@ -1018,7 +1032,24 @@ namespace KampungRun.Tests
                     p.ExitVehicle(false, true);
                     Object.Destroy(v.gameObject);
                     yield return Frames(3);
+                    Assert.Less(Vector3.Distance(characterAnimator.transform.localScale, authoredScale), 0.0001f,
+                        $"{cid} did not restore its standing proportions after leaving {id}");
                 }
+                // Riders keep the authored scale: the open bike has no cabin roof to fit.
+                var bikeAt = South(12, 1, 2.5f, 8f);
+                p.Teleport(bikeAt + Vector3.right * 9f, Quaternion.identity);
+                var bike = gm.SummonCar("kapcai", bikeAt, Quaternion.identity);
+                yield return Seconds(0.4f);
+                p.EnterVehicle(bike, true);
+                yield return Seconds(0.5f);
+                Assert.IsTrue(p.Driving, $"{cid} did not mount the bike");
+                Assert.Less(Vector3.Distance(characterAnimator.transform.localScale, authoredScale), 0.0001f,
+                    $"{cid} retained a car-cabin scale while riding");
+                p.ExitVehicle(false, true);
+                Object.Destroy(bike.gameObject);
+                yield return Frames(3);
+                Assert.Less(Vector3.Distance(characterAnimator.transform.localScale, authoredScale), 0.0001f,
+                    $"{cid} did not restore standing scale after the bike");
             }
             Debug.Log($"[ROOF] tightest: {worst} {worstGap * 100f:F0} cm");
             Assert.Greater(worstGap, 0.03f, $"{worst}: head pokes through the roof");

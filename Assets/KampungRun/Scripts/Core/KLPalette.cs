@@ -6,8 +6,8 @@ using UnityEngine;
 namespace KampungRun
 {
     /// <summary>
-    /// Runtime palette swaps for KL models. Every KL asset shares one material that samples
-    /// the flat-colour atlas (kl_palette.png); recolouring an instance (costumes, pedestrian
+    /// Runtime palette swaps for KL models. Materials sample the environment or character
+    /// colour atlas; recolouring an instance (costumes, pedestrian
     /// variety) means giving it a copy of the atlas with some named cells repainted. The cell
     /// table comes from Resources/kl_palette.json, written by the Blender build. Variants are
     /// cached, so a crowd of pedestrians shares a handful of textures and materials.
@@ -19,8 +19,8 @@ namespace KampungRun
 
         static Table _table;
         static Dictionary<string, Entry> _byName;
-        static readonly Dictionary<string, Texture2D> Textures = new Dictionary<string, Texture2D>();
-        static readonly Dictionary<(string, string), Material> Materials = new Dictionary<(string, string), Material>();
+        static readonly Dictionary<(Texture2D, string), Texture2D> Textures = new Dictionary<(Texture2D, string), Texture2D>();
+        static readonly Dictionary<(Material, string), Material> Materials = new Dictionary<(Material, string), Material>();
 
         /// <summary>Old per-material colour names (legacy models, costumes, mission NPC tints) -> the
         /// KL garment cells that play the same role.</summary>
@@ -50,7 +50,7 @@ namespace KampungRun
         {
             if (m == null || !m.HasProperty("_BaseMap")) return false;
             var t = m.GetTexture("_BaseMap");
-            return t != null && t.name.StartsWith("kl_palette");
+            return t != null && (t.name.StartsWith("kl_palette") || t.name.StartsWith("kl_character_palette"));
         }
 
         /// <summary>Resolve swap keys (KL cell names or legacy names) to KL cells.</summary>
@@ -70,14 +70,18 @@ namespace KampungRun
         static string Key(Dictionary<string, Color> swaps) =>
             string.Join(";", swaps.OrderBy(k => k.Key).Select(k => $"{k.Key}={ColorUtility.ToHtmlStringRGB(k.Value)}"));
 
-        public static Texture2D Texture(Dictionary<string, Color> swaps)
+        public static Texture2D Texture(Dictionary<string, Color> swaps, Texture2D source = null)
         {
-            string key = Key(swaps);
+            bool preserveSource = source && source.isReadable && source.name.StartsWith("kl_character_palette");
+            var key = (preserveSource ? source : null, Key(swaps));
             if (Textures.TryGetValue(key, out var cached) && cached) return cached;
             int size = _table.cells * _table.cellPx;
-            var px = new Color32[size * size];
+            var px = preserveSource ? source.GetPixels32() : new Color32[size * size];
             foreach (var e in _table.entries)
             {
+                // A tuned character atlas can differ from the environment's source table.
+                // Only requested costume/crowd cells change; all other pixels stay intact.
+                if (preserveSource && !swaps.ContainsKey(e.name)) continue;
                 var c = swaps.TryGetValue(e.name, out var sw) ? sw : new Color(e.r, e.g, e.b);
                 Color32 c32 = c;
                 c32.a = (byte)Mathf.RoundToInt(Mathf.Clamp01(e.alpha) * 255f);   // gloss / painted-surface code
@@ -85,13 +89,18 @@ namespace KampungRun
                 for (int y = 0; y < _table.cellPx; y++)
                 {
                     int row = size - 1 - (cy * _table.cellPx + y);           // PNG rows run bottom-up in Unity
-                    for (int x = 0; x < _table.cellPx; x++) px[row * size + cx * _table.cellPx + x] = c32;
+                    for (int x = 0; x < _table.cellPx; x++)
+                    {
+                        int index = row * size + cx * _table.cellPx + x;
+                        if (preserveSource) c32.a = px[index].a;
+                        px[index] = c32;
+                    }
                 }
             }
-            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { name = "kl_palette~" + Textures.Count,
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { name = (preserveSource ? "kl_character_palette~" : "kl_palette~") + Textures.Count,
                 filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
             tex.SetPixels32(px);
-            tex.Apply(false, true);
+            tex.Apply(false, !preserveSource);
             Textures[key] = tex;
             return tex;
         }
@@ -101,11 +110,27 @@ namespace KampungRun
         {
             var resolved = Resolve(swaps);
             if (resolved.Count == 0) return baseMat;
+            var source = baseMat.GetTexture("_BaseMap") as Texture2D;
+            // NPC skin variants should carry their ear/facial shading with them. Preserve
+            // the authored tint ratio; a caller's explicit skin_shadow takes precedence.
+            if (source && source.isReadable && source.name.StartsWith("kl_character_palette") &&
+                resolved.TryGetValue("skin", out var skin) && !resolved.ContainsKey("skin_shadow") &&
+                _byName.TryGetValue("skin", out var baseEntry) && _byName.TryGetValue("skin_shadow", out var shadowEntry))
+            {
+                Color Cell(Entry entry) => source.GetPixel((entry.index % _table.cells) * _table.cellPx,
+                    source.height - 1 - (entry.index / _table.cells) * _table.cellPx);
+                var oldSkin = Cell(baseEntry);
+                var oldShadow = Cell(shadowEntry);
+                resolved["skin_shadow"] = new Color(
+                    Mathf.Clamp01(skin.r * oldShadow.r / Mathf.Max(oldSkin.r, 1f / 255f)),
+                    Mathf.Clamp01(skin.g * oldShadow.g / Mathf.Max(oldSkin.g, 1f / 255f)),
+                    Mathf.Clamp01(skin.b * oldShadow.b / Mathf.Max(oldSkin.b, 1f / 255f)));
+            }
             string key = Key(resolved);
-            var ck = (baseMat.shader.name, key);
+            var ck = (baseMat, key);
             if (Materials.TryGetValue(ck, out var m) && m) return m;
             m = new Material(baseMat) { name = baseMat.name + "~" + Materials.Count };
-            m.SetTexture("_BaseMap", Texture(resolved));
+            m.SetTexture("_BaseMap", Texture(resolved, source));
             Materials[ck] = m;
             return m;
         }

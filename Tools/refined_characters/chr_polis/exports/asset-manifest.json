@@ -1,0 +1,49 @@
+{
+  "asset": "chr_polis",
+  "height_m": 1.76,
+  "mesh_height_m": 1.76,
+  "triangles": 69020,
+  "lod1_triangles": 19324,
+  "bones": 23,
+  "clips": [
+    "chr_polis|_tpose",
+    "chr_polis|idle",
+    "chr_polis|walk",
+    "chr_polis|run",
+    "chr_polis|panic",
+    "chr_polis|jump",
+    "chr_polis|punch",
+    "chr_polis|kick",
+    "chr_polis|ride",
+    "chr_polis|mount",
+    "chr_polis|dismount",
+    "chr_polis|sit",
+    "chr_polis|knockdown",
+    "chr_polis|hit",
+    "chr_polis|wave"
+  ],
+  "shape_keys": [
+    "Basis",
+    "Grin",
+    "Alarm",
+    "Determined",
+    "Blink"
+  ],
+  "bounds_m": [
+    1.844408392906189,
+    0.44919639825820923,
+    1.7599999904632568
+  ],
+  "palette": "kl_character_palette.png",
+  "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_polis\\chr_polis_master.blend",
+  "export": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_polis\\exports\\chr_polis.fbx",
+  "rig_contract": "Existing Unity Humanoid, T pose, 23 bones, metre scale, +Z Unity forward",
+  "inferred": [
+    "occluded anatomy",
+    "garment interior",
+    "finger depth",
+    "NPC adaptations from approved family style"
+  ],
+  "material_contract": "sRGB base color palette, alpha gloss metadata, no directional light baked; smooth vertex normals",
+  "reference_status": "Candidate reconstruction; consult measured review deviations before acceptance"
+}

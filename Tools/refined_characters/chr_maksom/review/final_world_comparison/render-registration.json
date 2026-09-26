@@ -1,0 +1,40 @@
+{
+  "asset": "chr_maksom",
+  "blend": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_maksom\\chr_maksom_master.blend",
+  "blend_sha256": "4173b92f0fbcfc0b68b1ebdcbdc0fa4c8a346a9b0641fc41ed28970660a41e99",
+  "rendered_utc": "2026-09-26T02:15:30.926198+00:00",
+  "reference_measurements": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_maksom\\ref\\measurements.json",
+  "m_per_px": 0.0028237410071942446,
+  "axis_col": 256,
+  "ground_row": 688,
+  "canvas_px": [
+    512,
+    704
+  ],
+  "supersample": 2,
+  "pose": "low-a",
+  "arm_lower_degrees": 68.0,
+  "objects": [
+    "chr_maksom_LOD0"
+  ],
+  "views": {
+    "front": {
+      "azimuth": 0,
+      "camera_location": [
+        0.0,
+        -20.0,
+        0.9487769603729248
+      ],
+      "ortho_horizontal_width_m": 1.4457553956834532
+    },
+    "side": {
+      "azimuth": 270,
+      "camera_location": [
+        -20.0,
+        3.673940187178589e-15,
+        0.9487769603729248
+      ],
+      "ortho_horizontal_width_m": 1.4457553956834532
+    }
+  }
+}

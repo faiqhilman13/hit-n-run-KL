@@ -24,6 +24,7 @@ namespace KampungRun
                 // (keep the importer's root rotation: single-mesh FBX roots carry the axis correction)
                 inst.transform.localRotation = IsKL(model) ? prefab.transform.localRotation : Quaternion.Euler(0, 180, 0);
                 if (IsKL(model)) SetupProxies(root);
+                if (model.StartsWith("chr_")) root.AddComponent<SeatedCharacterScale>();
             }
             return root;
         }
@@ -95,11 +96,8 @@ namespace KampungRun
             var inv = go.transform.worldToLocalMatrix;
             bool first = true;
             var b = new Bounds();
-            foreach (var mf in go.GetComponentsInChildren<MeshFilter>())
+            void Include(Bounds mb, Matrix4x4 m)
             {
-                if (mf.sharedMesh == null) continue;
-                var mb = mf.sharedMesh.bounds;
-                var m = inv * mf.transform.localToWorldMatrix;
                 for (int i = 0; i < 8; i++)
                 {
                     var c = mb.center + Vector3.Scale(mb.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
@@ -107,6 +105,22 @@ namespace KampungRun
                     if (first) { b = new Bounds(p, Vector3.zero); first = false; }
                     else b.Encapsulate(p);
                 }
+            }
+            foreach (var mf in go.GetComponentsInChildren<MeshFilter>())
+            {
+                if (mf.sharedMesh == null) continue;
+                Include(mf.sharedMesh.bounds, inv * mf.transform.localToWorldMatrix);
+            }
+            // Humanoid bodies have no MeshFilter. Measure the actual pose in renderer
+            // space so player capsules follow the new adult and child proportions.
+            foreach (var sk in go.GetComponentsInChildren<SkinnedMeshRenderer>())
+            {
+                if (sk.sharedMesh == null) continue;
+                var baked = new Mesh();
+                sk.BakeMesh(baked, true); // compensate scale; the matrix below applies it once
+                Include(baked.bounds, inv * sk.transform.localToWorldMatrix);
+                if (Application.isPlaying) Object.Destroy(baked);
+                else Object.DestroyImmediate(baked);
             }
             return b;
         }

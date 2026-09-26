@@ -1,0 +1,49 @@
+{
+  "asset": "chr_townman",
+  "height_m": 1.7,
+  "mesh_height_m": 1.7,
+  "triangles": 77396,
+  "lod1_triangles": 21667,
+  "bones": 23,
+  "clips": [
+    "chr_townman|_tpose",
+    "chr_townman|idle",
+    "chr_townman|walk",
+    "chr_townman|run",
+    "chr_townman|panic",
+    "chr_townman|jump",
+    "chr_townman|punch",
+    "chr_townman|kick",
+    "chr_townman|ride",
+    "chr_townman|mount",
+    "chr_townman|dismount",
+    "chr_townman|sit",
+    "chr_townman|knockdown",
+    "chr_townman|hit",
+    "chr_townman|wave"
+  ],
+  "shape_keys": [
+    "Basis",
+    "Grin",
+    "Alarm",
+    "Determined",
+    "Blink"
+  ],
+  "bounds_m": [
+    1.5618083477020264,
+    0.43752944469451904,
+    1.7000000476837158
+  ],
+  "palette": "kl_character_palette.png",
+  "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townman\\chr_townman_master.blend",
+  "export": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townman\\exports\\chr_townman.fbx",
+  "rig_contract": "Existing Unity Humanoid, T pose, 23 bones, metre scale, +Z Unity forward",
+  "inferred": [
+    "occluded anatomy",
+    "garment interior",
+    "finger depth",
+    "NPC adaptations from approved family style"
+  ],
+  "material_contract": "sRGB base color palette, alpha gloss metadata, no directional light baked; smooth vertex normals",
+  "reference_status": "Candidate reconstruction; consult measured review deviations before acceptance"
+}

@@ -10,7 +10,7 @@ namespace KampungRun.EditorTools
     /// Import rules for the Blender-generated FBX files in Assets/Models:
     ///  * legacy procedural models: bake axis conversion, per-colour LatInk materials;
     ///  * KL handoff assets (Assets/Models/KL): Humanoid avatar + named looping clips for
-    ///    characters, one LatInk material driven by the shared kl_palette.png atlas;
+    ///    characters, palette-based materials (CharacterSoft for humans, LatInk for the city);
     ///  * smoothed normals for the inverted-hull outline: UV3 for rigid meshes, the
     ///    tangent channel (w = 2) for skinned meshes, because Unity skins tangents.
     /// </summary>
@@ -19,11 +19,18 @@ namespace KampungRun.EditorTools
         const string ModelFolder = "Assets/Models/";
         const string KLFolder = "Assets/Models/KL/";
         const string PalettePath = "Assets/Models/KL/kl_palette.png";
+        const string CharacterPalettePath = "Assets/Models/KL/kl_character_palette.png";
         const string ShaderName = "KampungRun/LatInk";
+        const string CharacterShaderName = "KampungRun/CharacterSoft";
         static readonly string[] LoopClips = { "idle", "walk", "run", "ride", "wave", "sit", "panic" };
+        static readonly string[] HumanBones = { "Hips", "Spine", "Chest", "Neck", "Head",
+            "LeftShoulder", "LeftUpperArm", "LeftLowerArm", "LeftHand",
+            "RightShoulder", "RightUpperArm", "RightLowerArm", "RightHand",
+            "LeftUpperLeg", "LeftLowerLeg", "LeftFoot", "LeftToes",
+            "RightUpperLeg", "RightLowerLeg", "RightFoot", "RightToes" };
 
         // bump to force every model to reimport after changing these rules or shader defaults
-        public override uint GetVersion() => 12;
+        public override uint GetVersion() => 14;
         const string SurfaceFolder = "Assets/KampungRun/Textures/Surfaces/";
 
         string P => assetPath.Replace('\\', '/');
@@ -45,13 +52,15 @@ namespace KampungRun.EditorTools
                 st.textureCompression = TextureImporterCompression.Uncompressed;
                 return;
             }
-            if (P != PalettePath) return;
+            if (P != PalettePath && P != CharacterPalettePath) return;
             var ti = (TextureImporter)assetImporter;
             ti.filterMode = FilterMode.Point;      // flat colour cells, no bleeding
             ti.mipmapEnabled = false;
             ti.textureCompression = TextureImporterCompression.Uncompressed;
             ti.sRGBTexture = true;
             ti.wrapMode = TextureWrapMode.Clamp;
+            // Runtime costume swaps retain the character atlas's tuned, unswapped colours.
+            if (P == CharacterPalettePath) ti.isReadable = true;
         }
 
         void OnPreprocessModel()
@@ -76,6 +85,19 @@ namespace KampungRun.EditorTools
                     mi.animationType = ModelImporterAnimationType.Human;
                     mi.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
                     mi.importAnimation = true;
+                    // Keep the imported skeleton and name every humanoid bone;
+                    // Unity automapping can drop the chest, shoulders and toes.
+                    var skeleton = mi.humanDescription.skeleton;
+                    mi.humanDescription = new HumanDescription
+                    {
+                        human = HumanBones.Select(n => new HumanBone { boneName = n, humanName = n,
+                            limit = new HumanLimit { useDefaultValues = true } }).ToArray(),
+                        skeleton = skeleton,
+                        armStretch = 0.05f, legStretch = 0.05f,
+                        upperArmTwist = 0.5f, lowerArmTwist = 0.5f,
+                        upperLegTwist = 0.5f, lowerLegTwist = 0.5f,
+                        feetSpacing = 0f, hasTranslationDoF = false,
+                    };
                 }
                 else
                 {
@@ -95,10 +117,21 @@ namespace KampungRun.EditorTools
             if (!IsKLCharacter) return;
             var mi = (ModelImporter)assetImporter;
             var clips = mi.defaultClipAnimations;
-            foreach (var c in clips)
+            var previous = mi.clipAnimations.ToDictionary(c => c.name);
+            for (int i = 0; i < clips.Length; i++)
             {
+                var c = clips[i];
                 // Blender takes come in as "<rig>|<clip>"
                 string n = c.name.Contains("|") ? c.name.Substring(c.name.LastIndexOf('|') + 1) : c.name;
+                // Keep Unity's internal clip ID when Blender's wrapper/take name
+                // changes, or the shared controller's existing references break.
+                if (previous.TryGetValue(n, out var existing))
+                {
+                    existing.takeName = c.takeName;
+                    existing.firstFrame = c.firstFrame;
+                    existing.lastFrame = c.lastFrame;
+                    c = clips[i] = existing;
+                }
                 c.name = n;
                 c.loopTime = LoopClips.Contains(n);
                 c.lockRootRotation = true;
@@ -114,7 +147,7 @@ namespace KampungRun.EditorTools
         void OnPreprocessMaterialDescription(MaterialDescription description, Material material, AnimationClip[] clips)
         {
             if (!IsOurs) return;
-            var shader = Shader.Find(ShaderName);
+            var shader = Shader.Find(IsKLCharacter ? CharacterShaderName : ShaderName);
             if (shader == null) return;
             material.shader = shader;
             material.enableInstancing = true;
@@ -123,9 +156,12 @@ namespace KampungRun.EditorTools
                 material.SetColor("_BaseColor", Color.white);
                 // Hit & Run shading: the atlas alpha says which colours shine (paint, chrome, glass)
                 material.SetFloat("_Gloss", 1f);
-                var pal = AssetDatabase.LoadAssetAtPath<Texture2D>(PalettePath);
+                string palettePath = IsKLCharacter ? CharacterPalettePath : PalettePath;
+                context.DependsOnSourceAsset(palettePath);
+                var pal = AssetDatabase.LoadAssetAtPath<Texture2D>(palettePath);
+                // Keep a usable preview during a staged import before the character atlas arrives.
+                if (pal == null && IsKLCharacter) pal = AssetDatabase.LoadAssetAtPath<Texture2D>(PalettePath);
                 if (pal != null) material.SetTexture("_BaseMap", pal);
-                else context.DependsOnSourceAsset(PalettePath);
                 return;
             }
             Color c = Color.white;

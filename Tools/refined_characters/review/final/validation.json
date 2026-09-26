@@ -1,0 +1,1917 @@
+{
+  "passed": true,
+  "scope": "Technical geometry, skinning, texture and export checks; visual/reference acceptance is separate.",
+  "assets": [
+    {
+      "asset": "chr_pakmat",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_pakmat_LOD1",
+          "vertices": 11857,
+          "triangles": 21415,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 15431,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_pakmat_LOD0",
+          "vertices": 39441,
+          "triangles": 76484,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 40028,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.66,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakmat\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_pakmat_LOD1": [],
+        "chr_pakmat_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakmat\\chr_pakmat_master.blend"
+    },
+    {
+      "asset": "chr_maksom",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_maksom_LOD1",
+          "vertices": 12334,
+          "triangles": 22178,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 15868,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_maksom_LOD0",
+          "vertices": 40916,
+          "triangles": 79208,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 41188,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.57,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_maksom\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_maksom_LOD1": [],
+        "chr_maksom_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_maksom\\chr_maksom_master.blend"
+    },
+    {
+      "asset": "chr_along",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_along_LOD1",
+          "vertices": 10745,
+          "triangles": 20961,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 17035,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_along_LOD0",
+          "vertices": 37763,
+          "triangles": 74866,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 45516,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.64,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_along\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_along_LOD1": [],
+        "chr_along_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_along\\chr_along_master.blend"
+    },
+    {
+      "asset": "chr_adik",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_adik_LOD1",
+          "vertices": 9895,
+          "triangles": 19074,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 13897,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_adik_LOD0",
+          "vertices": 34467,
+          "triangles": 68126,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 35050,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.12,
+      "ground_min_m": 0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_adik\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_adik_LOD1": [],
+        "chr_adik_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_adik\\chr_adik_master.blend"
+    },
+    {
+      "asset": "chr_townman",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_townman_LOD1",
+          "vertices": 11901,
+          "triangles": 21667,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 17129,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_townman_LOD0",
+          "vertices": 39828,
+          "triangles": 77396,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 45245,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.7,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townman\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_townman_LOD1": [],
+        "chr_townman_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townman\\chr_townman_master.blend"
+    },
+    {
+      "asset": "chr_townaunty",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_townaunty_LOD1",
+          "vertices": 12327,
+          "triangles": 22161,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 15778,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_townaunty_LOD0",
+          "vertices": 40888,
+          "triangles": 79152,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 41160,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.56,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townaunty\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_townaunty_LOD1": [],
+        "chr_townaunty_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townaunty\\chr_townaunty_master.blend"
+    },
+    {
+      "asset": "chr_pakcik",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_pakcik_LOD1",
+          "vertices": 9573,
+          "triangles": 18491,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 13690,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_pakcik_LOD0",
+          "vertices": 33417,
+          "triangles": 66044,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 33972,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.63,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakcik\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_pakcik_LOD1": [],
+        "chr_pakcik_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakcik\\chr_pakcik_master.blend"
+    },
+    {
+      "asset": "chr_kid",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_kid_LOD1",
+          "vertices": 8789,
+          "triangles": 16943,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 13043,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_kid_LOD0",
+          "vertices": 30623,
+          "triangles": 60512,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 33502,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.15,
+      "ground_min_m": 0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_kid\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_kid_LOD1": [],
+        "chr_kid_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_kid\\chr_kid_master.blend"
+    },
+    {
+      "asset": "chr_polis",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_polis_LOD1",
+          "vertices": 9975,
+          "triangles": 19324,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 14248,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_polis_LOD0",
+          "vertices": 34879,
+          "triangles": 69020,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 35408,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.76,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_polis\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_polis_LOD1": [],
+        "chr_polis_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_polis\\chr_polis_master.blend"
+    },
+    {
+      "asset": "chr_datukmega",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_datukmega_LOD1",
+          "vertices": 11267,
+          "triangles": 21894,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 15991,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_datukmega_LOD0",
+          "vertices": 39467,
+          "triangles": 78199,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 39980,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.74,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_datukmega\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_datukmega_LOD1": [],
+        "chr_datukmega_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_datukmega\\chr_datukmega_master.blend"
+    },
+    {
+      "asset": "chr_aiman",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_aiman_LOD1",
+          "vertices": 8084,
+          "triangles": 15569,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 11521,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_aiman_LOD0",
+          "vertices": 28177,
+          "triangles": 55608,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 28710,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.72,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_aiman\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_aiman_LOD1": [],
+        "chr_aiman_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_aiman\\chr_aiman_master.blend"
+    },
+    {
+      "asset": "chr_mei",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_mei_LOD1",
+          "vertices": 9113,
+          "triangles": 17594,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 13131,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_mei_LOD0",
+          "vertices": 31805,
+          "triangles": 62836,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 32306,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.6,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_mei\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_mei_LOD1": [],
+        "chr_mei_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_mei\\chr_mei_master.blend"
+    },
+    {
+      "asset": "chr_ravi",
+      "passed": true,
+      "errors": [],
+      "meshes": [
+        {
+          "mesh": "chr_ravi_LOD1",
+          "vertices": 9651,
+          "triangles": 18672,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 13624,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        },
+        {
+          "mesh": "chr_ravi_LOD0",
+          "vertices": 33723,
+          "triangles": 66688,
+          "uv_layers": 1,
+          "materials": 1,
+          "unweighted_vertices": 0,
+          "unnormalised_vertices": 0,
+          "over_four_influences": 0,
+          "invalid_bone_weights": 0,
+          "zero_area_faces": 0,
+          "smooth_faces": 34258,
+          "positive_scale": true,
+          "armature_modifiers": 1
+        }
+      ],
+      "bones": [
+        "Hips",
+        "Spine",
+        "Chest",
+        "Neck",
+        "Head",
+        "LeftShoulder",
+        "LeftUpperArm",
+        "LeftLowerArm",
+        "LeftHand",
+        "RightShoulder",
+        "RightUpperArm",
+        "RightLowerArm",
+        "RightHand",
+        "Satchel",
+        "KeyCord",
+        "LeftUpperLeg",
+        "LeftLowerLeg",
+        "LeftFoot",
+        "LeftToes",
+        "RightUpperLeg",
+        "RightLowerLeg",
+        "RightFoot",
+        "RightToes"
+      ],
+      "bone_count": 23,
+      "height_m": 1.76,
+      "ground_min_m": -0.0,
+      "target_lod0_budget": 80000,
+      "textures": [
+        {
+          "name": "kl_character_palette",
+          "path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_ravi\\textures\\kl_character_palette.png",
+          "packed": true,
+          "resolves": true
+        }
+      ],
+      "shape_keys": {
+        "chr_ravi_LOD1": [],
+        "chr_ravi_LOD0": [
+          "Basis",
+          "Grin",
+          "Alarm",
+          "Determined",
+          "Blink"
+        ]
+      },
+      "clips": {
+        "_tpose": [
+          0.0,
+          1.0
+        ],
+        "dismount": [
+          0.0,
+          18.0
+        ],
+        "hit": [
+          0.0,
+          16.0
+        ],
+        "idle": [
+          0.0,
+          96.0
+        ],
+        "jump": [
+          0.0,
+          22.0
+        ],
+        "kick": [
+          0.0,
+          16.0
+        ],
+        "knockdown": [
+          0.0,
+          52.0
+        ],
+        "mount": [
+          0.0,
+          18.0
+        ],
+        "panic": [
+          0.0,
+          12.0
+        ],
+        "punch": [
+          0.0,
+          14.0
+        ],
+        "ride": [
+          0.0,
+          24.0
+        ],
+        "run": [
+          0.0,
+          12.0
+        ],
+        "sit": [
+          0.0,
+          24.0
+        ],
+        "walk": [
+          0.0,
+          16.0
+        ],
+        "wave": [
+          0.0,
+          24.0
+        ]
+      },
+      "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_ravi\\chr_ravi_master.blend"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "asset": "chr_adik",
+  "blend": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_adik\\chr_adik_master.blend",
+  "blend_sha256": "62871a098bed3026d3170b7ceb26c63f4f4afa0bd61db781137be39292672c45",
+  "rendered_utc": "2026-09-26T02:15:47.639353+00:00",
+  "reference_measurements": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_adik\\ref\\measurements.json",
+  "m_per_px": 0.001947826086956522,
+  "axis_col": 256,
+  "ground_row": 688,
+  "canvas_px": [
+    512,
+    704
+  ],
+  "supersample": 2,
+  "pose": "low-a",
+  "arm_lower_degrees": 61.0,
+  "objects": [
+    "chr_adik_LOD0"
+  ],
+  "views": {
+    "front": {
+      "azimuth": 0,
+      "camera_location": [
+        0.0,
+        -20.0,
+        0.6544695496559143
+      ],
+      "ortho_horizontal_width_m": 0.9972869565217393
+    },
+    "side": {
+      "azimuth": 270,
+      "camera_location": [
+        -20.0,
+        3.673940187178589e-15,
+        0.6544695496559143
+      ],
+      "ortho_horizontal_width_m": 0.9972869565217393
+    }
+  }
+}

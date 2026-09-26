@@ -1,0 +1,11 @@
+{
+  "asset": "chr_pakmat",
+  "left_to_right": [
+    "Neutral",
+    "Grin",
+    "Alarm",
+    "Determined",
+    "Blink"
+  ],
+  "morph_value": 1
+}

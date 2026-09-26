@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="3" result="Passed" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-26 02:17:06Z" end-time="2026-09-26 02:18:30Z" duration="83.7998543">
+  <test-suite type="TestSuite" id="1028" name="Kampung Run_ KL" fullname="Kampung Run_ KL" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-09-26 02:17:06Z" end-time="2026-09-26 02:18:30Z" duration="83.799854" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1050" name="KampungRun.Tests.dll" fullname="C:/Users/User/PROJECTS/kampung-game/KampungRun/Library/ScriptAssemblies/KampungRun.Tests.dll" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-09-26 02:17:06Z" end-time="2026-09-26 02:18:30Z" duration="83.792255" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="41168" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1051" name="KampungRun" fullname="KampungRun" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-09-26 02:17:06Z" end-time="2026-09-26 02:18:30Z" duration="83.791331" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1052" name="Tests" fullname="KampungRun.Tests" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-09-26 02:17:06Z" end-time="2026-09-26 02:18:30Z" duration="83.790899" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1033" name="SmokeTests" fullname="KampungRun.Tests.SmokeTests" classname="KampungRun.Tests.SmokeTests" runstate="Runnable" testcasecount="16" result="Passed" start-time="2026-09-26 02:17:06Z" end-time="2026-09-26 02:18:30Z" duration="83.789460" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1037" name="CastRestyled" fullname="KampungRun.Tests.SmokeTests.CastRestyled" methodname="CastRestyled" classname="KampungRun.Tests.SmokeTests" runstate="Runnable" seed="522922109" result="Passed" start-time="2026-09-26 02:17:06Z" end-time="2026-09-26 02:17:16Z" duration="9.882948" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[KLMap] KotaLama: 41 meshes, 1150 road nodes (62/62 joined to the grid), 112 pavement loops, 118 anchors
+[KLMap] TamanTasik: 26 meshes, 335 road nodes (37/37 joined to the grid), 31 pavement loops, 2 anchors
+[KLMap] KLSentral: 42 meshes, 626 road nodes (54/54 joined to the grid), 58 pavement loops, 3 anchors
+[KLMap] BukitNanas: 30 meshes, 53 road nodes (10/10 joined to the grid), 3 pavement loops, 1 anchors
+[KLMap] KLCC: 30 meshes, 112 road nodes (16/16 joined to the grid), 11 pavement loops, 2 anchors
+[KLMap] BukitBintang: 32 meshes, 296 road nodes (35/35 joined to the grid), 29 pavement loops, 1 anchors
+[City] merged 15195 static props into 683 meshes (658 groups); kept 3220 as they are: landmark=11 moves=3203 PhoneBooth=6
+[City] build times: load 62ms roads 353ms patches 242ms blocks 1248ms ground 103ms merge 997ms
+[Cast] 263/263 pedestrians are KL humanoids
+]]></output>
+            </test-case>
+            <test-case id="1045" name="DriversFitUnderRoof" fullname="KampungRun.Tests.SmokeTests.DriversFitUnderRoof" methodname="DriversFitUnderRoof" classname="KampungRun.Tests.SmokeTests" runstate="Runnable" seed="422489560" result="Passed" start-time="2026-09-26 02:17:16Z" end-time="2026-09-26 02:18:14Z" duration="58.076373" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[KLMap] KotaLama: 41 meshes, 1150 road nodes (62/62 joined to the grid), 112 pavement loops, 118 anchors
+[KLMap] TamanTasik: 26 meshes, 335 road nodes (37/37 joined to the grid), 31 pavement loops, 2 anchors
+[KLMap] KLSentral: 42 meshes, 626 road nodes (54/54 joined to the grid), 58 pavement loops, 3 anchors
+[KLMap] BukitNanas: 30 meshes, 53 road nodes (10/10 joined to the grid), 3 pavement loops, 1 anchors
+[KLMap] KLCC: 30 meshes, 112 road nodes (16/16 joined to the grid), 11 pavement loops, 2 anchors
+[KLMap] BukitBintang: 32 meshes, 296 road nodes (35/35 joined to the grid), 29 pavement loops, 1 anchors
+[City] merged 15195 static props into 683 meshes (658 groups); kept 3220 as they are: landmark=11 moves=3203 PhoneBooth=6
+[City] build times: load 49ms roads 245ms patches 142ms blocks 744ms ground 79ms merge 909ms
+[ROOF] pakmat in myvi: 7 cm headroom at=(0.37, 1.46, -0.08) state=Sit
+[ROOF]   pakmat bones: hips=(0.36, 0.53, -0.01) head=(0.35, 1.03, -0.10) lfoot=(0.15, 0.47, 0.47) model at (0.36, 0.24, 0.01) scale=0.91
+[ROOF] pakmat in saga: 6 cm headroom at=(0.34, 1.38, -0.04) state=Sit
+[ROOF]   pakmat bones: hips=(0.36, 0.46, 0.03) head=(0.36, 0.96, -0.06) lfoot=(0.15, 0.40, 0.50) model at (0.36, 0.17, 0.05) scale=0.90
+[ROOF] pakmat in kancil: 6 cm headroom at=(0.32, 1.45, -0.12) state=Sit
+[ROOF]   pakmat bones: hips=(0.32, 0.51, -0.04) head=(0.32, 1.02, -0.14) lfoot=(0.10, 0.45, 0.45) model at (0.32, 0.21, -0.02) scale=0.93
+[ROOF] pakmat in van: 24 cm headroom at=(0.40, 1.65, 0.31) state=Sit
+[ROOF]   pakmat bones: hips=(0.42, 0.63, 0.39) head=(0.42, 1.18, 0.29) lfoot=(0.18, 0.56, 0.91) model at (0.42, 0.31, 0.41) scale=1.00
+[ROOF] pakmat in hilux: 11 cm headroom at=(0.44, 1.87, 0.28) state=Sit
+[ROOF]   pakmat bones: hips=(0.42, 0.85, 0.36) head=(0.42, 1.39, 0.26) lfoot=(0.18, 0.77, 0.88) model at (0.42, 0.53, 0.38) scale=1.00
+[ROOF] pakmat in teksi: 6 cm headroom at=(0.39, 1.39, -0.04) state=Sit
+[ROOF]   pakmat bones: hips=(0.36, 0.47, 0.03) head=(0.36, 0.96, -0.06) lfoot=(0.15, 0.40, 0.50) model at (0.36, 0.18, 0.05) scale=0.90
+[ROOF] pakmat in polis: 13 cm headroom at=(0.40, 1.54, -0.10) state=Sit
+[ROOF]   pakmat bones: hips=(0.36, 0.52, -0.01) head=(0.37, 1.07, -0.12) lfoot=(0.13, 0.45, 0.51) model at (0.36, 0.20, 0.01) scale=1.00
+[ROOF] maksom in myvi: 8 cm headroom at=(0.40, 1.44, -0.16) state=Sit
+[ROOF]   maksom bones: hips=(0.36, 0.53, -0.01) head=(0.36, 1.06, -0.11) lfoot=(0.18, 0.47, 0.48) model at (0.36, 0.23, 0.01) scale=0.99
+[ROOF] maksom in saga: 7 cm headroom at=(0.36, 1.39, -0.14) state=Sit
+[ROOF]   maksom bones: hips=(0.36, 0.47, 0.03) head=(0.36, 1.00, -0.07) lfoot=(0.18, 0.41, 0.51) model at (0.36, 0.18, 0.05) scale=0.98
+[ROOF] maksom in kancil: 11 cm headroom at=(0.25, 1.41, -0.17) state=Sit
+[ROOF]   maksom bones: hips=(0.32, 0.51, -0.04) head=(0.31, 1.05, -0.14) lfoot=(0.14, 0.45, 0.45) model at (0.32, 0.22, -0.02) scale=1.00
+[ROOF] maksom in van: 35 cm headroom at=(0.37, 1.53, 0.25) state=Sit
+[ROOF]   maksom bones: hips=(0.42, 0.63, 0.39) head=(0.42, 1.17, 0.29) lfoot=(0.24, 0.57, 0.88) model at (0.42, 0.33, 0.41) scale=1.00
+[ROOF] maksom in hilux: 21 cm headroom at=(0.40, 1.77, 0.21) state=Sit
+[ROOF]   maksom bones: hips=(0.42, 0.85, 0.36) head=(0.43, 1.39, 0.26) lfoot=(0.24, 0.79, 0.85) model at (0.42, 0.55, 0.38) scale=1.00
+[ROOF] maksom in teksi: 7 cm headroom at=(0.35, 1.38, -0.13) state=Sit
+[ROOF]   maksom bones: hips=(0.36, 0.47, 0.03) head=(0.36, 0.99, -0.07) lfoot=(0.18, 0.41, 0.51) model at (0.36, 0.18, 0.05) scale=0.98
+[ROOF] maksom in polis: 21 cm headroom at=(0.34, 1.47, -0.18) state=Sit
+[ROOF]   maksom bones: hips=(0.36, 0.53, -0.01) head=(0.36, 1.08, -0.11) lfoot=(0.18, 0.47, 0.48) model at (0.36, 0.24, 0.01) scale=1.00
+[ROOF] along in myvi: 7 cm headroom at=(0.31, 1.46, -0.16) state=Sit
+[ROOF]   along bones: hips=(0.36, 0.53, -0.01) head=(0.36, 1.06, -0.11) lfoot=(0.23, 0.49, 0.41) model at (0.36, 0.30, 0.01) scale=0.94
+[ROOF] along in saga: 7 cm headroom at=(0.41, 1.38, -0.09) state=Sit
+[ROOF]   along bones: hips=(0.36, 0.47, 0.03) head=(0.35, 0.99, -0.06) lfoot=(0.24, 0.43, 0.44) model at (0.36, 0.24, 0.05) scale=0.92
+[ROOF] along in kancil: 6 cm headroom at=(0.26, 1.45, -0.18) state=Sit
+[ROOF]   along bones: hips=(0.32, 0.51, -0.04) head=(0.32, 1.04, -0.14) lfoot=(0.19, 0.47, 0.38) model at (0.32, 0.27, -0.02) scale=0.95
+[ROOF] along in van: 26 cm headroom at=(0.37, 1.63, 0.24) state=Sit
+[ROOF]   along bones: hips=(0.42, 0.63, 0.39) head=(0.42, 1.19, 0.28) lfoot=(0.29, 0.59, 0.83) model at (0.42, 0.38, 0.41) scale=1.00
+[ROOF] along in hilux: 14 cm headroom at=(0.40, 1.83, 0.19) state=Sit
+[ROOF]   along bones: hips=(0.42, 0.85, 0.36) head=(0.42, 1.41, 0.26) lfoot=(0.29, 0.80, 0.80) model at (0.42, 0.60, 0.38) scale=1.00
+[ROOF] along in teksi: 6 cm headroom at=(0.32, 1.39, -0.14) state=Sit
+[ROOF]   along bones: hips=(0.36, 0.47, 0.03) head=(0.36, 0.99, -0.07) lfoot=(0.24, 0.43, 0.44) model at (0.36, 0.24, 0.05) scale=0.92
+[ROOF] along in polis: 15 cm headroom at=(0.30, 1.53, -0.18) state=Sit
+[ROOF]   along bones: hips=(0.36, 0.54, -0.01) head=(0.36, 1.10, -0.12) lfoot=(0.23, 0.49, 0.43) model at (0.36, 0.28, 0.01) scale=1.00
+[ROOF] adik in myvi: 22 cm headroom at=(0.41, 1.31, -0.13) state=Sit
+[ROOF]   adik bones: hips=(0.36, 0.53, 0.00) head=(0.36, 0.91, -0.07) lfoot=(0.26, 0.50, 0.24) model at (0.36, 0.39, 0.00) scale=1.00
+[ROOF] adik in saga: 19 cm headroom at=(0.30, 1.26, -0.07) state=Sit
+[ROOF]   adik bones: hips=(0.36, 0.47, 0.04) head=(0.36, 0.85, -0.03) lfoot=(0.26, 0.44, 0.28) model at (0.36, 0.33, 0.04) scale=1.00
+[ROOF] adik in kancil: 22 cm headroom at=(0.31, 1.29, -0.15) state=Sit
+[ROOF]   adik bones: hips=(0.32, 0.51, -0.03) head=(0.32, 0.89, -0.10) lfoot=(0.22, 0.48, 0.21) model at (0.32, 0.37, -0.03) scale=1.00
+[ROOF] adik in van: 47 cm headroom at=(0.39, 1.42, 0.28) state=Sit
+[ROOF]   adik bones: hips=(0.42, 0.63, 0.40) head=(0.42, 1.01, 0.33) lfoot=(0.32, 0.60, 0.64) model at (0.42, 0.49, 0.40) scale=1.00
+[ROOF] adik in hilux: 34 cm headroom at=(0.39, 1.63, 0.25) state=Sit
+[ROOF]   adik bones: hips=(0.42, 0.85, 0.37) head=(0.42, 1.23, 0.30) lfoot=(0.32, 0.81, 0.61) model at (0.42, 0.71, 0.37) scale=1.00
+[ROOF] adik in teksi: 19 cm headroom at=(0.33, 1.26, -0.08) state=Sit
+[ROOF]   adik bones: hips=(0.36, 0.47, 0.04) head=(0.36, 0.85, -0.03) lfoot=(0.26, 0.44, 0.28) model at (0.36, 0.33, 0.04) scale=1.00
+[ROOF] adik in polis: 37 cm headroom at=(0.34, 1.31, -0.12) state=Sit
+[ROOF]   adik bones: hips=(0.36, 0.53, 0.00) head=(0.36, 0.91, -0.07) lfoot=(0.26, 0.50, 0.24) model at (0.36, 0.40, 0.00) scale=1.00
+[ROOF] aiman in myvi: 7 cm headroom at=(0.40, 1.46, -0.16) state=Sit
+[ROOF]   aiman bones: hips=(0.36, 0.53, 0.00) head=(0.36, 1.07, -0.10) lfoot=(0.24, 0.48, 0.45) model at (0.36, 0.22, 0.01) scale=0.91
+[ROOF] aiman in saga: 7 cm headroom at=(0.34, 1.38, -0.13) state=Sit
+[ROOF]   aiman bones: hips=(0.36, 0.47, 0.04) head=(0.36, 1.00, -0.06) lfoot=(0.24, 0.42, 0.48) model at (0.36, 0.16, 0.05) scale=0.90
+[ROOF] aiman in kancil: 7 cm headroom at=(0.34, 1.44, -0.21) state=Sit
+[ROOF]   aiman bones: hips=(0.32, 0.51, -0.03) head=(0.32, 1.05, -0.14) lfoot=(0.20, 0.46, 0.43) model at (0.32, 0.20, -0.02) scale=0.93
+[ROOF] aiman in van: 24 cm headroom at=(0.43, 1.64, 0.22) state=Sit
+[ROOF]   aiman bones: hips=(0.42, 0.63, 0.40) head=(0.43, 1.22, 0.29) lfoot=(0.29, 0.57, 0.89) model at (0.42, 0.29, 0.41) scale=1.00
+[ROOF] aiman in hilux: 12 cm headroom at=(0.41, 1.85, 0.19) state=Sit
+[ROOF]   aiman bones: hips=(0.42, 0.84, 0.37) head=(0.43, 1.43, 0.26) lfoot=(0.29, 0.79, 0.86) model at (0.42, 0.50, 0.38) scale=1.00
+[ROOF] aiman in teksi: 7 cm headroom at=(0.35, 1.39, -0.11) state=Sit
+[ROOF]   aiman bones: hips=(0.36, 0.47, 0.04) head=(0.36, 1.00, -0.06) lfoot=(0.24, 0.43, 0.48) model at (0.36, 0.17, 0.05) scale=0.90
+[ROOF] aiman in polis: 14 cm headroom at=(0.34, 1.54, -0.18) state=Sit
+[ROOF]   aiman bones: hips=(0.36, 0.53, 0.00) head=(0.36, 1.12, -0.11) lfoot=(0.23, 0.47, 0.49) model at (0.36, 0.19, 0.01) scale=1.00
+[ROOF] tightest: pakmat in kancil 6 cm
+]]></output>
+            </test-case>
+            <test-case id="1036" name="VehicleTransitions" fullname="KampungRun.Tests.SmokeTests.VehicleTransitions" methodname="VehicleTransitions" classname="KampungRun.Tests.SmokeTests" runstate="Runnable" seed="1274070361" result="Passed" start-time="2026-09-26 02:18:14Z" end-time="2026-09-26 02:18:30Z" duration="15.816448" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[KLMap] KotaLama: 41 meshes, 1150 road nodes (62/62 joined to the grid), 112 pavement loops, 118 anchors
+[KLMap] TamanTasik: 26 meshes, 335 road nodes (37/37 joined to the grid), 31 pavement loops, 2 anchors
+[KLMap] KLSentral: 42 meshes, 626 road nodes (54/54 joined to the grid), 58 pavement loops, 3 anchors
+[KLMap] BukitNanas: 30 meshes, 53 road nodes (10/10 joined to the grid), 3 pavement loops, 1 anchors
+[KLMap] KLCC: 30 meshes, 112 road nodes (16/16 joined to the grid), 11 pavement loops, 2 anchors
+[KLMap] BukitBintang: 32 meshes, 296 road nodes (35/35 joined to the grid), 29 pavement loops, 1 anchors
+[City] merged 15195 static props into 683 meshes (658 groups); kept 3220 as they are: landmark=11 moves=3203 PhoneBooth=6
+[City] build times: load 34ms roads 242ms patches 148ms blocks 751ms ground 77ms merge 825ms
+Saving results to: C:/Users/User/AppData/LocalLow/Kampung Run/Kampung Run_ KL\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

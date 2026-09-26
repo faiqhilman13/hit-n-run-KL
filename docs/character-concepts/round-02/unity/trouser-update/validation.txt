@@ -1,0 +1,433 @@
+Refined character Unity verification
+Unity 6000.6.2f1; UTC 2026-09-26T02:25:09.6727167Z
+PASS GameAssets keeps the shared humanoid controller
+PASS Shared controller has no missing clip references
+PASS Shared controller still references idle
+PASS Shared controller still references walk
+PASS Shared controller still references run
+PASS Shared controller still references jump
+PASS Shared controller still references punch
+PASS Shared controller still references kick
+PASS Shared controller still references knockdown
+PASS Shared controller still references ride
+PASS Shared controller still references mount
+PASS Shared controller still references dismount
+PASS Shared controller still references sit
+PASS Shared controller still references wave
+PASS Shared controller still references panic
+
+chr_aiman
+PASS Model imported at stable asset path
+PASS GameAssets registry references this imported model
+PASS Valid humanoid avatar
+PASS Humanoid bone Hips
+PASS Humanoid bone Spine
+PASS Humanoid bone Chest
+PASS Humanoid bone Neck
+PASS Humanoid bone Head
+PASS Humanoid bone LeftShoulder
+PASS Humanoid bone RightShoulder
+PASS Humanoid bone LeftToes
+PASS Humanoid bone RightToes
+PASS Humanoid bone LeftUpperArm
+PASS Humanoid bone LeftLowerArm
+PASS Humanoid bone LeftHand
+PASS Humanoid bone RightUpperArm
+PASS Humanoid bone RightLowerArm
+PASS Humanoid bone RightHand
+PASS Humanoid bone LeftUpperLeg
+PASS Humanoid bone LeftLowerLeg
+PASS Humanoid bone LeftFoot
+PASS Humanoid bone RightUpperLeg
+PASS Humanoid bone RightLowerLeg
+PASS Humanoid bone RightFoot
+PASS Faces Unity +Z
+PASS Clip idle
+PASS Clip walk
+PASS Clip run
+PASS Clip jump
+PASS Clip punch
+PASS Clip kick
+PASS Clip knockdown
+PASS Clip ride
+PASS Clip mount
+PASS Clip dismount
+PASS Clip sit
+PASS Clip wave
+PASS Clip panic
+PASS Has skinned character mesh
+PASS chr_aiman_LOD0 has weighted humanoid geometry
+PASS chr_aiman_LOD0 has soft character shader and swappable atlas
+INFO chr_aiman_LOD0: 28269 vertices; 55608 triangles
+PASS chr_aiman_LOD1 has weighted humanoid geometry
+PASS chr_aiman_LOD1 has soft character shader and swappable atlas
+INFO chr_aiman_LOD1: 8216 vertices; 15569 triangles
+PASS Blink facial shape
+PASS Two character LODs
+PASS Authored feet near ground -0.119
+PASS Metre scale height 1.863
+PASS Finite posed silhouette bounds (0.63, 1.86, 0.50)
+PASS Character palette allows colour-preserving swaps
+PASS Skin swap changes only skin and its related shading cell
+PASS Palette swap preserves character shader
+PASS NPC skin shading retains the authored skin-to-shadow colour ratio
+PASS Explicit skin-shadow colour overrides the derived shade
+PASS Shared run clip moves the hand away from its idle pose
+PASS Shared sitting clip bends both thighs
+
+chr_mei
+PASS Model imported at stable asset path
+PASS GameAssets registry references this imported model
+PASS Valid humanoid avatar
+PASS Humanoid bone Hips
+PASS Humanoid bone Spine
+PASS Humanoid bone Chest
+PASS Humanoid bone Neck
+PASS Humanoid bone Head
+PASS Humanoid bone LeftShoulder
+PASS Humanoid bone RightShoulder
+PASS Humanoid bone LeftToes
+PASS Humanoid bone RightToes
+PASS Humanoid bone LeftUpperArm
+PASS Humanoid bone LeftLowerArm
+PASS Humanoid bone LeftHand
+PASS Humanoid bone RightUpperArm
+PASS Humanoid bone RightLowerArm
+PASS Humanoid bone RightHand
+PASS Humanoid bone LeftUpperLeg
+PASS Humanoid bone LeftLowerLeg
+PASS Humanoid bone LeftFoot
+PASS Humanoid bone RightUpperLeg
+PASS Humanoid bone RightLowerLeg
+PASS Humanoid bone RightFoot
+PASS Faces Unity +Z
+PASS Clip idle
+PASS Clip walk
+PASS Clip run
+PASS Clip jump
+PASS Clip punch
+PASS Clip kick
+PASS Clip knockdown
+PASS Clip ride
+PASS Clip mount
+PASS Clip dismount
+PASS Clip sit
+PASS Clip wave
+PASS Clip panic
+PASS Has skinned character mesh
+PASS chr_mei_LOD0 has weighted humanoid geometry
+PASS chr_mei_LOD0 has soft character shader and swappable atlas
+INFO chr_mei_LOD0: 31893 vertices; 62836 triangles
+PASS chr_mei_LOD1 has weighted humanoid geometry
+PASS chr_mei_LOD1 has soft character shader and swappable atlas
+INFO chr_mei_LOD1: 9289 vertices; 17594 triangles
+PASS Blink facial shape
+PASS Two character LODs
+PASS Authored feet near ground -0.064
+PASS Metre scale height 1.702
+PASS Finite posed silhouette bounds (0.68, 1.70, 0.55)
+PASS Character palette allows colour-preserving swaps
+PASS Skin swap changes only skin and its related shading cell
+PASS Palette swap preserves character shader
+PASS NPC skin shading retains the authored skin-to-shadow colour ratio
+PASS Explicit skin-shadow colour overrides the derived shade
+PASS Shared run clip moves the hand away from its idle pose
+PASS Shared sitting clip bends both thighs
+
+chr_ravi
+PASS Model imported at stable asset path
+PASS GameAssets registry references this imported model
+PASS Valid humanoid avatar
+PASS Humanoid bone Hips
+PASS Humanoid bone Spine
+PASS Humanoid bone Chest
+PASS Humanoid bone Neck
+PASS Humanoid bone Head
+PASS Humanoid bone LeftShoulder
+PASS Humanoid bone RightShoulder
+PASS Humanoid bone LeftToes
+PASS Humanoid bone RightToes
+PASS Humanoid bone LeftUpperArm
+PASS Humanoid bone LeftLowerArm
+PASS Humanoid bone LeftHand
+PASS Humanoid bone RightUpperArm
+PASS Humanoid bone RightLowerArm
+PASS Humanoid bone RightHand
+PASS Humanoid bone LeftUpperLeg
+PASS Humanoid bone LeftLowerLeg
+PASS Humanoid bone LeftFoot
+PASS Humanoid bone RightUpperLeg
+PASS Humanoid bone RightLowerLeg
+PASS Humanoid bone RightFoot
+PASS Faces Unity +Z
+PASS Clip idle
+PASS Clip walk
+PASS Clip run
+PASS Clip jump
+PASS Clip punch
+PASS Clip kick
+PASS Clip knockdown
+PASS Clip ride
+PASS Clip mount
+PASS Clip dismount
+PASS Clip sit
+PASS Clip wave
+PASS Clip panic
+PASS Has skinned character mesh
+PASS chr_ravi_LOD0 has weighted humanoid geometry
+PASS chr_ravi_LOD0 has soft character shader and swappable atlas
+INFO chr_ravi_LOD0: 36345 vertices; 66688 triangles
+PASS chr_ravi_LOD1 has weighted humanoid geometry
+PASS chr_ravi_LOD1 has soft character shader and swappable atlas
+INFO chr_ravi_LOD1: 10351 vertices; 18672 triangles
+PASS Blink facial shape
+PASS Two character LODs
+PASS Authored feet near ground -0.065
+PASS Metre scale height 1.863
+PASS Finite posed silhouette bounds (0.76, 1.86, 0.53)
+PASS Character palette allows colour-preserving swaps
+PASS Skin swap changes only skin and its related shading cell
+PASS Palette swap preserves character shader
+PASS NPC skin shading retains the authored skin-to-shadow colour ratio
+PASS Explicit skin-shadow colour overrides the derived shade
+PASS Shared run clip moves the hand away from its idle pose
+PASS Shared sitting clip bends both thighs
+
+chr_townman
+PASS Model imported at stable asset path
+PASS GameAssets registry references this imported model
+PASS Valid humanoid avatar
+PASS Humanoid bone Hips
+PASS Humanoid bone Spine
+PASS Humanoid bone Chest
+PASS Humanoid bone Neck
+PASS Humanoid bone Head
+PASS Humanoid bone LeftShoulder
+PASS Humanoid bone RightShoulder
+PASS Humanoid bone LeftToes
+PASS Humanoid bone RightToes
+PASS Humanoid bone LeftUpperArm
+PASS Humanoid bone LeftLowerArm
+PASS Humanoid bone LeftHand
+PASS Humanoid bone RightUpperArm
+PASS Humanoid bone RightLowerArm
+PASS Humanoid bone RightHand
+PASS Humanoid bone LeftUpperLeg
+PASS Humanoid bone LeftLowerLeg
+PASS Humanoid bone LeftFoot
+PASS Humanoid bone RightUpperLeg
+PASS Humanoid bone RightLowerLeg
+PASS Humanoid bone RightFoot
+PASS Faces Unity +Z
+PASS Clip idle
+PASS Clip walk
+PASS Clip run
+PASS Clip jump
+PASS Clip punch
+PASS Clip kick
+PASS Clip knockdown
+PASS Clip ride
+PASS Clip mount
+PASS Clip dismount
+PASS Clip sit
+PASS Clip wave
+PASS Clip panic
+PASS Has skinned character mesh
+PASS chr_townman_LOD0 has weighted humanoid geometry
+PASS chr_townman_LOD0 has soft character shader and swappable atlas
+INFO chr_townman_LOD0: 39920 vertices; 77396 triangles
+PASS chr_townman_LOD1 has weighted humanoid geometry
+PASS chr_townman_LOD1 has soft character shader and swappable atlas
+INFO chr_townman_LOD1: 12077 vertices; 21667 triangles
+PASS Blink facial shape
+PASS Two character LODs
+PASS Authored feet near ground -0.119
+PASS Metre scale height 1.848
+PASS Finite posed silhouette bounds (0.60, 1.85, 0.51)
+PASS Character palette allows colour-preserving swaps
+PASS Skin swap changes only skin and its related shading cell
+PASS Palette swap preserves character shader
+PASS NPC skin shading retains the authored skin-to-shadow colour ratio
+PASS Explicit skin-shadow colour overrides the derived shade
+PASS Shared run clip moves the hand away from its idle pose
+PASS Shared sitting clip bends both thighs
+
+chr_pakcik
+PASS Model imported at stable asset path
+PASS GameAssets registry references this imported model
+PASS Valid humanoid avatar
+PASS Humanoid bone Hips
+PASS Humanoid bone Spine
+PASS Humanoid bone Chest
+PASS Humanoid bone Neck
+PASS Humanoid bone Head
+PASS Humanoid bone LeftShoulder
+PASS Humanoid bone RightShoulder
+PASS Humanoid bone LeftToes
+PASS Humanoid bone RightToes
+PASS Humanoid bone LeftUpperArm
+PASS Humanoid bone LeftLowerArm
+PASS Humanoid bone LeftHand
+PASS Humanoid bone RightUpperArm
+PASS Humanoid bone RightLowerArm
+PASS Humanoid bone RightHand
+PASS Humanoid bone LeftUpperLeg
+PASS Humanoid bone LeftLowerLeg
+PASS Humanoid bone LeftFoot
+PASS Humanoid bone RightUpperLeg
+PASS Humanoid bone RightLowerLeg
+PASS Humanoid bone RightFoot
+PASS Faces Unity +Z
+PASS Clip idle
+PASS Clip walk
+PASS Clip run
+PASS Clip jump
+PASS Clip punch
+PASS Clip kick
+PASS Clip knockdown
+PASS Clip ride
+PASS Clip mount
+PASS Clip dismount
+PASS Clip sit
+PASS Clip wave
+PASS Clip panic
+PASS Has skinned character mesh
+PASS chr_pakcik_LOD0 has weighted humanoid geometry
+PASS chr_pakcik_LOD0 has soft character shader and swappable atlas
+INFO chr_pakcik_LOD0: 33501 vertices; 66044 triangles
+PASS chr_pakcik_LOD1 has weighted humanoid geometry
+PASS chr_pakcik_LOD1 has soft character shader and swappable atlas
+INFO chr_pakcik_LOD1: 9717 vertices; 18491 triangles
+PASS Blink facial shape
+PASS Two character LODs
+PASS Authored feet near ground -0.072
+PASS Metre scale height 1.739
+PASS Finite posed silhouette bounds (0.74, 1.74, 0.52)
+PASS Character palette allows colour-preserving swaps
+PASS Skin swap changes only skin and its related shading cell
+PASS Palette swap preserves character shader
+PASS NPC skin shading retains the authored skin-to-shadow colour ratio
+PASS Explicit skin-shadow colour overrides the derived shade
+PASS Shared run clip moves the hand away from its idle pose
+PASS Shared sitting clip bends both thighs
+
+chr_polis
+PASS Model imported at stable asset path
+PASS GameAssets registry references this imported model
+PASS Valid humanoid avatar
+PASS Humanoid bone Hips
+PASS Humanoid bone Spine
+PASS Humanoid bone Chest
+PASS Humanoid bone Neck
+PASS Humanoid bone Head
+PASS Humanoid bone LeftShoulder
+PASS Humanoid bone RightShoulder
+PASS Humanoid bone LeftToes
+PASS Humanoid bone RightToes
+PASS Humanoid bone LeftUpperArm
+PASS Humanoid bone LeftLowerArm
+PASS Humanoid bone LeftHand
+PASS Humanoid bone RightUpperArm
+PASS Humanoid bone RightLowerArm
+PASS Humanoid bone RightHand
+PASS Humanoid bone LeftUpperLeg
+PASS Humanoid bone LeftLowerLeg
+PASS Humanoid bone LeftFoot
+PASS Humanoid bone RightUpperLeg
+PASS Humanoid bone RightLowerLeg
+PASS Humanoid bone RightFoot
+PASS Faces Unity +Z
+PASS Clip idle
+PASS Clip walk
+PASS Clip run
+PASS Clip jump
+PASS Clip punch
+PASS Clip kick
+PASS Clip knockdown
+PASS Clip ride
+PASS Clip mount
+PASS Clip dismount
+PASS Clip sit
+PASS Clip wave
+PASS Clip panic
+PASS Has skinned character mesh
+PASS chr_polis_LOD0 has weighted humanoid geometry
+PASS chr_polis_LOD0 has soft character shader and swappable atlas
+INFO chr_polis_LOD0: 34967 vertices; 69020 triangles
+PASS chr_polis_LOD1 has weighted humanoid geometry
+PASS chr_polis_LOD1 has soft character shader and swappable atlas
+INFO chr_polis_LOD1: 10010 vertices; 19324 triangles
+PASS Blink facial shape
+PASS Two character LODs
+PASS Authored feet near ground -0.065
+PASS Metre scale height 1.863
+PASS Finite posed silhouette bounds (0.79, 1.86, 0.54)
+PASS Character palette allows colour-preserving swaps
+PASS Skin swap changes only skin and its related shading cell
+PASS Palette swap preserves character shader
+PASS NPC skin shading retains the authored skin-to-shadow colour ratio
+PASS Explicit skin-shadow colour overrides the derived shade
+PASS Shared run clip moves the hand away from its idle pose
+PASS Shared sitting clip bends both thighs
+
+chr_datukmega
+PASS Model imported at stable asset path
+PASS GameAssets registry references this imported model
+PASS Valid humanoid avatar
+PASS Humanoid bone Hips
+PASS Humanoid bone Spine
+PASS Humanoid bone Chest
+PASS Humanoid bone Neck
+PASS Humanoid bone Head
+PASS Humanoid bone LeftShoulder
+PASS Humanoid bone RightShoulder
+PASS Humanoid bone LeftToes
+PASS Humanoid bone RightToes
+PASS Humanoid bone LeftUpperArm
+PASS Humanoid bone LeftLowerArm
+PASS Humanoid bone LeftHand
+PASS Humanoid bone RightUpperArm
+PASS Humanoid bone RightLowerArm
+PASS Humanoid bone RightHand
+PASS Humanoid bone LeftUpperLeg
+PASS Humanoid bone LeftLowerLeg
+PASS Humanoid bone LeftFoot
+PASS Humanoid bone RightUpperLeg
+PASS Humanoid bone RightLowerLeg
+PASS Humanoid bone RightFoot
+PASS Faces Unity +Z
+PASS Clip idle
+PASS Clip walk
+PASS Clip run
+PASS Clip jump
+PASS Clip punch
+PASS Clip kick
+PASS Clip knockdown
+PASS Clip ride
+PASS Clip mount
+PASS Clip dismount
+PASS Clip sit
+PASS Clip wave
+PASS Clip panic
+PASS Has skinned character mesh
+PASS chr_datukmega_LOD0 has weighted humanoid geometry
+PASS chr_datukmega_LOD0 has soft character shader and swappable atlas
+INFO chr_datukmega_LOD0: 39555 vertices; 78199 triangles
+PASS chr_datukmega_LOD1 has weighted humanoid geometry
+PASS chr_datukmega_LOD1 has soft character shader and swappable atlas
+INFO chr_datukmega_LOD1: 11460 vertices; 21894 triangles
+PASS Blink facial shape
+PASS Two character LODs
+PASS Authored feet near ground -0.065
+PASS Metre scale height 1.845
+PASS Finite posed silhouette bounds (0.87, 1.84, 0.63)
+PASS Character palette allows colour-preserving swaps
+PASS Skin swap changes only skin and its related shading cell
+PASS Palette swap preserves character shader
+PASS NPC skin shading retains the authored skin-to-shadow colour ratio
+PASS Explicit skin-shadow colour overrides the derived shade
+PASS Shared run clip moves the hand away from its idle pose
+PASS Shared sitting clip bends both thighs
+PASS Character shader compiled without errors
+
+Result: 0 failed checks.

@@ -1,0 +1,49 @@
+{
+  "asset": "chr_townaunty",
+  "height_m": 1.56,
+  "mesh_height_m": 1.56,
+  "triangles": 79152,
+  "lod1_triangles": 22161,
+  "bones": 23,
+  "clips": [
+    "chr_townaunty|_tpose",
+    "chr_townaunty|idle",
+    "chr_townaunty|walk",
+    "chr_townaunty|run",
+    "chr_townaunty|panic",
+    "chr_townaunty|jump",
+    "chr_townaunty|punch",
+    "chr_townaunty|kick",
+    "chr_townaunty|ride",
+    "chr_townaunty|mount",
+    "chr_townaunty|dismount",
+    "chr_townaunty|sit",
+    "chr_townaunty|knockdown",
+    "chr_townaunty|hit",
+    "chr_townaunty|wave"
+  ],
+  "shape_keys": [
+    "Basis",
+    "Grin",
+    "Alarm",
+    "Determined",
+    "Blink"
+  ],
+  "bounds_m": [
+    1.6616082191467285,
+    0.5784350633621216,
+    1.559999942779541
+  ],
+  "palette": "kl_character_palette.png",
+  "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townaunty\\chr_townaunty_master.blend",
+  "export": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_townaunty\\exports\\chr_townaunty.fbx",
+  "rig_contract": "Existing Unity Humanoid, T pose, 23 bones, metre scale, +Z Unity forward",
+  "inferred": [
+    "occluded anatomy",
+    "garment interior",
+    "finger depth",
+    "NPC adaptations from approved family style"
+  ],
+  "material_contract": "sRGB base color palette, alpha gloss metadata, no directional light baked; smooth vertex normals",
+  "reference_status": "Candidate reconstruction; consult measured review deviations before acceptance"
+}

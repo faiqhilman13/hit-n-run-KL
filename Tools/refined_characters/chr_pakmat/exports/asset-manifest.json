@@ -1,0 +1,49 @@
+{
+  "asset": "chr_pakmat",
+  "height_m": 1.66,
+  "mesh_height_m": 1.66,
+  "triangles": 76484,
+  "lod1_triangles": 21415,
+  "bones": 23,
+  "clips": [
+    "chr_pakmat|_tpose",
+    "chr_pakmat|idle",
+    "chr_pakmat|walk",
+    "chr_pakmat|run",
+    "chr_pakmat|panic",
+    "chr_pakmat|jump",
+    "chr_pakmat|punch",
+    "chr_pakmat|kick",
+    "chr_pakmat|ride",
+    "chr_pakmat|mount",
+    "chr_pakmat|dismount",
+    "chr_pakmat|sit",
+    "chr_pakmat|knockdown",
+    "chr_pakmat|hit",
+    "chr_pakmat|wave"
+  ],
+  "shape_keys": [
+    "Basis",
+    "Grin",
+    "Alarm",
+    "Determined",
+    "Blink"
+  ],
+  "bounds_m": [
+    1.844408392906189,
+    0.636991024017334,
+    1.659999966621399
+  ],
+  "palette": "kl_character_palette.png",
+  "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakmat\\chr_pakmat_master.blend",
+  "export": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_pakmat\\exports\\chr_pakmat.fbx",
+  "rig_contract": "Existing Unity Humanoid, T pose, 23 bones, metre scale, +Z Unity forward",
+  "inferred": [
+    "occluded anatomy",
+    "garment interior",
+    "finger depth",
+    "NPC adaptations from approved family style"
+  ],
+  "material_contract": "sRGB base color palette, alpha gloss metadata, no directional light baked; smooth vertex normals",
+  "reference_status": "Candidate reconstruction; consult measured review deviations before acceptance"
+}

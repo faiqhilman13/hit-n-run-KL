@@ -1,0 +1,59 @@
+{
+  "family": [
+    {
+      "id": "chr_pakmat",
+      "label": "Pak Mat"
+    },
+    {
+      "id": "chr_maksom",
+      "label": "Mak Som"
+    },
+    {
+      "id": "chr_along",
+      "label": "Along"
+    },
+    {
+      "id": "chr_adik",
+      "label": "Adik"
+    }
+  ],
+  "npcs": [
+    {
+      "id": "chr_townman",
+      "label": "Town man"
+    },
+    {
+      "id": "chr_townaunty",
+      "label": "Town aunty"
+    },
+    {
+      "id": "chr_pakcik",
+      "label": "Pakcik"
+    },
+    {
+      "id": "chr_kid",
+      "label": "Neighbourhood kid"
+    },
+    {
+      "id": "chr_polis",
+      "label": "Polis"
+    },
+    {
+      "id": "chr_datukmega",
+      "label": "Datuk Mega"
+    },
+    {
+      "id": "chr_aiman",
+      "label": "Aiman"
+    },
+    {
+      "id": "chr_mei",
+      "label": "Mei"
+    },
+    {
+      "id": "chr_ravi",
+      "label": "Ravi"
+    }
+  ],
+  "order": "left to right, top to bottom"
+}

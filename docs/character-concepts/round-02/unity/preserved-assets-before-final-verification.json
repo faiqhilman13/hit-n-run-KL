@@ -1,0 +1,26 @@
+{
+  "utc": "2026-09-26T02:13:58.9163702Z",
+  "scope": "Before final geometry verification and Windows build",
+  "assets": [
+    {
+      "path": "Assets/Scenes/KampungRun.unity",
+      "sha256": "32DA07B6E585F02F01C28BE2056EAE1DA9C70D7B4C76089C67E2F9A54602CF90"
+    },
+    {
+      "path": "Assets/KampungRun/Animation/KL_Human.controller",
+      "sha256": "B59E0479127BD1668294E85B4ABA235C002D35B44B6A4E31957CC785488EA6FF"
+    },
+    {
+      "path": "Assets/KampungRun/Scripts/Characters/SeatFit.cs",
+      "sha256": "BB6CE3F5A31AB3E9BED4C493EEEDAAFB642D28CFEF0409AFFDADB59C0A3C840E"
+    },
+    {
+      "path": "Assets/KampungRun/Scripts/Vehicles/VehicleVisuals.cs",
+      "sha256": "845BEF456BEF2595BCA229D4B3C924EACDB489CE2A89A8D68DFF05A342F0DAD9"
+    },
+    {
+      "path": "Assets/KampungRun/Tests/PromoCapture.cs",
+      "sha256": "75E137DAA220745B2D641F4296459A6A3FA2F025B25E52A2A19BA165FDD0C187"
+    }
+  ]
+}

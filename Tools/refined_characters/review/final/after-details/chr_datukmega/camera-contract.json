@@ -1,0 +1,41 @@
+{
+  "projection": "orthographic",
+  "source_axis_up": "+Z",
+  "source_forward": "-Y",
+  "yaw_degrees": {
+    "front": 0,
+    "side": 270
+  },
+  "elevation_degrees": 0,
+  "cameras": {
+    "front": {
+      "target_center_m": [
+        5.960464477539063e-08,
+        -0.015783309936523438,
+        1.0000028610229492
+      ],
+      "vertical_ortho_scale_m": 2.299999952316284,
+      "yaw_degrees": 0,
+      "elevation_degrees": 0
+    },
+    "side": {
+      "target_center_m": [
+        0.0,
+        -0.015783756971359253,
+        1.0000009536743164
+      ],
+      "vertical_ortho_scale_m": 2.299999952316284,
+      "yaw_degrees": 270,
+      "elevation_degrees": 0
+    }
+  },
+  "camera_center_z_m": 1.0,
+  "vertical_ortho_scale_m": 2.3,
+  "resolution_pixels": [
+    600,
+    800
+  ],
+  "pixels_per_m": 347.82608695652175,
+  "ground_y_pixel": 747.8260869565217,
+  "pose": "rest skeleton with upper arms lowered 72 degrees; all other bones identity"
+}

@@ -1,0 +1,49 @@
+{
+  "asset": "chr_datukmega",
+  "height_m": 1.74,
+  "mesh_height_m": 1.74,
+  "triangles": 78199,
+  "lod1_triangles": 21894,
+  "bones": 23,
+  "clips": [
+    "chr_datukmega|_tpose",
+    "chr_datukmega|idle",
+    "chr_datukmega|walk",
+    "chr_datukmega|run",
+    "chr_datukmega|panic",
+    "chr_datukmega|jump",
+    "chr_datukmega|punch",
+    "chr_datukmega|kick",
+    "chr_datukmega|ride",
+    "chr_datukmega|mount",
+    "chr_datukmega|dismount",
+    "chr_datukmega|sit",
+    "chr_datukmega|knockdown",
+    "chr_datukmega|hit",
+    "chr_datukmega|wave"
+  ],
+  "shape_keys": [
+    "Basis",
+    "Grin",
+    "Alarm",
+    "Determined",
+    "Blink"
+  ],
+  "bounds_m": [
+    1.926408290863037,
+    0.5611894130706787,
+    1.7400000095367432
+  ],
+  "palette": "kl_character_palette.png",
+  "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_datukmega\\chr_datukmega_master.blend",
+  "export": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_datukmega\\exports\\chr_datukmega.fbx",
+  "rig_contract": "Existing Unity Humanoid, T pose, 23 bones, metre scale, +Z Unity forward",
+  "inferred": [
+    "occluded anatomy",
+    "garment interior",
+    "finger depth",
+    "NPC adaptations from approved family style"
+  ],
+  "material_contract": "sRGB base color palette, alpha gloss metadata, no directional light baked; smooth vertex normals",
+  "reference_status": "Candidate reconstruction; consult measured review deviations before acceptance"
+}

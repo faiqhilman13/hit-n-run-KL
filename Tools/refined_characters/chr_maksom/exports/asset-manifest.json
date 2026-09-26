@@ -1,0 +1,49 @@
+{
+  "asset": "chr_maksom",
+  "height_m": 1.57,
+  "mesh_height_m": 1.57,
+  "triangles": 79208,
+  "lod1_triangles": 22178,
+  "bones": 23,
+  "clips": [
+    "chr_maksom|_tpose",
+    "chr_maksom|idle",
+    "chr_maksom|walk",
+    "chr_maksom|run",
+    "chr_maksom|panic",
+    "chr_maksom|jump",
+    "chr_maksom|punch",
+    "chr_maksom|kick",
+    "chr_maksom|ride",
+    "chr_maksom|mount",
+    "chr_maksom|dismount",
+    "chr_maksom|sit",
+    "chr_maksom|knockdown",
+    "chr_maksom|hit",
+    "chr_maksom|wave"
+  ],
+  "shape_keys": [
+    "Basis",
+    "Grin",
+    "Alarm",
+    "Determined",
+    "Blink"
+  ],
+  "bounds_m": [
+    1.6616082191467285,
+    0.5784345865249634,
+    1.5700000524520874
+  ],
+  "palette": "kl_character_palette.png",
+  "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_maksom\\chr_maksom_master.blend",
+  "export": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_maksom\\exports\\chr_maksom.fbx",
+  "rig_contract": "Existing Unity Humanoid, T pose, 23 bones, metre scale, +Z Unity forward",
+  "inferred": [
+    "occluded anatomy",
+    "garment interior",
+    "finger depth",
+    "NPC adaptations from approved family style"
+  ],
+  "material_contract": "sRGB base color palette, alpha gloss metadata, no directional light baked; smooth vertex normals",
+  "reference_status": "Candidate reconstruction; consult measured review deviations before acceptance"
+}

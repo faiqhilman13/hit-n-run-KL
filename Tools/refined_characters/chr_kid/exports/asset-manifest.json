@@ -1,0 +1,49 @@
+{
+  "asset": "chr_kid",
+  "height_m": 1.15,
+  "mesh_height_m": 1.15,
+  "triangles": 60512,
+  "lod1_triangles": 16943,
+  "bones": 23,
+  "clips": [
+    "chr_kid|_tpose",
+    "chr_kid|idle",
+    "chr_kid|walk",
+    "chr_kid|run",
+    "chr_kid|panic",
+    "chr_kid|jump",
+    "chr_kid|punch",
+    "chr_kid|kick",
+    "chr_kid|ride",
+    "chr_kid|mount",
+    "chr_kid|dismount",
+    "chr_kid|sit",
+    "chr_kid|knockdown",
+    "chr_kid|hit",
+    "chr_kid|wave"
+  ],
+  "shape_keys": [
+    "Basis",
+    "Grin",
+    "Alarm",
+    "Determined",
+    "Blink"
+  ],
+  "bounds_m": [
+    1.0703151226043701,
+    0.4193039834499359,
+    1.149999976158142
+  ],
+  "palette": "kl_character_palette.png",
+  "source": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_kid\\chr_kid_master.blend",
+  "export": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\refined_characters\\chr_kid\\exports\\chr_kid.fbx",
+  "rig_contract": "Existing Unity Humanoid, T pose, 23 bones, metre scale, +Z Unity forward",
+  "inferred": [
+    "occluded anatomy",
+    "garment interior",
+    "finger depth",
+    "NPC adaptations from approved family style"
+  ],
+  "material_contract": "sRGB base color palette, alpha gloss metadata, no directional light baked; smooth vertex normals",
+  "reference_status": "Candidate reconstruction; consult measured review deviations before acceptance"
+}
