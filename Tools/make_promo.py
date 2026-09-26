@@ -24,22 +24,25 @@ FONT_CAP = "C:/Windows/Fonts/seguibl.ttf"
 
 RED, TEAL, YELLOW, INK, WHITE = (216, 50, 42), (19, 144, 143), (255, 214, 58), (31, 26, 26), (255, 255, 255)
 
-# (shot folder, first frame, last frame (None = all), caption, landmark stamp)
+# (shot folder, first frame, last frame (None = all), caption, stamp). A stamp is a landmark name
+# (labelled KUALA LUMPUR) or (name, label) for the family.
 SHOTS = [
-    ("00_aerial", 0, None, "The real KL - rebuilt from the map", None),
-    ("01_cruise", 0, None, "Up the flyover in a Myvi", None),
-    ("02_drift", 0, None, "Drift round the bulatan", None),
-    ("03_lineup", 0, None, "Myvi  -  Saga  -  Kancil  -  Alphard  -  Hilux  -  Kapcai", None),
-    ("04_door", 0, None, "Doors swing. Drivers sit. Everything bounces.", None),
-    ("05_bop", 0, None, "Bop the pakciks - they always get back up", None),
-    ("06_kapcai", 0, None, "Weave under the flyovers on a kapcai", None),
-    ("07_batu", 0, None, None, "BATU CAVES"),
-    ("08_merdeka118", 0, None, None, "MERDEKA 118"),
-    ("09_klcc", 0, 54, None, "KLCC"),
-    ("10_masjidnegara", 0, None, None, "MASJID NEGARA"),
-    ("11_jamek", 0, None, None, "MASJID JAMEK"),
-    ("12_kltower", 0, None, None, "MENARA KL"),
-    ("13_night", 0, None, "Day to night", None),
+    ("00_aerial", 0, 150, "The real KL - rebuilt from the map", None),
+    ("01_family", 0, None, "Meet the family - Kampung Baru, KL", None),
+    ("02_pakmat", 0, 120, "Old KL in Ayah's Saga", ("PAK MAT", "MORNING")),
+    ("03_maksom", 0, None, "Up the flyover in Mak's Myvi", ("MAK SOM", "MIDDAY")),
+    ("04_along", 0, None, "Kapcai at golden hour", ("ALONG", "SUNSET")),
+    ("05_adik", 0, None, "KL after dark", ("ADIK", "NIGHT")),
+    ("06_drift", 10, None, "Drift round the bulatan", None),
+    ("07_police", 0, None, "Polis on your tail? Lari!", None),
+    ("08_carjack", 0, 140, "Need a car? Borrow one", None),
+    ("09_bop", 0, 110, "Bop the pakciks - they always get back up", None),
+    ("10_merdeka118", 0, 72, None, "MERDEKA 118"),
+    ("11_klcc", 0, 54, None, "KLCC"),
+    ("12_jamek", 0, 66, None, "MASJID JAMEK"),
+    ("13_masjidnegara", 0, 66, None, "MASJID NEGARA"),
+    ("14_kltower", 0, 66, None, "MENARA KL"),
+    ("15_batu", 0, 72, None, "BATU CAVES"),
 ]
 TITLE_S, END_S = 2.6, 4.2
 
@@ -81,14 +84,14 @@ def pill(img, cx, cy, text, f, scale=1.0, fg=INK, bg=YELLOW, pad=(36, 18)):
     img.alpha_composite(layer, (int(cx - layer.width / 2), int(cy - layer.height / 2)))
 
 
-def stamp(img, x, y, text, f, t):
-    """Landmark name: a tilted red stamp that thumps in."""
+def stamp(img, x, y, text, f, t, label="KUALA LUMPUR"):
+    """Landmark (or family member) name: a tilted red stamp that thumps in, a small label over it."""
     k = ease_back(t / 0.25)
     layer = Image.new("RGBA", (1100, 260), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
     d.text((40, 60), text, font=f, fill=WHITE, stroke_width=10, stroke_fill=INK)
     d.text((40, 60), text, font=f, fill=RED if len(text) % 2 else TEAL, stroke_width=0)
-    d.text((44, 36), "KUALA LUMPUR", font=font(FONT_CAP, 34), fill=WHITE, stroke_width=5, stroke_fill=INK)
+    d.text((44, 36), label, font=font(FONT_CAP, 34), fill=WHITE, stroke_width=5, stroke_fill=INK)
     layer = layer.rotate(4, resample=Image.BICUBIC, expand=True)
     s = max(0.01, 0.6 + 0.4 * k)
     layer = layer.resize((int(layer.width * s), int(layer.height * s)), Image.LANCZOS)
@@ -253,14 +256,14 @@ def timeline():
 def render_16x9(kind, payload, t, L, cache):
     W, H = 1920, 1080
     if kind == "title":
-        bg = cache.setdefault("title_bg", backdrop(Image.open(load_shot("03_lineup", 60, 61)[0]).convert("RGB"), W, H))
+        bg = cache.setdefault("title_bg", backdrop(Image.open(load_shot("01_family", 60, 61)[0]).convert("RGB"), W, H))
         img = bg.convert("RGBA")
         logo(img, W / 2, H / 2 - 60, 210, t, "A Hit & Run-style game... set in KL")
         if t > 1.1:
             pill(img, W / 2, H - 170, "I grew up loving it, so I made my own", font(FONT_CAP, 44), ease_back((t - 1.1) / 0.3))
         return img.convert("RGB")
     if kind == "end":
-        bg = cache.setdefault("end_bg", backdrop(Image.open(load_shot("09_klcc", 30, 31)[0]).convert("RGB"), W, H))
+        bg = cache.setdefault("end_bg", backdrop(Image.open(load_shot("11_klcc", 30, 31)[0]).convert("RGB"), W, H))
         img = bg.convert("RGBA")
         logo(img, W / 2, H / 2 - 170, 190, t)
         d = ImageDraw.Draw(img)
@@ -281,7 +284,8 @@ def render_16x9(kind, payload, t, L, cache):
         if k > 0.02:
             pill(img, W / 2, H - 120, cap, font(FONT_CAP, 52), k)
     if stp:
-        stamp(img, 70, 60, stp, font(FONT_TITLE, 120), t)
+        text, label = (stp, "KUALA LUMPUR") if isinstance(stp, str) else stp
+        stamp(img, 70, 60, text, font(FONT_TITLE, 120), t, label)
     # small corner bug so clips stay credited when reshared
     d = ImageDraw.Draw(img)
     d.text((W - 40, 44), "KAMPUNG RUN: KL", font=font(FONT_TITLE, 44), fill=WHITE, stroke_width=4, stroke_fill=INK, anchor="rm")
@@ -291,7 +295,7 @@ def render_16x9(kind, payload, t, L, cache):
 def render_9x16(kind, payload, t, L, cache):
     W, H = 1080, 1920
     if kind in ("title", "end"):
-        src = cache.setdefault(kind + "_v_src", Image.open(load_shot("03_lineup" if kind == "title" else "09_klcc",
+        src = cache.setdefault(kind + "_v_src", Image.open(load_shot("01_family" if kind == "title" else "11_klcc",
                                                                          60 if kind == "title" else 30, None)[0]).convert("RGB"))
         img = cache.setdefault(kind + "_v_bg", backdrop(src, W, H)).convert("RGBA")
         if kind == "title":
@@ -334,7 +338,8 @@ def render_9x16(kind, payload, t, L, cache):
             cf = font(FONT_CAP, 40 if len(cap) < 36 else 30)
             pill(img, W / 2, y0 + crop.height + (H - y0 - crop.height) / 2, cap, cf, k)
     if stp:
-        stamp(img, 30, y0 + 30, stp, font(FONT_TITLE, 96), t)
+        text, label = (stp, "KUALA LUMPUR") if isinstance(stp, str) else stp
+        stamp(img, 30, y0 + 30, text, font(FONT_TITLE, 96), t, label)
     return img.convert("RGB")
 
 
