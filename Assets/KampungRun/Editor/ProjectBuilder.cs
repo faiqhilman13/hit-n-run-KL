@@ -177,6 +177,13 @@ namespace KampungRun.EditorTools
         public static void BuildWebGL()
         {
             RebuildEverything();
+            WebGLPlayer();
+        }
+
+        /// <summary>The browser player and its itch zip, from the scene as saved (BuildWebGL regenerates it first;
+        /// RefinedCharacterBuild.WebGL doesn't). True if the build succeeded.</summary>
+        public static bool WebGLPlayer()
+        {
             PlayerSettings.WebGL.template = "PROJECT:KampungRun";
             PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
             PlayerSettings.WebGL.decompressionFallback = true;
@@ -200,12 +207,13 @@ namespace KampungRun.EditorTools
             });
             Debug.Log($"[KampungRun] WebGL build {report.summary.result}: {report.summary.totalSize / (1024 * 1024)} MB, " +
                       $"{report.summary.totalErrors} errors");
-            if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded) return;
+            if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded) return false;
             // itch.io wants a zip with index.html at its root
             const string zip = "Builds/KampungRunKL_web_itch.zip";
             if (System.IO.File.Exists(zip)) System.IO.File.Delete(zip);
             System.IO.Compression.ZipFile.CreateFromDirectory(outDir, zip);
             Debug.Log($"[KampungRun] itch.io zip: {zip} ({new System.IO.FileInfo(zip).Length / (1024 * 1024)} MB)");
+            return true;
         }
     }
 }

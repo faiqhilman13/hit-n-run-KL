@@ -115,19 +115,27 @@ namespace KampungRun.Tests
             cc.enabled = false;
             var cam = Camera.main.transform;
             var piv = focus + Vector3.up * height;
+            // the haze starts just short of the landmark and closes in before the map's edge behind it
             float fs = RenderSettings.fogStartDistance, fe = RenderSettings.fogEndDistance;
-            float k = Mathf.Max(1f, dist * 1.1f / fs);
-            RenderSettings.fogStartDistance = fs * k; RenderSettings.fogEndDistance = fe * k;
+            float fs2 = fs > 1f ? Mathf.Max(fs, dist * 0.9f) : fs, fe2 = fs > 1f ? Mathf.Max(fe, dist * 2f) : fe;   // (no fog start: leave it alone)
             void Place(float t)
             {
                 cam.position = piv + Quaternion.Euler(pitch, yaw0 + sweep * t, 0) * Vector3.back * dist;
                 cam.rotation = Quaternion.LookRotation(piv - cam.position);
             }
-            Place(0f);
-            yield return Frames(3);
-            yield return Shot(name, seconds, Place);
-            RenderSettings.fogStartDistance = fs; RenderSettings.fogEndDistance = fe;
-            cc.enabled = true;
+            try
+            {
+                RenderSettings.fogStartDistance = fs2; RenderSettings.fogEndDistance = fe2;
+                Place(0f);
+                yield return Frames(3);
+                yield return Shot(name, seconds, Place);
+            }
+            finally
+            {
+                // put the haze and the chase camera back even if the capture is cut short
+                RenderSettings.fogStartDistance = fs; RenderSettings.fogEndDistance = fe;
+                if (cc) cc.enabled = true;
+            }
         }
 
         /// <summary>Frame-by-frame look at getting in and out of a car (for checking the motion).</summary>
@@ -440,6 +448,7 @@ namespace KampungRun.Tests
         {
             _rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };
             _tex = new Texture2D(W, H, TextureFormat.RGB24, false);
+            SeatFit.GripWheel = true; SeatFit.GripClock = 9f;          // drivers' hands on the wheel, whatever a cut-short hands check left
 
             // The promo is about the family and KL: the real city from the air, the family at home, each of
             // them out driving at their own time of day, the fun of it (drifts, the polis, borrowed cars,

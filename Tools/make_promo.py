@@ -38,7 +38,7 @@ SHOTS = [
     ("08_carjack", 0, 140, "Need a car? Borrow one", None),
     ("09_bop", 0, 110, "Bop the pakciks - they always get back up", None),
     ("10_merdeka118", 0, 72, None, "MERDEKA 118"),
-    ("11_klcc", 0, 54, None, "KLCC"),
+    ("11_klcc", 0, 72, None, "KLCC"),
     ("12_jamek", 0, 66, None, "MASJID JAMEK"),
     ("13_masjidnegara", 0, 66, None, "MASJID NEGARA"),
     ("14_kltower", 0, 66, None, "MENARA KL"),

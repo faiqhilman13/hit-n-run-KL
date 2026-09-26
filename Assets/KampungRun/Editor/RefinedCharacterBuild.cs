@@ -49,5 +49,29 @@ namespace KampungRun.EditorTools
             if (report.summary.result != BuildResult.Succeeded || !unchanged) throw new InvalidOperationException(result);
             Debug.Log(result);
         }
+
+        /// <summary>
+        /// The browser build (Builds/WebGL plus the itch zip) of the saved scene: ProjectBuilder.BuildWebGL's player
+        /// settings without its scene/controller regeneration, and a check that neither changed.
+        /// Batch: -buildTarget WebGL -executeMethod KampungRun.EditorTools.RefinedCharacterBuild.WebGL
+        /// </summary>
+        [MenuItem("Kampung Run/Build Refined Character WebGL (browser)")]
+        public static void WebGL()
+        {
+            if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.WebGL)
+                throw new InvalidOperationException("Select WebGL first (batch: -buildTarget WebGL).");
+            string[] preserved = { "Assets/Scenes/KampungRun.unity", HumanControllerBuilder.Path };
+            string Hash(string path)
+            {
+                using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(path)));
+            }
+            var hashes = preserved.ToDictionary(path => path, Hash);
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            bool built = ProjectBuilder.WebGLPlayer();
+            bool unchanged = hashes.All(pair => pair.Value == Hash(pair.Key));
+            string result = $"WebGL build {(built ? "succeeded" : "FAILED")}. Scene and controller preserved: {unchanged}.";
+            if (!built || !unchanged) throw new InvalidOperationException(result);
+            Debug.Log("[KampungRun] " + result);
+        }
     }
 }

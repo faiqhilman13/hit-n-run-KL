@@ -216,3 +216,34 @@ These commands can overwrite reports/build outputs. Use new output/log paths if 
 ## Suggested continuation
 
 Start by viewing the current family/NPC renders and the game itself, then act on the user's next feedback. If they want closer concept matching, use the measured family deviations to guide shape edits. If they want smoother motion, review full animation sequences in gameplay. Before targeting browsers/mobile or increasing crowd density, profile the refined models and LOD behavior. Preserve the city style, rig/clip identity and current gameplay state throughout.
+
+## Update — driver hands, KLCC promo shot, web build 1.9.0 (26 Sep 2026, afternoon)
+
+A follow-up session acted on user feedback about the promo ("KLCC view too zoomed in, one tower", "hands going through the steering wheels") and published the refined cast to itch.
+
+- **Hands on the wheel.** `SeatFit` places the hips, then runs a two-bone arm IK. It puts each palm on the rim at 9 and 3 (`SeatFit.GripClock`), after `SeatedCharacterScale`.
+  - The hands follow the wheel for 50° each way, then slip round it.
+  - `VehicleVisuals.WheelGrip` supplies the rim points.
+  - Steering right turns the wheel clockwise from the driver's view. It used to turn the other way.
+  - Verified for Pak Mat, Mak Som, Along and Adik in a Saga, Kancil, Hilux and Alphard using `PromoCapture.RecordDriverHands`. It writes x-ray close-ups with the car body hidden to `Tools/promo_frames/x_hands`, plus a bone-position log.
+  - Adik is too short to reach the rim: her hands stop just short and the wheel sits in front of her face.
+  - `CastRestyled`, `VehicleTransitions` and `DriversFitUnderRoof` still pass.
+- **Promo.**
+  - Landmark orbits place the camera directly; the chase camera's wall check had pulled it against a Petronas tower.
+  - KLCC is framed across the tower pair from over KLCC Park (yaw 300–340).
+  - Orbit fog handling is guarded and restored in `finally`.
+  - Promo v3.1 was re-recorded with the refined cast.
+- **Web build without regeneration.** Use `RefinedCharacterBuild.WebGL` (batch: `-buildTarget WebGL`). It shares `ProjectBuilder.WebGLPlayer()` settings with `BuildWebGL`, skips `RebuildEverything`, and hash-checks the scene and controller. It produced itch **1.9.0** (`Builds/WebGL`, 41 MB).
+- **Compiling without regeneration.** Plain `Unity.exe -batchmode -nographics -projectPath . -quit` compiles without touching the scene; `ProjectBuilder.BatchSetup` regenerates it.
+- **Web performance.** The refined cast cost frame rate in the browser (`Tools/web_bench.py`, headless Chrome, RTX 3080):
+
+  | Spot | 1.9.0 | 1.9.0 without peds | 1.8.0 |
+  | --- | --- | --- | --- |
+  | Title | 236 fps | — | ~238 fps |
+  | Kampung home | 49 fps | 72 fps | not measured |
+  | Dataran | 60 fps | 72 fps | 80–110 fps (downtown) |
+  | Chow Kit | 32 fps | 41 fps | ~57 fps |
+
+  WebGL skins characters on the CPU, and LOD0 is 55–80k triangles (LOD1 15–22k), so crowds and drivers now dominate. Two fixes are on the table if the user wants the frame rate back:
+  - a much lighter crowd/driver LOD from the Blender pipeline;
+  - web-only LOD bias and crowd density.

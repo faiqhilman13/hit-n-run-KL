@@ -84,7 +84,8 @@ namespace KampungRun
 
         void Grip(Transform upper, Transform fore, Transform hand, float clock, float side)
         {
-            if (!upper || !fore || !hand || !_car.WheelGrip(clock, 80f, out var rim, out var toDriver, out var outward)) return;
+            // the hands turn the wheel 50 degrees each way, then slip round it (further, the top hand covers the face)
+            if (!upper || !fore || !hand || !_car.WheelGrip(clock, 50f, out var rim, out var toDriver, out var outward)) return;
             var shoulder = upper.position;
             // the palm on the rim: the wrist sits back down the reach by a palm's length, a touch outside the rim
             var reach = (rim - shoulder).normalized;
