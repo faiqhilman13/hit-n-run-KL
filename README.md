@@ -10,6 +10,9 @@ Malaysian cars: Myvi, classic Saga, Kancil, Alphard, Hilux 4x4, kapcai, teksi an
 Unity 6.6 (URP) + Blender 5.2. Every model, texture, the city, sounds and music are generated
 from code (`Tools/`), so the art can be rebuilt and tweaked from scripts.
 
+[Current agent handoff](docs/AGENT_HANDOFF.md) covers the refined cast, validation,
+remote commits, local-only artifacts and safe rebuild instructions.
+
 ## Play
 
 - **Refined character preview:** use *Kampung Run → Build Refined Character Preview (Windows)*.
@@ -41,8 +44,10 @@ from code (`Tools/`), so the art can be rebuilt and tweaked from scripts.
 
 ## What's in it
 
-- **4 levels, 4 playable family members** (Pak Mat, Mak Som, Along, Adik), each with
-  5 story missions and a street race, at morning, afternoon, sunset and night.
+- **5 levels, 5 playable characters:** the four family chapters (Pak Mat, Mak Som,
+  Along, Adik) at morning, afternoon, sunset and night, followed by Aiman's
+  **Penghantar Chow Kit** delivery chapter after the rain. Each has 5 story missions
+  and a street race.
 - **Story:** MegaMaju Berhad and the round Datuk Mega are feeding KL a mind-control
   "Cendol Ajaib" and spying with robot mynah birds.
 - **Mission types:** talk, timed drives, collect, destroy-the-car, tail-the-car,
