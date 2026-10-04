@@ -138,7 +138,8 @@ namespace KampungRun
 
         void Start()
         {
-            walkSpeed = _arch == "kid" ? Random.Range(1.6f, 2.4f) : Random.Range(1.1f, 1.7f);
+            // (a kid's legs are half the length: at 1.1-1.8 m/s they trot, any faster and they'd always be running)
+            walkSpeed = _arch == "kid" ? Random.Range(1.1f, 1.8f) : Random.Range(1.1f, 1.7f);
             _lane = Random.Range(-0.9f, 0.9f);
             _greetCooldown = Random.Range(0f, 20f);
             if (_voice == null) SetPersona(_arch);
@@ -200,6 +201,8 @@ namespace KampungRun
             _nearMissCooldown -= dt;
             if (_waveT > 0f && (_waveT -= dt) <= 0f && _rig && _state != State.Grumble) _rig.waving = false;
             if (!_hidden && (_socialCheck -= dt) <= 0f) Social();
+            // gestures belong to standing about and talking; anything else drops them
+            if (_rig && _rig.gesture >= 0 && _state != State.Chat && _state != State.Watch && _state != State.Grumble) _rig.gesture = -1;
             switch (_state)
             {
                 case State.Stagger:
@@ -213,12 +216,12 @@ namespace KampungRun
                 case State.Grumble:
                     // stand there shaking a fist at you for a moment
                     _timer -= dt;
-                    if (_rig) { _rig.speed = 0; _rig.waving = true; }
+                    if (_rig) { _rig.speed = 0; _rig.gesture = (int)CharacterRig.Gesture.Angry; }
                     var threat = PlayerController.I ? PlayerController.I.transform.position : transform.position;
                     var look = Flat(threat - transform.position);
                     if (look.sqrMagnitude > 0.01f)
                         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(look), dt * 6f);
-                    if (_timer <= 0) { if (_rig) _rig.waving = false; _state = State.Walk; PickTarget(); }
+                    if (_timer <= 0) { if (_rig) { _rig.waving = false; _rig.gesture = -1; } _state = State.Walk; PickTarget(); }
                     break;
                 case State.Walk:
                     Move(_target, walkSpeed, dt);
@@ -255,7 +258,6 @@ namespace KampungRun
                             var pc = PlayerController.I;
                             if (pc != null && (pc.transform.position - transform.position).sqrMagnitude < 14f * 14f)
                                 Say(Barks.Pick(Barks.Chatter), true);
-                            if (_rig && Random.value < 0.35f) { _rig.waving = true; _waveT = 0.9f; }   // talking with their hands
                         }
                     }
                     break;
@@ -378,7 +380,13 @@ namespace KampungRun
             _state = State.Chat;
             _timer = time;
             _chatLine = Random.Range(1f, 4f);
-            if (_rig) _rig.panicking = false;
+            if (_rig)
+            {
+                // talking with their hands: explaining, laughing at their own story, or pointing and laughing at the other one
+                _rig.panicking = false;
+                float g = Random.value;
+                _rig.gesture = (int)(g < 0.5f ? CharacterRig.Gesture.Talk : g < 0.85f ? CharacterRig.Gesture.Talk2 : CharacterRig.Gesture.PointLaugh);
+            }
             _look?.LookAt(partner.transform);
         }
 
@@ -564,6 +572,17 @@ namespace KampungRun
             _state = State.Watch;
             _timer = Random.Range(2f, 4.5f);
             _watchAt = pos;
+            if (_rig)
+            {
+                // everyone reacts in their own way: arms folded, hands on hips, phone out to film it, pointing
+                // and laughing; kids cheer the chaos on; a horn just gets you told off
+                float g = Random.value;
+                var react = stir == Stir.Horn ? (g < 0.5f ? CharacterRig.Gesture.Angry : CharacterRig.Gesture.WatchHips)
+                    : _arch == "kid" && g < 0.5f ? CharacterRig.Gesture.Cheer
+                    : g < 0.32f ? CharacterRig.Gesture.Film : g < 0.52f ? CharacterRig.Gesture.WatchCross
+                    : g < 0.72f ? CharacterRig.Gesture.WatchHips : CharacterRig.Gesture.PointLaugh;
+                _rig.gesture = (int)react;
+            }
             _look?.LookAt(pos + Vector3.up * 0.8f);
             if (talkers < 2 && _barkCooldown <= 0f && Random.value < 0.5f)
             {

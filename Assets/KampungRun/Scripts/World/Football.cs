@@ -212,7 +212,7 @@ namespace KampungRun
             if (_cheerT > 0f)
             {
                 _cheerT -= dt;
-                foreach (var k in _kids) if (k.rig) k.rig.waving = _cheerT > 0f;
+                foreach (var k in _kids) if (k.rig) k.rig.gesture = _cheerT > 0f ? (int)CharacterRig.Gesture.Cheer : -1;
             }
         }
 

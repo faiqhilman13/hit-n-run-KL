@@ -58,6 +58,9 @@ namespace KampungRun
             }
             I.Show(who, who.position, text, height);
             if (voice != null) VoiceSynth.SayAt(voice, voiceKey, text, who.position + Vector3.up * height * 0.7f, volume, excited);
+            // and their mouth goes as they say it
+            var rig = who.GetComponentInChildren<CharacterRig>();
+            if (rig != null) rig.Speak(Mathf.Clamp(text.Length * 0.065f, 0.5f, 2.6f));
             ProcAudio.Play(ProcAudio.Bubble, who.position + Vector3.up * height, 0.12f, Random.Range(0.9f, 1.2f));
             return true;
         }

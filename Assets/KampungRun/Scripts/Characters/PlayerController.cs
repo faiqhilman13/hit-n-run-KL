@@ -82,6 +82,7 @@ namespace KampungRun
             if (costume != null) ModelFactory.Recolor(_model, costume.swaps);
             foreach (var t in _model.GetComponentsInChildren<Transform>()) t.gameObject.layer = Layers.Character;
             _rig = _model.AddComponent<CharacterRig>();
+            _rig.lively = true;
             // the hero is always posed, even for a frame the camera misses (tucked in a car, swinging
             // round) - otherwise the body pops back to whatever pose it last had on screen
             var anim = _model.GetComponentInChildren<Animator>();
@@ -291,6 +292,7 @@ namespace KampungRun
                 else
                 {
                     _flipT = FlipTime;
+                    _rig?.Flip();
                     Quip(Joy, 0.3f);
                     Fx.Ring(transform.position, 2.2f, 8, 0.28f);
                     ProcAudio.Play(ProcAudio.Whoosh, transform.position, 0.45f, 1.35f);
@@ -340,6 +342,8 @@ namespace KampungRun
             {
                 _rig.speed = flatVel.magnitude;
                 _rig.grounded = grounded || _groundedGrace > 0f;
+                _rig.velY = _rig.grounded ? 0f : _vel.y;
+                _rig.skidding = _skidT > 0f;
             }
 
             if (transform.position.y < -12f) GameManager.I.Respawn();
@@ -361,6 +365,8 @@ namespace KampungRun
         {
             if (impact < 3.5f) return;
             float k = Mathf.Clamp01((impact - 3.5f) / 14f);
+            // a big drop onto the spot: absorb it in the knees (on the run, the squash and the lean carry it)
+            if (k > 0.18f && !_stomping && new Vector3(_vel.x, 0f, _vel.z).magnitude < 3f) _rig?.Land();
             _squash = 0.1f + k * 0.28f;
             _squashV = 0f;
             ProcAudio.Play(ProcAudio.Land, transform.position, 0.22f + k * 0.5f, Random.Range(0.92f, 1.08f));
@@ -440,6 +446,7 @@ namespace KampungRun
             _spinT = StompHang;
             _flipT = 0f;
             _vel = Vector3.zero;
+            _rig?.Pound();
             ProcAudio.Play(ProcAudio.Whoosh, transform.position, 0.5f, 0.7f);
         }
 
@@ -447,6 +454,7 @@ namespace KampungRun
         {
             _stomping = false;
             _attackCooldown = 0.3f;
+            _rig?.PoundLand();
             _squash = 0.35f;
             _squashV = 0f;
             Fx.Ring(transform.position, 6f, 16, 0.5f);

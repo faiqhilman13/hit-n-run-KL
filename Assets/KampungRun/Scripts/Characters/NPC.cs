@@ -79,7 +79,15 @@ namespace KampungRun
         void Update()
         {
             Notice(Time.deltaTime);
-            if (_rig) _rig.waving = hasMission && Mathf.Repeat(Time.time, 4f) < 1.5f || _fanning;
+            if (_rig)
+            {
+                // a wave for a hello (and to call you over for a job), the satay man fanning his coals,
+                // a stallholder's hands going as they call out to the street
+                _waveT -= Time.deltaTime;
+                _cryT -= Time.deltaTime;
+                _rig.waving = hasMission && Mathf.Repeat(Time.time, 4f) < 1.5f || _waveT > 0f;
+                _rig.gesture = _fanning ? (int)CharacterRig.Gesture.Fan : _cryT > 0f ? (int)CharacterRig.Gesture.Talk2 : -1;
+            }
             if (hasMission && _marker == null) _marker = MakeMarker();
             if (_marker)
             {
@@ -94,7 +102,7 @@ namespace KampungRun
         }
 
         bool _fanning;
-        float _smokeT;
+        float _smokeT, _waveT, _cryT;
 
         /// <summary>Watch the player come and go, greet them, and (stallholders) cry their wares.</summary>
         void Notice(float dt)
@@ -119,7 +127,7 @@ namespace KampungRun
                 // a bubble wants a few words: the long idle lines are for when you stop and talk
                 var line = hasMission ? Barks.Pick(CallOver, who)
                     : !string.IsNullOrEmpty(idleLine) && idleLine.Length <= 28 ? idleLine : Barks.Pick(Barks.Greet, who);
-                if (Barks.Say(transform, key, line, true, 2.45f, 0.8f)) _barkT = 25f;
+                if (Barks.Say(transform, key, line, true, 2.45f, 0.8f)) { _barkT = 25f; if (!hasMission) _waveT = 1.4f; }
             }
             _near = near;
             if (calls == null) return;
@@ -133,7 +141,8 @@ namespace KampungRun
             }
             if ((_callT -= dt) > 0f) return;
             _callT = UnityEngine.Random.Range(9f, 16f);
-            if (d2 < 30f * 30f && !Dialogue.Showing) Barks.Say(transform, key, calls[UnityEngine.Random.Range(0, calls.Length)], true, 2.45f, 0.75f);
+            if (d2 < 30f * 30f && !Dialogue.Showing && Barks.Say(transform, key, calls[UnityEngine.Random.Range(0, calls.Length)], true, 2.45f, 0.75f))
+                _cryT = 2.4f;
         }
 
         GameObject MakeMarker()

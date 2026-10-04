@@ -280,3 +280,87 @@ The user asked for the driving camera and handling to match Hit & Run. Then they
   - Chow Kit awnings and canopies and the Petaling Street stall canopies are `Bouncy`, with coins above and on the roofs. Bounce boxes sit apart from the prop so it still merges.
   - `DressPatches` lines the real-KL patches' pavements with crates, kapcai, pots, bins and stools. It has its own RNG, so nothing else moves: 854 props, capped at 260 smashable.
 - **Checking it:** `OnFootCapture.OnFootStills` / `OnFootRun` (Explicit) write to `Tools/promo_frames/x_onfoot`. The run also logs stall-bounce heights and ambience loudness against the music. Smoke tests must run without `-nographics`.
+
+## Update — character animation overhaul (4 Oct 2026, evening; itch 1.12.0)
+
+The user said the characters "feel like fat stick men" and asked for more fluid motion with a bigger range of movement. The old clips were 16- and 12-frame sine swings on `chr_aiman.fbx`.
+
+**What was wrong:**
+- The walk and run were tuned for stride speeds of 2.55 and 6.5 m/s. The cast's legs are only 0.52 m from hip to ankle, so planted feet slid at 2.4 m/s walking and 4.1 m/s running.
+- Pedestrians walked as a half-blend of walk and idle.
+- Humanoid retargeting sank some feet into the ground: Along by 12 cm, the kids by 3–5 cm.
+
+**The motion library** is authored in C# (`Assets/KampungRun/Editor/Animation`) and baked to Humanoid clips in `Assets/KampungRun/Animation/Clips` (56 clips, about 15 MB after curve thinning).
+- `AnimRig` poses the reference skeleton (chr_aiman):
+  - The spine and arms use forward kinematics, with rotations about the rest-pose body axes.
+  - The legs use two-bone IK with heel–toe roll and hinge-axis knees, so a high knee never flips.
+  - Hands can reach targets by IK; blends slide the target rather than mixing rotations, so elbows never kink.
+  - The result is read back with `HumanPoseHandler`.
+- `AnimLibrary` holds a gait generator for idle, walk, jog, run and sprint: planted feet, hip bob, sway and swivel, counter-rotating shoulders, trailing arms and wrists, and a stabilised head.
+  - Walks swing the foot on a Bézier arc that leaves and lands at stance speed.
+  - Jog, run and sprint follow a runner's stride through key positions (`RunSwing`): the push-off leg trails out behind (`rearZ`, `rearLift`), the heel folds up under the seat (`tuckZ`), the knee drives through (`driveZ`), the foot reaches out in front, then paws back down.
+  - Their stance is shifted behind the hips, so the push-off happens behind the body.
+  - The first version swung both feet up in front of the body; the user said it looked like riding a bicycle.
+- `AnimLibrary.Actions`:
+  - air poses: rise, apex, fall and flail;
+  - flip, pound, pound_land, land and skid;
+  - a three-hit combo (punch, punch2, punch3), a punt kick, hit and knockdown;
+  - wave, talk, talk2, cheer, angry, watch_cross, watch_hips, film, point_laugh, fan and panic;
+  - five idle fidgets.
+- `AnimLibrary.Styles` gives each style its own idle, walk, jog, run and sprint:
+  - heavy: Pak Mat and Datuk Mega;
+  - lady: Mak Som, the town aunty and Mei;
+  - kid: Adik, Along and the kid;
+  - elder: the pakcik.
+  Skirted styles take shorter strides so the cloth holds together.
+- All gaits share one speed table (`Gaits` in `CharacterRig.cs`): walk 1.15, jog 3.0, run 5.5 and sprint 8.5 m/s for the reference legs.
+- Poses stay within Unity's **default** humanoid muscle ranges. Arms reach only about 60° above horizontal, so overhead poses add a collarbone shrug, and a thigh extends only 50° behind. The bake report prints `LIMIT:` for anything over, and Unity clamps those on playback.
+  - The avatars and the seated/riding FBX takes (sit, ride, mount, dismount) are unchanged.
+  - On these chibi bodies the `Chest` bone is at belly height (0.92 m) while the shoulders are at 1.17 m, and the head is 0.44 m tall. Aim hand targets from the shoulder line (`Chest()` in the library does this).
+
+**Controller.** `HumanControllerBuilder` rebuilds `KL_Human.controller` **in place**, keeping its GUID, so the scene and `GameAssets` references hold.
+- Locomotion is a blend by Style, then by Speed. Air is a blend by VelY.
+- Other states: Flip, Pound, PoundLand, Land, Skid, Punch/Punch2/Punch3 (chosen by `Combo`), Kick, Hit, Knockdown, Ride, Mount, Dismount, Sit, Wave, Panic, Gesture (`GestureId`) and Fidget (`FidgetId`).
+- To bake and build in one step, run `-executeMethod KampungRun.EditorTools.HumanControllerBuilder.BakeAndBuild`.
+
+**Runtime (`CharacterRig`):**
+- Speed is normalised by each character's leg length. Brisk walkers stay in the walk, played faster, and `LocoSpeed` matches the stride up to 2.4×.
+- Style comes from the avatar name.
+- A grounding fix evaluates the idle once at spawn and lifts the hips by the measured sink whenever the animator poses them. It's guarded against throttled or culled frames.
+- Idle characters fidget every 7–15 s.
+- The player gets a `lively` spring layer: lean into starts and stops, arms that overshoot, a nod on landing, and the satchel and key cord swinging.
+
+**Gameplay hooks:**
+- `PlayerController` drives velY, skidding, the flip, the pound and the hard landing.
+- Pedestrians talk with their hands in chats. When something happens they react by filming it, folding their arms, putting their hands on their hips, or pointing and laughing; kids cheer, and a horn gets told off. Kids' walk speed is now 1.1–1.8 m/s.
+- NPCs wave hello, stallholders gesture while calling out, and satay men fan the coals. The football kids cheer goals.
+- `HeadLook` now rebinds after a body swap. It used to throw MissingReference after `SetCharacter`.
+
+**Measured with the review tool** (`AnimationStudio.ReviewBatch`, which prints sinking and planted-foot sliding per character):
+- Reference walk/run sliding: 2.44/4.07 m/s before, 0.07/0.44 m/s after. The remainder is heel–ball rolling in the metric.
+- Along's feet sank 12 cm before, 8 cm before the runtime fix, and are lifted by it now.
+- Round trip (authored pose → baked clip → playback): within about 1 cm for almost every clip.
+
+**Tools:**
+- Bake only: `AnimationStudio.BakeBatch`.
+- Renders: `AnimationStudio.ReviewBatch [-animClips a,b] [-animChars chr_x,...] [-animFrames 10] [-animNoBake 1] [-animOld 1]` writes to `Tools/anim_review` (gitignored). Make sheets with `uv run --no-project --with pillow python Tools/anim_sheet.py`.
+- Round trip: `AnimationStudio.RoundTripBatch`.
+- Muscle ranges: `AnimDiagnostics.Limits` / `.Sweep`.
+- In-game capture: `AnimCapture.AnimShowcase` (Explicit). It runs the family round a ring on Dataran (moves, then styles) and films a crowd, writing to `Tools/promo_frames/x_anim` with `segments.txt`.
+
+**Verified:** SmokeTests 16/16 and `CharacterArtValidation` 731 checks with 0 failing (run to a temp folder, so the round-02 evidence is untouched).
+
+**Known limits:**
+- The sprint's back leg runs a few degrees past the thigh-extension limit; the kid sprint runs about 10° past.
+- Long skirts still balloon at a full sprint.
+- Elders' hands-behind-the-back doesn't fit the default arm ranges on these round bodies, so the pakcik folds his hands in front.
+- Web frame rate is unchanged within run-to-run noise (`RefinedCharacterBuild.WebGL`, 42 MB; `Tools/web_bench.py`, RTX 3080):
+
+  | Spot | 1.11.0 | After |
+  | --- | --- | --- |
+  | Kampung home | 42.7 fps | 41.3–43.6 fps |
+  | Dataran | 45.9 fps | 51.1 fps |
+  | Chow Kit | 27.5 fps | 28.2 fps |
+  | Petaling (`spot=Pasar`) | 37.5 fps | 33.9–39.0 fps |
+
+  Pedestrians remain the main cost: Petaling runs at 64 fps with `nopeds`.

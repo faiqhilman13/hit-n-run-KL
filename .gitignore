@@ -48,6 +48,9 @@ __pycache__/
 
 # ---- promo video frames (Tests/PromoCapture.cs) and renders (Tools/make_promo.py)
 /Tools/promo_frames/
+# ---- motion library review renders (AnimationStudio.ReviewBatch / RoundTripBatch)
+/Tools/anim_review/
+/Tools/anim_review_roundtrip.txt
 /Tools/promo_out/
 /Tools/_*.jpg
 

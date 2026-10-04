@@ -26,12 +26,20 @@ namespace KampungRun
 
         void Awake()
         {
-            var a = GetComponentInChildren<Animator>();
-            if (a == null || !a.isHuman) { enabled = false; return; }
+            if (!Bind()) enabled = false;
+        }
+
+        /// <summary>Find the body's head (again, when the body has been swapped: the old one is destroyed a frame later).</summary>
+        bool Bind()
+        {
+            Animator a = null;
+            foreach (var x in GetComponentsInChildren<Animator>())
+                if (x != null && x.isHuman && x.gameObject.activeInHierarchy) a = x;    // the newest body is the last one
+            if (a == null) return false;
             _head = a.GetBoneTransform(HumanBodyBones.Head);
             _neck = a.GetBoneTransform(HumanBodyBones.Neck);
-            _renderer = GetComponentInChildren<SkinnedMeshRenderer>();
-            if (_head == null) enabled = false;
+            _renderer = a.GetComponentInChildren<SkinnedMeshRenderer>();
+            return _head != null;
         }
 
         public void LookAt(Transform t) { target = t; usePoint = false; }
@@ -40,6 +48,7 @@ namespace KampungRun
 
         void LateUpdate()
         {
+            if (_head == null && !Bind()) return;
             Vector3 aim = default;
             bool has = false;
             if (target != null)
