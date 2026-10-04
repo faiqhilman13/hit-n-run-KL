@@ -68,7 +68,14 @@ namespace KampungRun
         {
             def = GameData.Characters[id];
             if (_model) Destroy(_model);
-            _model = ModelFactory.Spawn(def.model, transform.position, transform.rotation, transform, "Body");
+            // the body hangs off a "juice" pivot that squashes, leans and flips without touching the animation
+            if (_juice == null)
+            {
+                _juice = new GameObject("Juice").transform;
+                _juice.SetParent(transform, false);
+            }
+            ResetJuice();
+            _model = ModelFactory.Spawn(def.model, transform.position, transform.rotation, _juice, "Body");
             _model.transform.localPosition = Vector3.zero;
             _model.transform.localRotation = Quaternion.identity;
             var costume = GameData.Costumes.Find(c => c.id == GameState.Costume(id));
@@ -83,6 +90,28 @@ namespace KampungRun
             _cc.height = Mathf.Max(1.0f, h * 0.95f);
             _cc.center = new Vector3(0, _cc.height * 0.5f + 0.02f, 0);
             _cc.radius = h < 1.3f ? 0.28f : 0.35f;
+            if (_head == null) _head = gameObject.AddComponent<HeadLook>();
+            else { Destroy(_head); _head = gameObject.AddComponent<HeadLook>(); }   // re-bind to the new body's bones
+            if (!Driving && !Transitioning) FootCamera();
+        }
+
+        HeadLook _head;
+
+        /// <summary>
+        /// The on-foot camera, measured against Hit &amp; Run: close behind and a little above, looking almost level,
+        /// with the character big in the lower part of the frame. Scaled to the character (Adik is small).
+        /// </summary>
+        void FootCamera(bool snap = false)
+        {
+            var cam = ChaseCamera.I;
+            if (cam == null) return;
+            float s = Mathf.Clamp(_cc.height / 1.62f, 0.62f, 1.3f);
+            cam.target = transform;
+            cam.targetBody = null;
+            cam.distance = ChaseCamera.FootDistance * Mathf.Lerp(1f, s, 0.7f);
+            cam.height = ChaseCamera.FootHeight * s;
+            cam.pitch = ChaseCamera.FootPitch;
+            if (snap) cam.SnapBehind();
         }
 
         public void Teleport(Vector3 pos, Quaternion rot)
@@ -93,8 +122,13 @@ namespace KampungRun
             transform.SetPositionAndRotation(pos, rot);
             _yaw = rot.eulerAngles.y;
             _vel = Vector3.zero;
+            _stomping = false;
+            _stompHang = 0f;
+            _airMinVy = 0f;                  // (a fall before the jump isn't a landing after it)
+            _launched = false;
+            ResetJuice();
             _cc.enabled = true;
-            if (ChaseCamera.I) { ChaseCamera.I.target = transform; ChaseCamera.I.targetBody = null; ChaseCamera.I.distance = 6.5f; ChaseCamera.I.SnapBehind(); }
+            FootCamera(true);
         }
 
         void Update()
@@ -136,9 +170,31 @@ namespace KampungRun
         }
 
         // ---------------------------------------------------------------- on foot
+        // The feel borrows from the platformers that got it right (Mario 64, Hit & Run): a quick but not
+        // instant start and stop, a skid when you turn back on yourself, a lean into corners; jumps you can cut
+        // short, a buffered jump button and a moment's grace off a ledge, a faster fall than rise, a big double
+        // jump with a flip, and a squash, a puff of dust and a thud when you land.
+        const float AccelTime = 0.14f, StopTime = 0.09f, AirControl = 0.5f;
+        const float JumpBoost = 1.25f, DoubleBoost = 1.4f;                     // x def.jump
+        const float RiseGravity = 1.6f, CutGravity = 2.6f, FallGravity = 2.2f, MaxFall = 26f;
+        const float FlipTime = 0.42f, StompHang = 0.2f;
+
+        Transform _juice;
+        float _jumpBuffer, _skidT, _stepPhase, _lean, _flipT, _spinT, _squash, _squashV, _airMinVy, _bumpT, _bumpCheck, _stompHang;
+        float _idleT, _chatterT = 20f, _gazeT;
+        Vector3 _lungeOffset;
+        bool _wasGrounded = true, _jumpCut, _launched;
+        static readonly Collider[] Near = new Collider[64];
+
+        public bool Grounded { get; private set; }
+        public bool Sprinting { get; private set; }
+        /// <summary>Which way we're running (zero when standing), for the camera.</summary>
+        public Vector3 MoveDir { get; private set; }
+
         void UpdateOnFoot(float dt)
         {
             bool grounded = _cc.isGrounded;
+            Grounded = grounded;
             if (grounded) _groundedGrace = 0.12f; else _groundedGrace -= dt;
 
             if (_knockTime > 0f)
@@ -149,6 +205,7 @@ namespace KampungRun
                 _cc.Move(_knockVel * dt);
                 if (_model && !(_rig && _rig.Humanoid)) _model.transform.localRotation = Quaternion.Euler(-80f * Mathf.Clamp01(_knockTime * 2f), 0, 0);
                 if (_knockTime <= 0f && _model) _model.transform.localRotation = Quaternion.identity;
+                _wasGrounded = grounded;
                 return;
             }
 
@@ -156,118 +213,437 @@ namespace KampungRun
             var cam = ChaseCamera.I ? ChaseCamera.I.transform : transform;
             Vector3 fwd = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
             Vector3 right = Vector3.Cross(Vector3.up, fwd);
-            Vector3 wish = fwd * input.y + right * input.x;
-            float speed = GameInput.Sprint ? def.run : Mathf.Lerp(def.walk, def.run, Mathf.Clamp01(input.magnitude - 0.85f) * 3f);
-            if (_attackCooldown > 0.15f) speed *= 0.3f;
-            Vector3 target = wish * speed;
-            float accel = grounded ? 14f : 5f;
-            _vel.x = Mathf.MoveTowards(_vel.x, target.x, accel * speed * dt);
-            _vel.z = Mathf.MoveTowards(_vel.z, target.z, accel * speed * dt);
-            if (wish.sqrMagnitude > 0.01f)
-                _yaw = Mathf.MoveTowardsAngle(_yaw, Mathf.Atan2(wish.x, wish.z) * Mathf.Rad2Deg, 720f * dt);
-            transform.rotation = Quaternion.Euler(0, _yaw, 0);
+            Vector3 wish = Vector3.ClampMagnitude(fwd * input.y + right * input.x, 1f);
+            float stick = wish.magnitude;
+            Vector3 dir = stick > 0.001f ? wish / stick : Vector3.zero;
 
+            // full stick jogs, Shift sprints; a light touch walks
+            float jog = def.run * 0.9f, dash = def.run * 1.22f;
+            bool sprint = !frozen && (GameInput.Sprint || debugSprint) && stick > 0.3f;
+            float speed = stick < 0.15f ? 0f : sprint ? dash : Mathf.Lerp(def.walk * 0.45f, jog, Mathf.InverseLerp(0.15f, 1f, stick));
+            if (_attackCooldown > 0.15f) speed *= 0.35f;
+            if (_bumpT > 0f) { _bumpT -= dt; speed *= 0.55f; }
+
+            var flatVel = new Vector3(_vel.x, 0f, _vel.z);
+            float cur = flatVel.magnitude;
+            Sprinting = sprint && grounded && cur > jog * 0.9f;
+
+            // turning back on yourself at a run: skid to a stop in a puff of dust, then off the other way
+            if (grounded && _skidT <= 0f && cur > 4.5f && dir != Vector3.zero && Vector3.Dot(flatVel / cur, dir) < -0.5f)
+            {
+                _skidT = 0.2f;
+                ProcAudio.Play(ProcAudio.Skid, transform.position, 0.3f, Random.Range(0.9f, 1.1f));
+            }
+            Vector3 target;
+            float rate;
+            if (_skidT > 0f)
+            {
+                _skidT -= dt;
+                target = Vector3.zero;
+                rate = jog / 0.18f;
+                if (Random.value < dt * 30f) Fx.Dust(transform.position + flatVel * 0.05f);
+            }
+            else
+            {
+                target = dir * speed;
+                bool faster = target.sqrMagnitude > flatVel.sqrMagnitude;
+                rate = faster ? Mathf.Max(speed, jog) / AccelTime : jog / StopTime;
+                if (!grounded) rate *= AirControl;
+            }
+            flatVel = Vector3.MoveTowards(flatVel, target, rate * dt);
+            _vel.x = flatVel.x;
+            _vel.z = flatVel.z;
+
+            // face the way we're going, leaning into the turn
+            float prevYaw = _yaw;
+            if (_skidT <= 0f && dir != Vector3.zero)
+                _yaw = Mathf.MoveTowardsAngle(_yaw, Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg, (grounded ? 900f : 540f) * dt);
+            transform.rotation = Quaternion.Euler(0, _yaw, 0);
+            float yawRate = Mathf.DeltaAngle(prevYaw, _yaw) / Mathf.Max(dt, 1e-4f);
+            _lean = Mathf.Lerp(_lean, grounded ? Mathf.Clamp(-yawRate * flatVel.magnitude * 0.0028f, -14f, 14f) : 0f, dt * 10f);
+            MoveDir = flatVel.sqrMagnitude > 0.25f ? flatVel.normalized : Vector3.zero;
+
+            // jumping: a buffered press, ledge grace, cut-short hops, and the big flipping double jump
+            if (!frozen && GameInput.JumpDown) _jumpBuffer = 0.15f; else _jumpBuffer -= dt;
+            _debugHold -= dt;
+            bool held = !frozen && (GameInput.Handbrake || _debugHold > 0f);    // (the jump button, held)
             if (grounded && _vel.y < 0)
             {
-                if (_stomping) Stomp();
-                _vel.y = -2f;
-                _jumps = 0;
+                if (!_wasGrounded) Land(-_airMinVy);
+                if (_stomping) { Stomp(); _vel.y = 4.5f; _jumps = 1; }            // the slam bounces you up a little
+                else { _vel.y = -2f; _jumps = 0; }
+                _airMinVy = 0f;
             }
-            if (!frozen && GameInput.JumpDown && (_groundedGrace > 0f || _jumps < 2))
+            if (_jumpBuffer > 0f && !_stomping && _stompHang <= 0f && (_groundedGrace > 0f || _jumps < 2))
             {
-                if (_groundedGrace <= 0f && _jumps == 0) _jumps = 1; // walked off a ledge: one jump left
-                _vel.y = _jumps == 0 ? def.jump : def.jump * 0.85f;
-                _jumps++;
+                _jumpBuffer = 0f;
+                bool first = _groundedGrace > 0f;
+                _vel.y = def.jump * (first ? JumpBoost : DoubleBoost);
+                _jumps = first ? 1 : 2;
+                _jumpCut = !first;                                                // the double jump always goes full height
                 _groundedGrace = 0f;
-                ProcAudio.Play(ProcAudio.Whoosh, transform.position, 0.4f, _jumps == 1 ? 1f : 1.3f);
+                if (first)
+                {
+                    _squash = -0.16f;                                             // stretch up off the ground
+                    ProcAudio.Play(ProcAudio.Whoosh, transform.position, 0.35f, 1f);
+                    if (flatVel.sqrMagnitude > 4f) Fx.Dust(transform.position);
+                }
+                else
+                {
+                    _flipT = FlipTime;
+                    Quip(Joy, 0.3f);
+                    Fx.Ring(transform.position, 2.2f, 8, 0.28f);
+                    ProcAudio.Play(ProcAudio.Whoosh, transform.position, 0.45f, 1.35f);
+                }
             }
-            _vel.y += Physics.gravity.y * (_stomping ? 3f : 1.6f) * dt;
+            if (!held && !_jumpCut && _vel.y > 0f && _jumps > 0) { _jumpCut = true; _vel.y *= 0.55f; }
+            if (_stompHang > 0f)
+            {
+                // the ground pound: hang in the air for a beat, spinning, then slam down
+                _stompHang -= dt;
+                _vel = Vector3.zero;
+                if (_stompHang <= 0f) { _stomping = true; _vel.y = -20f; }
+            }
+            else
+            {
+                if (_vel.y <= 0f) _launched = false;
+                float g = _stomping ? 3.2f : _vel.y > 0f ? (held || _launched ? RiseGravity : CutGravity) : FallGravity;
+                _vel.y = Mathf.Max(_vel.y + Physics.gravity.y * g * dt, -MaxFall);
+            }
+            if (!grounded) _airMinVy = Mathf.Min(_airMinVy, _vel.y);
+            _wasGrounded = grounded;
             _cc.Move(_vel * dt);
+
+            Footsteps(dt, grounded, flatVel.magnitude);
+            UpdateJuice(dt);
 
             // attacks
             _attackCooldown -= dt;
+            _quipT -= dt;
             _comboTimer -= dt;
             if (_comboTimer <= 0f) _combo = 0;
-            if (!frozen && _attackCooldown <= 0f)
+            if (!frozen && _attackCooldown <= 0f && _stompHang <= 0f)
             {
                 if (GameInput.PunchDown) Punch();
                 else if (GameInput.KickDown)
                 {
-                    if (!grounded && _groundedGrace <= 0f) { _stomping = true; _vel = new Vector3(0, -4f, 0); ProcAudio.Play(ProcAudio.Whoosh, transform.position, 0.5f, 0.7f); }
+                    if (!grounded && _groundedGrace <= 0f) { if (!_stomping) BeginStomp(); }
                     else Kick();
                 }
             }
 
+            BumpPeople(flatVel);
+            Gaze(dt);
+            Chatter(dt, flatVel.magnitude, grounded);
+
             if (_rig)
             {
-                _rig.speed = new Vector2(_vel.x, _vel.z).magnitude;
+                _rig.speed = flatVel.magnitude;
                 _rig.grounded = grounded || _groundedGrace > 0f;
             }
 
             if (transform.position.y < -12f) GameManager.I.Respawn();
         }
 
+        /// <summary>Footfalls in time with the stride; a scuff of dust when sprinting.</summary>
+        void Footsteps(float dt, bool grounded, float speed)
+        {
+            if (!grounded || speed < 0.8f) { _stepPhase = 0.6f; return; }
+            _stepPhase += speed * dt / (speed > 5f ? 1.55f : 1.0f);
+            if (_stepPhase < 1f) return;
+            _stepPhase -= 1f;
+            ProcAudio.Play(ProcAudio.Step, transform.position, Mathf.Lerp(0.1f, 0.26f, speed / 9f), Random.Range(0.85f, 1.15f));
+            if (Sprinting && Random.value < 0.6f) Fx.Dust(transform.position - MoveDir * 0.3f);
+        }
+
+        /// <summary>Touch down: the bigger the drop, the bigger the squash, the dust and the thud.</summary>
+        void Land(float impact)
+        {
+            if (impact < 3.5f) return;
+            float k = Mathf.Clamp01((impact - 3.5f) / 14f);
+            _squash = 0.1f + k * 0.28f;
+            _squashV = 0f;
+            ProcAudio.Play(ProcAudio.Land, transform.position, 0.22f + k * 0.5f, Random.Range(0.92f, 1.08f));
+            if (k > 0.3f) Fx.Ring(transform.position, 1.6f + k * 3f, 6 + (int)(k * 8), 0.3f + k * 0.15f);
+            else { Fx.Dust(transform.position + transform.right * 0.25f); Fx.Dust(transform.position - transform.right * 0.25f); }
+            if (k > 0.55f) { ChaseCamera.I?.Shake(0.1f + k * 0.15f); Quip(Ouch, 0.5f); }
+        }
+
+        /// <summary>Squash and stretch (a spring), the lean, the double-jump flip and the ground-pound spin.</summary>
+        void UpdateJuice(float dt)
+        {
+            if (_juice == null) return;
+            _squashV += (-_squash * 320f - _squashV * 20f) * dt;
+            _squash += _squashV * dt;
+            float sq = Mathf.Clamp(_squash, -0.3f, 0.4f);
+            _juice.localScale = new Vector3(1f + sq * 0.5f, 1f - sq, 1f + sq * 0.5f);
+            float pitch = 0f, spin = 0f;
+            if (_flipT > 0f)
+            {
+                _flipT -= dt;
+                float k = 1f - Mathf.Clamp01(_flipT / FlipTime);
+                pitch = (1f - (1f - k) * (1f - k)) * 360f;                         // ease-out forward flip
+            }
+            if (_spinT > 0f)
+            {
+                _spinT -= dt;
+                spin = (1f - Mathf.Clamp01(_spinT / StompHang)) * 360f;
+            }
+            var rot = Quaternion.Euler(pitch, spin, _lean);
+            // turn about the middle of the body, not the feet
+            var mid = Vector3.up * _cc.height * 0.5f;
+            _lungeOffset = Vector3.Lerp(_lungeOffset, Vector3.zero, 1f - Mathf.Exp(-dt * 16f));
+            _juice.localRotation = rot;
+            _juice.localPosition = mid - rot * mid + transform.InverseTransformVector(_lungeOffset);
+        }
+
+        void ResetJuice()
+        {
+            _squash = _squashV = _lean = _flipT = _spinT = 0f;
+            _lungeOffset = Vector3.zero;
+            if (_juice == null) return;
+            _juice.localPosition = Vector3.zero;
+            _juice.localRotation = Quaternion.identity;
+            _juice.localScale = Vector3.one;
+        }
+
         public void DebugPunch(int times) { for (int i = 0; i < times; i++) Punch(); }
         public void DebugKick() => Kick();
+        /// <summary>Tests and captures: press jump (held for a full-height jump), ground-pound, sprint.</summary>
+        public void DebugJump() { _jumpBuffer = 0.15f; _debugHold = 0.45f; }
+        public void DebugStomp() { if (!_cc.isGrounded && !_stomping && _stompHang <= 0f) BeginStomp(); }
+        public bool debugSprint;
+        float _debugHold;
 
         void Punch()
         {
             _combo = (_combo % 3) + 1;
             _comboTimer = 0.6f;
             _attackCooldown = _combo == 3 ? 0.45f : 0.22f;
+            Lunge();
             _rig?.Punch(_combo);
             // third hit is the big one
-            Attack(transform.position + Vector3.up * 1.1f + transform.forward * 0.8f, 0.85f, _combo == 3 ? 11f : 6f, _combo == 3 ? 18f : 8f);
+            Attack(transform.position + Vector3.up * 1.1f + transform.forward * 0.8f, 0.85f, _combo == 3 ? 11f : 6f, _combo == 3 ? 18f : 8f, _combo == 3);
         }
 
         void Kick()
         {
             _attackCooldown = 0.4f;
+            Lunge();
             _rig?.Kick();
-            Attack(transform.position + Vector3.up * 0.6f + transform.forward * 0.9f, 1f, 13f, 14f);
+            Attack(transform.position + Vector3.up * 0.6f + transform.forward * 0.9f, 1f, 13f, 14f, true);
+        }
+
+        void BeginStomp()
+        {
+            _stompHang = StompHang;
+            _spinT = StompHang;
+            _flipT = 0f;
+            _vel = Vector3.zero;
+            ProcAudio.Play(ProcAudio.Whoosh, transform.position, 0.5f, 0.7f);
         }
 
         void Stomp()
         {
             _stomping = false;
             _attackCooldown = 0.3f;
-            for (int i = 0; i < 10; i++) Fx.Dust(transform.position + Quaternion.Euler(0, i * 36, 0) * Vector3.forward * 1.2f);
-            ChaseCamera.I?.Shake(0.4f);
+            _squash = 0.35f;
+            _squashV = 0f;
+            Fx.Ring(transform.position, 6f, 16, 0.5f);
+            ChaseCamera.I?.Shake(0.45f);
             Fx.Word(transform.position + Vector3.up * 2f, "DEBUK!");
-            Attack(transform.position + Vector3.up * 0.4f, 2.6f, 10f, 20f);
+            Quip(Fight, 0.3f);
+            ProcAudio.Play(ProcAudio.Land, transform.position, 0.9f, 0.75f);
+            HitStop.Do(0.06f);
+            Attack(transform.position + Vector3.up * 0.4f, 3f, 12f, 20f, true);
+            Pedestrian.React(transform.position, 14f, Pedestrian.Stir.Commotion);
+            Pigeons.Startle(transform.position, 16f);
         }
 
-        void Attack(Vector3 center, float radius, float force, float damage)
+        /// <summary>
+        /// Lock on, Arkham-style: turn to face the best thing to hit in front of you (people, smashables, birds,
+        /// animals, toys) and, if it's just out of reach, close the gap. The body jumps forward at once so the
+        /// hit lands this frame; the model eases after it so it reads as a lunge, not a teleport.
+        /// </summary>
+        void Lunge()
+        {
+            var t = FindTarget(2.8f, 70f, out var at);
+            if (t == null) return;
+            var to = at - transform.position;
+            to.y = 0f;
+            float d = to.magnitude;
+            if (d < 0.05f) return;
+            _yaw = Mathf.Atan2(to.x, to.z) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.Euler(0, _yaw, 0);
+            if (d > 1.15f && _cc.enabled)
+            {
+                var before = transform.position;
+                _cc.Move(to / d * Mathf.Min(d - 1.0f, 1.3f));
+                _lungeOffset += before - transform.position;
+            }
+        }
+
+        Transform FindTarget(float range, float cone, out Vector3 at)
+        {
+            at = default;
+            Vector2 input = GameInput.Move;
+            var camT = ChaseCamera.I ? ChaseCamera.I.transform : transform;
+            var f = Vector3.ProjectOnPlane(camT.forward, Vector3.up).normalized;
+            var face = input.sqrMagnitude > 0.04f ? (f * input.y + Vector3.Cross(Vector3.up, f) * input.x).normalized : transform.forward;
+            int n = Physics.OverlapSphereNonAlloc(transform.position + Vector3.up, range, Near, ~0, QueryTriggerInteraction.Collide);
+            Transform best = null;
+            float bestScore = float.MaxValue;
+            for (int i = 0; i < n; i++)
+            {
+                var c = Near[i];
+                if (c.transform.IsChildOf(transform)) continue;
+                Component hit = c.GetComponentInParent<Pedestrian>();
+                float bias = 0f;
+                if (hit == null) hit = c.GetComponentInParent<Breakable>();
+                if (hit == null) hit = c.GetComponentInParent<BurungKamera>();
+                if (hit == null) hit = c.GetComponentInParent<Critter>();
+                if (hit == null && c.attachedRigidbody && !c.attachedRigidbody.isKinematic && c.attachedRigidbody.mass < 30f) { hit = c.attachedRigidbody; bias = 0.5f; }
+                if (hit == null) continue;
+                var to = hit.transform.position - transform.position;
+                to.y = 0f;
+                float d = to.magnitude;
+                float ang = d > 0.01f ? Vector3.Angle(face, to) : 0f;
+                if (ang > cone) continue;
+                float score = d + ang * 0.025f + bias;
+                if (score < bestScore) { bestScore = score; best = hit.transform; }
+            }
+            if (best != null) at = best.position;
+            return best;
+        }
+
+        void Attack(Vector3 center, float radius, float force, float damage, bool heavy = false)
         {
             bool hitSomething = false;
             var seen = new HashSet<Object>();
-            foreach (var c in Physics.OverlapSphere(center, radius, ~0, QueryTriggerInteraction.Collide))
+            int n = Physics.OverlapSphereNonAlloc(center, radius, Near, ~0, QueryTriggerInteraction.Collide);
+            for (int i = 0; i < n; i++)
             {
+                var c = Near[i];
                 if (c.transform.IsChildOf(transform)) continue;
                 var dir = (c.transform.position - transform.position); dir.y = 0; dir.Normalize();
 
                 var ped = c.GetComponentInParent<Pedestrian>();
-                if (ped && seen.Add(ped)) { ped.Hit(dir, force, true); hitSomething = true; continue; }
+                if (ped) { if (seen.Add(ped)) { ped.Hit(dir, force, true); hitSomething = true; } continue; }
                 var br = c.GetComponentInParent<Breakable>();
-                if (br && seen.Add(br)) { br.Hit(transform.position, force, true); hitSomething = true; continue; }
+                if (br) { if (seen.Add(br)) { br.Hit(transform.position, force, true); hitSomething = true; } continue; }
                 var cam = c.GetComponentInParent<BurungKamera>();
-                if (cam && seen.Add(cam)) { cam.Smash(); hitSomething = true; continue; }
-                var v = c.attachedRigidbody ? c.attachedRigidbody.GetComponent<Vehicle>() : null;
-                if (v && seen.Add(v))
+                if (cam) { if (seen.Add(cam)) { cam.Smash(); hitSomething = true; HitStop.Do(0.06f); } continue; }
+                var critter = c.GetComponentInParent<Critter>();
+                if (critter) { if (seen.Add(critter)) { critter.Kicked(dir, force); hitSomething = true; if (critter.isChicken) Quip(Sorry, 0.35f); } continue; }
+                var body = c.attachedRigidbody;
+                var v = body ? body.GetComponent<Vehicle>() : null;
+                if (v)
                 {
+                    if (!seen.Add(v)) continue;
                     v.Body.AddForceAtPosition(dir * force * 120f, center, ForceMode.Impulse);
                     v.Damage(damage * 0.25f);
                     SamanMeter.I?.AddHeat(v.role == VehicleRole.Police ? 25f : 3f);
+                    hitSomething = true;
+                }
+                else if (body && !body.isKinematic && seen.Add(body))
+                {
+                    // loose things (balls, toppled lamps, flung doors) fly off the boot
+                    body.AddForce((dir * 0.55f + Vector3.up * 0.32f) * force * Mathf.Clamp(body.mass, 0.4f, 8f), ForceMode.Impulse);
                     hitSomething = true;
                 }
             }
             if (hitSomething)
             {
                 ProcAudio.Play(ProcAudio.Punch, center, 0.8f, Random.Range(0.85f, 1.15f));
+                if (heavy) ProcAudio.Play(ProcAudio.Thwack, center, 0.6f, Random.Range(0.9f, 1.1f));
+                Fx.Stars(center + transform.forward * 0.25f, heavy ? 10 : 6, heavy ? 9f : 6f);
                 Fx.Word(center + Vector3.up * 0.8f);
-                ChaseCamera.I?.Shake(0.15f);
+                ChaseCamera.I?.Shake(heavy ? 0.26f : 0.15f);
+                HitStop.Do(heavy ? 0.085f : 0.045f);
+                if (heavy) Quip(Fight, 0.2f);
             }
             else ProcAudio.Play(ProcAudio.Whoosh, center, 0.3f, 1.4f);
+        }
+
+        /// <summary>Run into someone and they stumble aside and tell you off (nobody is a ghost).</summary>
+        void BumpPeople(Vector3 flatVel)
+        {
+            float speed = flatVel.magnitude;
+            if (speed < 2.2f || (_bumpCheck -= Time.deltaTime) > 0f) return;
+            _bumpCheck = 0.08f;
+            var ahead = transform.position + Vector3.up * 0.9f + flatVel / speed * 0.45f;
+            int n = Physics.OverlapSphereNonAlloc(ahead, 0.45f, Near, 1 << Layers.Character, QueryTriggerInteraction.Collide);
+            for (int i = 0; i < n; i++)
+            {
+                var ped = Near[i].GetComponentInParent<Pedestrian>();
+                if (ped != null && ped.Bump(flatVel / speed, speed))
+                {
+                    _bumpT = 0.3f;
+                    ProcAudio.Play(ProcAudio.Punch, ahead, 0.25f, 0.6f);
+                    break;
+                }
+            }
+        }
+
+        /// <summary>Glance at whoever is close by (people and the cast), the way anyone walking down a street does.</summary>
+        void Gaze(float dt)
+        {
+            if (_head == null || (_gazeT -= dt) > 0f) return;
+            _gazeT = Random.Range(0.4f, 0.8f);
+            Transform best = null;
+            float bd = 5.5f * 5.5f;
+            foreach (var p in Pedestrian.All)
+            {
+                if (p == null) continue;
+                var to = p.transform.position - transform.position;
+                float d = to.sqrMagnitude;
+                if (d < bd && Vector3.Dot(to, transform.forward) > 0f) { bd = d; best = p.transform; }
+            }
+            if (best != null) _head.LookAt(best); else _head.Clear();
+        }
+
+        static readonly string[] IdleLines = { "Hmm...", "Panas betul KL ni.", "Lapar pulak...", "Nak buat apa ni?", "Hmm, mana nak pergi?" };
+
+        // the heroes talk while they play, the way Hit & Run's cast never stop quipping: a few words each,
+        // in their own voice, now and then (never every time, never two on top of each other)
+        static readonly Dictionary<string, string[]> JoyLines = new Dictionary<string, string[]>
+        {
+            ["pakmat"] = new[] { "Hup!", "Masih kuat lagi!", "Hehe!" },
+            ["maksom"] = new[] { "Hup!", "Eh, boleh lagi!", "Wah!" },
+            ["along"] = new[] { "Steady!", "Yeehaa!", "Senang je!" },
+            ["adik"] = new[] { "Yeay!", "Wiii!", "Hehehe!" },
+            ["aiman"] = new[] { "Fuh!", "Power!", "Jom!" },
+        };
+        static readonly Dictionary<string, string[]> OuchLines = new Dictionary<string, string[]>
+        {
+            ["pakmat"] = new[] { "Adoi, pinggang...", "Ya Allah!", "Uish!" },
+            ["maksom"] = new[] { "Astaghfirullah!", "Aduh, lutut...", "Uish!" },
+            ["along"] = new[] { "Uish, sakit!", "Takpe, takpe.", "Adoi!" },
+            ["adik"] = new[] { "Aduh!", "Huhu...", "Tak sakit pun!" },
+            ["aiman"] = new[] { "Adoi!", "Uish!", "Okay, okay..." },
+        };
+        static readonly string[] FightLines = { "Ambik ni!", "Rasakan!", "Hiyaa!", "Jangan main-main!" };
+        static readonly string[] SorryLines = { "Maaf, ayam!", "Sorry, sorry!", "Eh, tak sengaja!" };
+        enum QuipKind { Joy, Ouch, Fight, Sorry }
+        const QuipKind Joy = QuipKind.Joy, Ouch = QuipKind.Ouch, Fight = QuipKind.Fight, Sorry = QuipKind.Sorry;
+        float _quipT;
+
+        void Quip(QuipKind kind, float chance)
+        {
+            if (_quipT > 0f || def == null || Random.value > chance) return;
+            string[] lines = kind == QuipKind.Fight ? FightLines : kind == QuipKind.Sorry ? SorryLines
+                : (kind == QuipKind.Joy ? JoyLines : OuchLines).TryGetValue(def.id, out var own) ? own : kind == QuipKind.Joy ? JoyLines["pakmat"] : OuchLines["pakmat"];
+            if (Barks.Say(transform, def.name, lines[Random.Range(0, lines.Length)], false, 2.1f, 0.8f)) _quipT = 4f;
+        }
+
+        /// <summary>Left standing a while, the hero mutters to themselves (once in a while, never in a mission dialogue).</summary>
+        void Chatter(float dt, float speed, bool grounded)
+        {
+            _chatterT -= dt;
+            if (speed > 0.3f || !grounded) { _idleT = 0f; return; }
+            _idleT += dt;
+            if (_idleT < 9f || _chatterT > 0f) return;
+            if (Barks.Say(transform, def.name, IdleLines[Random.Range(0, IdleLines.Length)], true, 2.1f, 0.7f)) _chatterT = 30f;
         }
 
         /// <summary>Hit by a car: tumble and drop some coins, like H&amp;R.</summary>
@@ -276,6 +652,9 @@ namespace KampungRun
             if (Driving || Transitioning || _knockTime > 0f) return;
             _knockTime = 1.2f;
             _knockVel = impulse;
+            _stomping = false;
+            _stompHang = 0f;
+            ResetJuice();
             _rig?.Tumble(1.2f);
             ProcAudio.Play(ProcAudio.Aduh, transform.position, 0.8f);
             Fx.Word(transform.position + Vector3.up * 2f, "ADUH!");
@@ -286,10 +665,29 @@ namespace KampungRun
 
         void OnControllerColliderHit(ControllerColliderHit hit)
         {
-            // push loose things around
+            // trampolines (awnings, market canopies): land on one and it fires you up, Mario-style
+            if (!Driving && hit.normal.y > 0.6f && _vel.y < -1.5f)
+            {
+                var bouncy = hit.collider.GetComponentInParent<Bouncy>();
+                if (bouncy != null)
+                {
+                    _vel.y = bouncy.power;
+                    _jumps = 1;                                                    // a double jump still to come
+                    _jumpCut = true;
+                    _launched = true;                                              // the full height, button or not
+                    _airMinVy = 0f;
+                    _stomping = false;
+                    _squash = -0.2f;
+                    _groundedGrace = 0f;
+                    bouncy.Boing();
+                    Quip(Joy, 0.3f);
+                    return;
+                }
+            }
+            // push loose things around (a ball at your feet gets dribbled along)
             var rb = hit.rigidbody;
             if (rb && !rb.isKinematic && rb.GetComponent<Vehicle>() == null && hit.moveDirection.y > -0.3f)
-                rb.AddForce(hit.moveDirection * 3f, ForceMode.Impulse);
+                rb.AddForce(hit.moveDirection * (rb.mass < 2f ? 1.6f + new Vector2(_vel.x, _vel.z).magnitude * 0.35f : 3f), ForceMode.Impulse);
             // speeding car hits us
             var v = rb ? rb.GetComponent<Vehicle>() : null;
             if (v && v.Body.linearVelocity.magnitude > 7f)
@@ -398,6 +796,10 @@ namespace KampungRun
         public void EnterVehicle(Vehicle v, bool instant = false)
         {
             if (v == null || Driving || Transitioning) return;
+            ResetJuice();
+            _head?.Clear();
+            _stomping = false;
+            _stompHang = 0f;
             if (v.role == VehicleRole.Traffic || v.role == VehicleRole.MissionTarget)
             {
                 // carjack! the driver hops out and runs off yelling
@@ -526,11 +928,8 @@ namespace KampungRun
             v.role = VehicleRole.Parked;
             v.driver = null;
             if (_engine) Destroy(_engine.gameObject);
-            var cam = ChaseCamera.I;
-            cam.target = transform;
-            cam.targetBody = null;
-            cam.distance = 6.5f;
-            cam.height = 1.6f;
+            ResetJuice();
+            FootCamera();
 
             if (bail)
             {
@@ -796,13 +1195,36 @@ namespace KampungRun
             if (GameInput.HornDown)
             {
                 ProcAudio.Play(ProcAudio.Horn, vehicle.transform.position, 0.6f);
-                Pedestrian.ScareAround(vehicle.transform.position, 14f);
+                // some jump out of the way, some turn round and give you an earful
+                Pedestrian.React(vehicle.transform.position, 16f, Pedestrian.Stir.Horn);
+                Pigeons.Startle(vehicle.transform.position, 18f);
             }
             if (GameInput.ResetCarDown) vehicle.Flip();
             if (vehicle.Wrecked)
             {
                 HUD.I?.Toast("Kereta rosak! Keluar!");
                 ExitVehicle(true);
+            }
+            NearMisses(dt);
+        }
+
+        float _nearMissCheck;
+
+        /// <summary>Tearing past people on the pavement: they leap back and shout after you (GTA's best street detail).</summary>
+        void NearMisses(float dt)
+        {
+            if ((_nearMissCheck -= dt) > 0f) return;
+            _nearMissCheck = 0.15f;
+            var vel = vehicle.Body.linearVelocity;
+            vel.y = 0f;
+            if (vel.sqrMagnitude < 9f * 9f) return;
+            var p = vehicle.transform.position;
+            Pigeons.Startle(p, 9f);
+            int n = Physics.OverlapSphereNonAlloc(p, 5f, Near, 1 << Layers.Character, QueryTriggerInteraction.Collide);
+            for (int i = 0; i < n; i++)
+            {
+                var ped = Near[i].GetComponentInParent<Pedestrian>();
+                if (ped != null) ped.NearMiss(p, vel);
             }
         }
     }

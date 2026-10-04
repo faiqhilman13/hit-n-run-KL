@@ -99,6 +99,9 @@ namespace KampungRun
         }
 
         bool _done;
+        static int _chain;
+        static float _chainUntil;
+        static readonly int[] Scale = { 0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23, 24 };   // major scale, two octaves
 
         public void Collect()
         {
@@ -108,7 +111,11 @@ namespace KampungRun
             {
                 case Kind.Coin:
                     GameState.AddCoins(value);
-                    ProcAudio.Play(ProcAudio.Coin, transform.position, 0.35f, UnityEngine.Random.Range(1f, 1.15f));
+                    // a run of coins climbs the scale (Mario and Sonic do this): grab them quickly for the tune
+                    if (Time.time > _chainUntil) _chain = 0;
+                    _chainUntil = Time.time + 0.9f;
+                    int step = Mathf.Min(_chain++, Scale.Length - 1);
+                    ProcAudio.Play(ProcAudio.Coin, transform.position, 0.35f, Mathf.Pow(2f, Scale[step] / 12f));
                     break;
                 case Kind.Card:
                     GameState.CollectCard(id);

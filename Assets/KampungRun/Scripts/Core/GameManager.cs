@@ -96,6 +96,8 @@ namespace KampungRun
             var sm = new GameObject("SamanMeter").AddComponent<SamanMeter>();
             sm.transform.SetParent(transform, false);
             City = new CityBuilder().Build(transform);
+            // street life the city itself doesn't build: hawkers, pigeons, the sound of the place
+            StreetLife.Populate(City, transform);
         }
 
         void Start()

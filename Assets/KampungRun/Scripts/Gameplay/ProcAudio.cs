@@ -10,6 +10,8 @@ namespace KampungRun
     public class ProcAudio : MonoBehaviour
     {
         public static AudioClip Coin, Crash, Smash, Clang, Horn, Fanfare, Punch, Siren, Engine, Blip, Fail, Whoosh, Aduh;
+        // on foot and street life
+        public static AudioClip Step, Land, Boing, Flutter, Cluck, Meow, Skid, Thwack, Coo, Bubble;
         static ProcAudio _i;
         readonly List<AudioSource> _pool = new List<AudioSource>();
         const int Rate = 22050;
@@ -49,7 +51,50 @@ namespace KampungRun
                 return (Mathf.Sin(t * f * 6.28f) * 0.5f + Sq(t, f * 2f) * 0.2f + Mathf.Sin(t * f * 0.5f * 6.28f) * 0.3f) * 0.5f;
             });
             Aduh = Make("aduh", 0.35f, t => Sq(t, Mathf.Lerp(620, 380, t / 0.35f)) * 0.2f * Env(t, 0.35f)); // cartoon yelp
+
+            // a soft scuff on the pavement
+            float lp = 0f;
+            Step = Make("step", 0.07f, t => { lp += (N() - lp) * 0.35f; return (lp * 0.9f + Mathf.Sin(t * 180f * 6.28f) * 0.25f) * Mathf.Exp(-t * 60f); });
+            // landing: a low thump with a little grit
+            Land = Make("land", 0.28f, t => (Mathf.Sin(6.28f * t * Mathf.Lerp(85f, 42f, t / 0.28f)) * 0.9f + N() * 0.3f * Mathf.Exp(-t * 40f)) * Mathf.Exp(-t * 13f));
+            // cartoon spring: a rising, wobbling tone
+            Boing = Make("boing", 0.5f, t =>
+            {
+                float f = 150f + 520f * Mathf.Sqrt(t / 0.5f);
+                return Mathf.Sin(6.28f * f * t + Mathf.Sin(t * 38f * 6.28f) * 2.2f) * 0.4f * Mathf.Exp(-t * 4.5f) * Mathf.Clamp01(t / 0.005f);
+            });
+            // wings: a burst of noise beating at about 16 flaps a second
+            Flutter = Make("flutter", 0.7f, t => { float b = 0.5f + 0.5f * Mathf.Sin(t * 16f * 6.28f); return N() * b * b * 0.45f * Env(t, 0.7f); });
+            // "bok bok bok-AAK"
+            Cluck = Make("cluck", 0.42f, t =>
+            {
+                float k = t % 0.11f;
+                float f = t > 0.3f ? 760f : 520f;
+                return (Sq(t, f) * 0.25f + N() * 0.15f) * Mathf.Exp(-k * 38f) * Env(t, 0.42f);
+            });
+            Meow = Make("meow", 0.55f, t =>
+            {
+                float f = t < 0.18f ? Mathf.Lerp(520f, 820f, t / 0.18f) : Mathf.Lerp(820f, 480f, (t - 0.18f) / 0.37f);
+                return (Mathf.Sin(6.28f * f * t) * 0.6f + Mathf.Sin(6.28f * f * 2.01f * t) * 0.25f) * 0.35f * Env(t, 0.55f);
+            });
+            // shoes sliding to a stop
+            lp = 0f;
+            Skid = Make("skid", 0.3f, t => { lp += (N() - lp) * 0.6f; return lp * 0.5f * Env(t, 0.3f); });
+            // the heavy layer under a big hit
+            Thwack = Make("thwack", 0.3f, t => (N() * 0.55f * Mathf.Exp(-t * 35f) + Mathf.Sin(6.28f * t * Mathf.Lerp(120f, 55f, t / 0.3f)) * Mathf.Exp(-t * 11f)) * 0.9f);
+            // a pigeon's "oo-OO-oo"
+            Coo = Make("coo", 0.75f, t =>
+            {
+                float f = 300f + 40f * Mathf.Sin(t * 4.2f * 6.28f);
+                float am = Mathf.Max(0f, Mathf.Sin(t / 0.75f * 3f * Mathf.PI));
+                return (Mathf.Sin(6.28f * f * t) + 0.35f * Mathf.Sin(6.28f * f * 2f * t)) * 0.22f * am;
+            });
+            // speech bubble pop
+            Bubble = Make("bubble", 0.09f, t => Mathf.Sin(6.28f * Mathf.Lerp(500f, 1100f, t / 0.09f) * t) * 0.25f * Env(t, 0.09f));
         }
+
+        /// <summary>Synthesise a clip from a sample function of time (seconds), for other systems' sounds.</summary>
+        public static AudioClip MakeClip(string name, float len, System.Func<float, float> f) => Make(name, len, f);
 
         static AudioSource _music;
 
@@ -129,7 +174,10 @@ namespace KampungRun
             return clip;
         }
 
-        public static void Play(AudioClip clip, Vector3 pos, float volume = 1f, float pitch = 1f)
+        public static void Play(AudioClip clip, Vector3 pos, float volume = 1f, float pitch = 1f) => PlayAt(clip, pos, volume, pitch, 0.6f);
+
+        /// <summary>Play at a point with a chosen 3D-ness (voices and street sounds want more than the default 0.6).</summary>
+        public static void PlayAt(AudioClip clip, Vector3 pos, float volume, float pitch, float spatial, float maxDistance = 90f)
         {
             if (_i == null || clip == null) return;
             var src = _i.GetSource();
@@ -137,7 +185,8 @@ namespace KampungRun
             src.clip = clip;
             src.volume = volume;
             src.pitch = pitch;
-            src.spatialBlend = 0.6f;
+            src.spatialBlend = spatial;
+            src.maxDistance = maxDistance;
             src.Play();
         }
 
@@ -149,6 +198,7 @@ namespace KampungRun
             src.volume = volume;
             src.pitch = pitch;
             src.spatialBlend = 0f;
+            src.maxDistance = 90f;
             src.Play();
         }
 

@@ -4,7 +4,11 @@ using UnityEngine;
 
 namespace KampungRun
 {
-    /// <summary>A named character you can talk to (mission givers, shopkeepers...).</summary>
+    /// <summary>
+    /// A named character you can talk to (mission givers, shopkeepers...). They notice you: heads turn as
+    /// you come near and they face you when you're close enough to talk; they say hello (or call you over
+    /// when they've a job for you), and the stallholders call out to the street the way a pasar sounds.
+    /// </summary>
     public class NPC : MonoBehaviour, IInteractable
     {
         public string key;
@@ -13,9 +17,24 @@ namespace KampungRun
         public bool hasMission;
         public bool talkable = true;
         public string idleLine;   // said when there's nothing else to do
+        public string[] calls;    // a stallholder's cries, now and then, to anyone in earshot
 
         CharacterRig _rig;
         GameObject _marker;
+        HeadLook _look;
+        Quaternion _rest;
+        bool _near;
+        float _barkT, _callT;
+
+        static readonly Dictionary<string, string[]> Cries = new Dictionary<string, string[]>
+        {
+            ["auntypasar"] = new[] { "Murah murah!", "Sayur segar, mari!", "Tiga seringgit!", "Adik, beli la sikit!" },
+            ["anneh"] = new[] { "Teh tarik!", "Roti canai panas!", "Boss, makan boss?", "Mee goreng mamak!" },
+            ["mei"] = new[] { "Mee hailam!", "Kopi peng, kopi-O!", "Duduk dulu, duduk!" },
+            ["pakciktaksi"] = new[] { "Teksi! Teksi!", "Nak ke mana, boss?", "Murah je!" },
+            ["satay"] = new[] { "Satay! Satay!", "Satay ayam, satay daging!", "Kuah kacang power!", "Mari, panas-panas!" },
+        };
+        static readonly string[] CallOver = { "Eh, {0}! Sini kejap!", "{0}! Tolong aku!", "Psst... {0}!", "{0}, mari sini!" };
 
         public string Prompt => hasMission ? $"Cakap dengan {displayName}  (MISI)" : $"Cakap dengan {displayName}";
         public Vector3 Position => transform.position;
@@ -37,6 +56,10 @@ namespace KampungRun
             npc.key = key;
             npc.displayName = name;
             npc._rig = rig;
+            npc._look = go.AddComponent<HeadLook>();
+            npc._rest = rot;
+            npc._callT = UnityEngine.Random.Range(3f, 12f);
+            if (Cries.TryGetValue(key.StartsWith("satay") ? "satay" : key, out var cries)) npc.calls = cries;
             Interactables.All.Add(npc);
             return npc;
         }
@@ -55,7 +78,8 @@ namespace KampungRun
 
         void Update()
         {
-            if (_rig) _rig.waving = hasMission && Mathf.Repeat(Time.time, 4f) < 1.5f;
+            Notice(Time.deltaTime);
+            if (_rig) _rig.waving = hasMission && Mathf.Repeat(Time.time, 4f) < 1.5f || _fanning;
             if (hasMission && _marker == null) _marker = MakeMarker();
             if (_marker)
             {
@@ -67,6 +91,49 @@ namespace KampungRun
                     if (cam) _marker.transform.rotation = Quaternion.LookRotation(_marker.transform.position - cam.transform.position);
                 }
             }
+        }
+
+        bool _fanning;
+        float _smokeT;
+
+        /// <summary>Watch the player come and go, greet them, and (stallholders) cry their wares.</summary>
+        void Notice(float dt)
+        {
+            _barkT -= dt;
+            var pc = PlayerController.I;
+            if (pc == null) return;
+            var to = pc.transform.position - transform.position;
+            to.y = 0f;
+            float d2 = to.sqrMagnitude;
+            bool onFoot = !pc.Driving;
+            if (_look) { if (onFoot && d2 < 8f * 8f) _look.LookAt(pc.transform); else _look.Clear(); }
+            // close enough to talk: turn to face you; otherwise back the way they were standing
+            var want = onFoot && d2 < 4f * 4f && d2 > 0.01f ? Quaternion.LookRotation(to) : _rest;
+            if (Quaternion.Angle(transform.rotation, want) > 0.5f)
+                transform.rotation = Quaternion.Slerp(transform.rotation, want, dt * (want == _rest ? 2f : 5f));
+            // say hello the first time you come near (or call you over when there's a job going)
+            bool near = onFoot && d2 < 7f * 7f;
+            if (near && !_near && _barkT <= 0f && !Dialogue.Showing && talkable)
+            {
+                var who = pc.def != null ? pc.def.name : null;
+                // a bubble wants a few words: the long idle lines are for when you stop and talk
+                var line = hasMission ? Barks.Pick(CallOver, who)
+                    : !string.IsNullOrEmpty(idleLine) && idleLine.Length <= 28 ? idleLine : Barks.Pick(Barks.Greet, who);
+                if (Barks.Say(transform, key, line, true, 2.45f, 0.8f)) _barkT = 25f;
+            }
+            _near = near;
+            if (calls == null) return;
+            // a stallholder calls out to the street (and a satay man fans his grill)
+            _fanning = key.StartsWith("satay") && Mathf.Repeat(Time.time + _rest.y * 10f, 3f) < 1.6f;
+            if (_fanning && (_smokeT -= dt) <= 0f && d2 < 45f * 45f)
+            {
+                _smokeT = UnityEngine.Random.Range(0.35f, 0.7f);
+                Fx.Puff(transform.position + transform.forward * 0.9f + Vector3.up * 1.15f, new Color(0.88f, 0.88f, 0.86f),
+                    Vector3.up * 1.1f + UnityEngine.Random.insideUnitSphere * 0.25f, 0.35f, 1.6f);
+            }
+            if ((_callT -= dt) > 0f) return;
+            _callT = UnityEngine.Random.Range(9f, 16f);
+            if (d2 < 30f * 30f && !Dialogue.Showing) Barks.Say(transform, key, calls[UnityEngine.Random.Range(0, calls.Length)], true, 2.45f, 0.75f);
         }
 
         GameObject MakeMarker()

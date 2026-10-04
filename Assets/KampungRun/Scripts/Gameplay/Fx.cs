@@ -25,6 +25,7 @@ namespace KampungRun
             public Vector3 v;
             public float life, max, size;
             public bool gravity, puff;
+            public float fall;              // feathers: a slow drift down instead of gravity
         }
 
         // round puffs (smoke, exhaust, tyre smoke) share one low-poly sphere mesh
@@ -137,10 +138,61 @@ namespace KampungRun
             Puff(pos + Random.insideUnitSphere * 0.2f, new Color(0.88f, 0.82f, 0.7f), Vector3.up * 0.8f + Random.insideUnitSphere, 0.35f, 0.7f);
         }
 
+        static readonly Color DustColor = new Color(0.88f, 0.82f, 0.7f);
+
+        /// <summary>A ring of dust rolling outward along the ground (ground pounds, heavy landings).</summary>
+        public static void Ring(Vector3 pos, float speed, int count, float size = 0.45f)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var dir = Quaternion.Euler(0, i * 360f / count + Random.Range(-6f, 6f), 0) * Vector3.forward;
+                Puff(pos + dir * 0.4f + Vector3.up * 0.15f, DustColor, dir * speed + Vector3.up * 0.4f, size, 0.55f);
+            }
+        }
+
+        /// <summary>Impact sparks: a quick star-burst of bright chips with no gravity, plus a flash.</summary>
+        public static void Stars(Vector3 pos, int count = 7, float speed = 7f)
+        {
+            Flash(pos, 0.9f);
+            for (int i = 0; i < count; i++)
+            {
+                var c = i % 2 == 0 ? new Color(1f, 0.95f, 0.6f) : Color.white;
+                I.Spawn(pos, c, Random.onUnitSphere * speed, Random.Range(0.08f, 0.16f), Random.Range(0.18f, 0.3f), false);
+            }
+        }
+
+        /// <summary>A white pop that swells and vanishes in a blink.</summary>
+        public static void Flash(Vector3 pos, float size)
+        {
+            if (I._blobs.Count > 260) return;
+            var t = I.GetPuff(new Color(1f, 0.98f, 0.9f));
+            t.position = pos;
+            t.rotation = Random.rotation;
+            t.localScale = Vector3.one * size * 0.3f;
+            I._blobs.Add(new Blob { t = t, v = Vector3.zero, life = 0.12f, max = 0.12f, size = size, puff = true });
+        }
+
+        /// <summary>Feathers (or fur) that flutter down slowly.</summary>
+        public static void Feathers(Vector3 pos, Color c, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var t = I.Get(c);
+                t.position = pos + Random.insideUnitSphere * 0.2f;
+                t.rotation = Random.rotation;
+                float s = Random.Range(0.06f, 0.11f);
+                t.localScale = new Vector3(s * 1.6f, s * 0.25f, s);
+                I._blobs.Add(new Blob { t = t, v = Random.insideUnitSphere * 2.2f + Vector3.up * 1.5f, life = Random.Range(1.2f, 2f), max = 2f, size = s, fall = 0.9f });
+            }
+        }
+
         static readonly string[] Words = { "DUSH!", "PANG!", "BUK!", "PAP!", "DEBUK!", "PRANG!" };
+        static readonly Color WordRed = new Color(0.85f, 0.2f, 0.15f);
 
         /// <summary>Comic sound word that pops up and floats away.</summary>
-        public static void Word(Vector3 pos, string word = null)
+        public static void Word(Vector3 pos, string word = null) => Word(pos, word, WordRed, 1f);
+
+        public static void Word(Vector3 pos, string word, Color color, float scale)
         {
             word ??= Words[Random.Range(0, Words.Length)];
             var go = new GameObject("Word");
@@ -149,10 +201,10 @@ namespace KampungRun
             var tm = go.AddComponent<TextMesh>();
             tm.text = word;
             tm.anchor = TextAnchor.MiddleCenter;
-            tm.characterSize = 0.12f;
+            tm.characterSize = 0.12f * scale;
             tm.fontSize = 64;
             tm.fontStyle = FontStyle.Bold;
-            tm.color = new Color(0.85f, 0.2f, 0.15f);
+            tm.color = color;
             tm.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             go.GetComponent<MeshRenderer>().sharedMaterial = tm.font.material;
             go.AddComponent<FloatingWord>();
@@ -173,9 +225,18 @@ namespace KampungRun
                     continue;
                 }
                 if (b.gravity) b.v += Physics.gravity * dt;
+                else if (b.fall > 0f)
+                {
+                    // a feather: drags to a slow, swaying fall
+                    b.v *= 1f - dt * 2.5f;
+                    b.v.y -= b.fall * dt;
+                    b.t.position += new Vector3(Mathf.Sin((b.life + b.size * 40f) * 5f), 0, Mathf.Cos((b.life + b.size * 30f) * 4f)) * 0.6f * dt;
+                    b.t.Rotate(90f * dt, 140f * dt, 0f);
+                }
                 else b.v *= 1f - dt;
                 b.t.position += b.v * dt;
                 float k = b.life / b.max;
+                if (b.fall > 0f) { b.t.localScale = new Vector3(b.size * 1.6f, b.size * 0.25f, b.size) * Mathf.Clamp01(k * 4f); continue; }
                 if (b.puff)
                 {
                     // pop up fast, drift and swell, then shrink away

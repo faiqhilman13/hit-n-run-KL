@@ -24,7 +24,13 @@ namespace KampungRun
         public float driveRise = 0.5f;          // the aim point rises this much at full speed (m)
         public float driveFullSpeed = 28f;      // m/s
 
-        float _dist, _rise;
+        // On foot, measured the same way: Homer stands about a third of the screen tall with his feet near
+        // the bottom and the horizon a little above the middle - a camera ~3.8 m behind and ~2.2 m up,
+        // looking almost level. (Distance/height scale with the character; PlayerController applies them.)
+        public const float FootDistance = 3.9f, FootHeight = 1.55f, FootPitch = 9f;
+
+        float _dist, _rise, _footPull, _fovKick, _baseFov;
+        Camera _cam;
         float _lookIdle;
         Vector3 _focus;
         float _shake;
@@ -80,12 +86,55 @@ namespace KampungRun
             }
             else
             {
-                _dist = Mathf.Lerp(_dist, distance, dt * 3f);
+                _dist = Mathf.Lerp(_dist, distance + _footPull, dt * 3f);
                 _rise = Mathf.Lerp(_rise, 0f, dt * 3f);
             }
 
+            // on foot behind the player: the platformer camera
+            var player = PlayerController.I;
+            bool onFoot = !driving && player != null && target == player.transform && !player.Driving;
+            if (onFoot)
+            {
+                var mv = player.MoveDir;
+                if (_lookIdle > 1f && mv != Vector3.zero)
+                {
+                    // Lakitu-style: leave the stick alone and it drifts round behind the way you're running
+                    // (not when you run at the camera - then it lets you come to it)
+                    float heading = Mathf.Atan2(mv.x, mv.z) * Mathf.Rad2Deg;
+                    if (Mathf.Abs(Mathf.DeltaAngle(yaw, heading)) < 115f)
+                        yaw = Mathf.LerpAngle(yaw, heading, dt * 1.3f * Mathf.Clamp01(player.Speed / 4f));
+                }
+                if (_lookIdle > 1.5f) pitch = Mathf.Lerp(pitch, FootPitch, dt * 1.5f);
+                // sprinting: a wider lens and a step back, so the speed reads
+                _fovKick = Mathf.Lerp(_fovKick, player.Sprinting ? 7f : 0f, dt * 4f);
+                _footPull = Mathf.Lerp(_footPull, player.Sprinting ? 0.6f : 0f, dt * 3f);
+            }
+            else
+            {
+                _fovKick = Mathf.Lerp(_fovKick, 0f, dt * 4f);
+                _footPull = Mathf.Lerp(_footPull, 0f, dt * 3f);
+            }
+            if (_cam == null) _cam = GetComponent<Camera>();
+            if (_cam != null)
+            {
+                if (_baseFov <= 0f) _baseFov = _cam.fieldOfView;
+                if (_fovKick > 0.01f) _cam.fieldOfView = _baseFov + _fovKick;
+                else if (_cam.fieldOfView != _baseFov && Mathf.Abs(_cam.fieldOfView - _baseFov) < 8f) _cam.fieldOfView = _baseFov;
+            }
+
             // the aim point stays tight on a car (so it sits low in the frame at speed instead of drifting up)
-            _focus = Vector3.Lerp(_focus, target.position + Vector3.up * (height + _rise), 1f - Mathf.Exp(-dt * (driving ? 30f : 12f)));
+            var want = target.position + Vector3.up * (height + _rise);
+            float k = 1f - Mathf.Exp(-dt * (driving ? 30f : 12f));
+            if (onFoot && !player.Grounded)
+            {
+                // in the air it follows you sideways at once but up and down lazily, so a jump lifts you up
+                // the screen (and a long fall is still followed)
+                float ky = 1f - Mathf.Exp(-dt * (want.y < _focus.y - 1.2f ? 9f : 2.5f));
+                _focus = new Vector3(Mathf.Lerp(_focus.x, want.x, k), Mathf.Lerp(_focus.y, want.y, ky), Mathf.Lerp(_focus.z, want.z, k));
+                // ...but never so far behind that you leave the frame (bouncing on a trampoline, say)
+                _focus.y = Mathf.Clamp(_focus.y, want.y - 1.6f, want.y + 0.8f);
+            }
+            else _focus = Vector3.Lerp(_focus, want, k);
             Place(dt);
         }
 

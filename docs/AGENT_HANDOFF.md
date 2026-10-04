@@ -247,3 +247,36 @@ A follow-up session acted on user feedback about the promo ("KLCC view too zoome
   WebGL skins characters on the CPU, and LOD0 is 55–80k triangles (LOD1 15–22k), so crowds and drivers now dominate. Two fixes are on the table if the user wants the frame rate back:
   - a much lighter crowd/driver LOD from the Blender pipeline;
   - web-only LOD bias and crowd density.
+
+## Update — driving camera (1.10.0) and on-foot feel + living streets (1.11.0) (4 Oct 2026)
+
+The user asked for the driving camera and handling to match Hit & Run. Then they said on-foot play "isn't really fun", the world "feels quite empty and sparse" and the characters "feel hollow". Both passes take their cues from classic games: Hit & Run, Mario 64, Zelda and Arkham. **The leaked SHAR source was declined: never use it. Measure footage only.**
+
+- **Driving (1.10.0).** `ChaseCamera` drive* fields were calibrated against Hit & Run PC footage: the camera hardly pulls back with speed but tips down. `Vehicle.cornerGrip` 0.4 lets cars slide about 10° in hard corners. `PromoCapture.RecordDriveFeel` re-measures this.
+- **On-foot movement** (`PlayerController`, the on-foot block):
+  - Starts in 0.14 s and stops in 0.09 s, skids when you turn back, leans into turns.
+  - Full stick jogs at 0.9× `def.run`; Shift sprints at 1.22×.
+  - Jumps: 0.15 s buffer, 0.12 s ledge grace, variable height, and a ×1.4 double jump with a flip. Gravity is 1.6 rising, 2.6 when cut, 2.2 falling.
+  - Kick in the air ground-pounds. Punch and kick lunge onto the nearest target (2.8 m, 70°).
+  - `HitStop`, squash and stretch on a `Juice` transform, footsteps, bumping into people, glancing at passers-by, and per-character quips.
+  - Test hooks: `DebugJump`, `DebugStomp`, `debugSprint`.
+- **On-foot camera** (`ChaseCamera`): 3.9 m back, 1.55 m up, 9° pitch, scaled by the character's height.
+  - Swings back behind the direction of travel after 1 s without look input.
+  - Sprint widens the field of view by 7°.
+  - Follows jumps lazily, but always keeps you in frame.
+- **People:**
+  - Pedestrians have a type and a voice (`VoiceSynth.Townsperson`) and walk in lanes rather than single file.
+  - They turn their heads (`HeadLook`), say hello, chat in pairs on the same pavement, and stop to stare at a commotion.
+  - They leap back from near misses and complain when barged. Lines appear in `Barks` speech bubbles.
+  - Named NPCs watch you, face you within 4 m and call you over when they have a job; stallholders cry their wares.
+  - `StreetLife` adds a satay hawker at every cart and four kids playing football on the kampung padang (`Football`).
+- **Animals and the world:**
+  - Pigeon flocks (`Pigeons`, one mesh per flock) scatter when startled.
+  - Kicked chickens tumble off in feathers; seven kicks in 15 s brings the flock's revenge. Cats dodge.
+  - Synthesised ambience beds (`Ambience`) are mixed by `CityBuilder.Greenery`, crowd size and night.
+  - Breakables respawn out of sight after 90 s. Mission props (anything with `onBroken`) stay broken.
+  - Coin pickups climb a major scale; the HUD coin counter pops.
+- **Trampolines and street dressing** (`CityBuilder.StreetLife.cs`):
+  - Chow Kit awnings and canopies and the Petaling Street stall canopies are `Bouncy`, with coins above and on the roofs. Bounce boxes sit apart from the prop so it still merges.
+  - `DressPatches` lines the real-KL patches' pavements with crates, kapcai, pots, bins and stools. It has its own RNG, so nothing else moves: 854 props, capped at 260 smashable.
+- **Checking it:** `OnFootCapture.OnFootStills` / `OnFootRun` (Explicit) write to `Tools/promo_frames/x_onfoot`. The run also logs stall-bounce heights and ambience loudness against the music. Smoke tests must run without `-nographics`.

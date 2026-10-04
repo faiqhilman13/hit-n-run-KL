@@ -40,6 +40,8 @@ namespace KampungRun
         Canvas _canvas;
         RectTransform _root;
         Text _coins, _collect, _objective, _timer, _progress, _prompt, _speed, _district, _toast, _bigTitle, _bigSub;
+        int _shownCoins = -1;
+        float _coinPop;
         Image _heatFill, _bustFill, _heatPanel, _carHealthFill, _targetFill;
         GameObject _targetBar, _speedPanel, _objPanel, _bigPanel, _arrowGO;
         RectTransform _arrow;
@@ -464,7 +466,11 @@ namespace KampungRun
             _district.gameObject.SetActive(playing);
             if (!playing) { _objPanel.SetActive(false); _arrowGO.SetActive(false); _arrowDist.text = ""; _speedPanel.SetActive(false); UpdateMinimap(null); return; }
 
-            // money + collectibles
+            // money + collectibles (the counter pops as coins come in)
+            if (_shownCoins >= 0 && GameState.Coins > _shownCoins) _coinPop = 1f;
+            _shownCoins = GameState.Coins;
+            _coinPop = Mathf.MoveTowards(_coinPop, 0f, dt * 5f);
+            _coins.transform.localScale = Vector3.one * (1f + 0.22f * Mathf.Sin(_coinPop * Mathf.PI * 0.5f));
             _coins.text = $"RM {GameState.Coins}";
             int lvl = GameState.Level;
             _collect.text = $"Kad {GameState.CardsInLevel(lvl)}/{GameData.CardsPerLevel}   Burung {GameState.CamerasInLevel(lvl)}/{GameData.CamerasPerLevel}   {GameState.Percent}%";

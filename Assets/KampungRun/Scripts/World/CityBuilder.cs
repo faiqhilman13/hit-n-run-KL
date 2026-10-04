@@ -43,6 +43,7 @@ namespace KampungRun
             public readonly List<WalkZone> walkZones = new List<WalkZone>();   // pavement loops people stroll round
             public readonly List<Vector3> coinSpots = new List<Vector3>();
             public readonly List<Vector3> itemSpots = new List<Vector3>(); // mission collectible candidates
+            public readonly List<Transform> satayCarts = new List<Transform>();   // a hawker stands at each (StreetLife)
             public Bounds bounds;
 
             /// <summary>The nearest point on a pavement loop to p (where people stand), optionally
@@ -224,6 +225,7 @@ namespace KampungRun
             BuildSkyline();
             BuildPhoneBooths();
             BuildStreetLife();
+            DressPatches();
             BuildBorder();
             BuildParapets();
             _ground.Build(root, "Ground");
@@ -415,7 +417,7 @@ namespace KampungRun
                 {
                     // a night-market stall, facing the middle of the pedestrian street
                     var face = road - pos;
-                    KitProp(a.model, pos, face.sqrMagnitude > 0.01f ? Mathf.Atan2(face.x, face.z) * Mathf.Rad2Deg : 0f);
+                    StallBounce(KitProp(a.model, pos, face.sqrMagnitude > 0.01f ? Mathf.Atan2(face.x, face.z) * Mathf.Rad2Deg : 0f));
                     continue;
                 }
                 if (!string.IsNullOrEmpty(a.model)) PatchLandmark(a.name, a.model, pos);
@@ -1354,7 +1356,7 @@ namespace KampungRun
             var shop = Prop(KitShops[RI(0, KitShops.Length)], center, yaw, false);
             ModelFactory.UseProxyCollider(shop);
             var front = rot * Vector3.forward;
-            Prop(KitAwnings[RI(0, KitAwnings.Length)], center + front * 5.0f + Vector3.up * 3.35f, yaw, false);
+            var awning = Prop(KitAwnings[RI(0, KitAwnings.Length)], center + front * 5.0f + Vector3.up * 3.35f, yaw, false);
             var go = new GameObject("ShopSign");
             go.transform.SetParent(shop.transform, false);
             go.transform.localPosition = new Vector3(0, 3.25f, 3.3f);
@@ -1369,6 +1371,7 @@ namespace KampungRun
             tm.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             go.GetComponent<MeshRenderer>().sharedMaterial = LatMaterials.SignText(tm.font);
             _city.itemSpots.Add(center + front * 6.3f + Vector3.up * 0.6f);
+            ShopAwningBounce(shop, awning, front);
         }
 
         /// <summary>
@@ -1396,12 +1399,14 @@ namespace KampungRun
             {
                 var can = Prop(KitCanopies[i % 4], c + new Vector3(-16.5f + i * 5.5f, G, 20.4f), 0, false);
                 ModelFactory.UseProxyCollider(can);
+                Trampoline(can, 10f, 0.85f);
                 _city.itemSpots.Add(can.transform.position + new Vector3(0, 1.2f, 1.2f));
             }
             for (int i = 0; i < 3; i++)
             {
                 var can = Prop(KitCanopies[(i + 1) % 4], c + new Vector3(20.4f, G, -7f + i * 7f), 90, false);
                 ModelFactory.UseProxyCollider(can);
+                Trampoline(can, 10f, 0.85f);
             }
             // hawker stalls with umbrellas and stools on the south sidewalk
             for (int i = 0; i < 3; i++)
@@ -2095,6 +2100,7 @@ namespace KampungRun
                     }
                     var cart = Prop("Prop_SatayCart", at, R(0, 360), false);
                     var bc = cart.AddComponent<BoxCollider>(); bc.center = new Vector3(0, 0.6f, 0); bc.size = new Vector3(1.8f, 1.2f, 0.9f);
+                    _city.satayCarts.Add(cart.transform);
                 }
             // chickens in the kampung, cats in the city
             for (int col = 0; col < NX; col++)

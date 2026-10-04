@@ -96,13 +96,52 @@ namespace KampungRun
         {
             var prof = For(speaker);
             if (prof == null) return;
-            var fast = new Profile
+            SayAt(prof, speaker + "!", word + "!", pos, 1f, true);
+        }
+
+        // street chatter is short and repeats (greetings, "HOI!"), so clips are kept; a bounded cache keeps
+        // a browser's memory in check (a second of voice is ~90 KB)
+        static readonly Dictionary<string, AudioClip> StreetCache = new Dictionary<string, AudioClip>();
+
+        /// <summary>
+        /// Say a line where someone stands (3D, not through the dialogue voice, so it never cuts off a
+        /// conversation). excited = the higher, faster shout of an exclamation. voiceKey identifies the voice
+        /// for the cache (same key + profile = same clip).
+        /// </summary>
+        public static void SayAt(Profile prof, string voiceKey, string text, Vector3 pos, float volume = 1f, bool excited = false)
+        {
+            if (prof == null || string.IsNullOrEmpty(text)) return;
+            string ck = voiceKey + "|" + text + (excited ? "!" : "");
+            if (!StreetCache.TryGetValue(ck, out var clip))
             {
-                pitch = prof.pitch * 1.25f, range = prof.range * 1.5f, rate = prof.rate * 1.2f, formant = prof.formant,
-                buzz = prof.buzz, vibrato = prof.vibrato, breath = prof.breath, volume = prof.volume, growl = prof.growl,
-            };
-            var clip = Babble(fast, word + "!");
-            AudioSource.PlayClipAtPoint(clip, pos, prof.volume);
+                var p = new Profile
+                {
+                    pitch = prof.pitch * (excited ? 1.25f : 1.05f), range = prof.range * (excited ? 1.5f : 1.15f),
+                    rate = prof.rate * (excited ? 1.2f : 1.08f), formant = prof.formant, buzz = prof.buzz, vibrato = prof.vibrato,
+                    breath = prof.breath, volume = prof.volume, growl = prof.growl,
+                };
+                clip = Babble(p, text);
+                if (StreetCache.Count >= 64) StreetCache.Clear();
+                StreetCache[ck] = clip;
+            }
+            ProcAudio.PlayAt(clip, pos, prof.volume * volume, 1f, 0.85f, 45f);
+        }
+
+        /// <summary>
+        /// A townsperson's voice, by archetype ("pakcik", "man", "aunty", "kid") and a variant number: a handful
+        /// of voices per archetype, so the street sounds varied while clips still get reused.
+        /// </summary>
+        public static Profile Townsperson(string archetype, int variant)
+        {
+            variant = Mathf.Abs(variant) % 3;
+            float v = variant / 2f;
+            switch (archetype)
+            {
+                case "pakcik": return new Profile { pitch = Mathf.Lerp(100, 128, v), range = 0.18f, rate = Mathf.Lerp(7f, 8.2f, v), formant = 0.9f, buzz = 0.65f, vibrato = 0.04f, breath = 0.1f };
+                case "aunty": return new Profile { pitch = Mathf.Lerp(205, 250, v), range = 0.36f, rate = Mathf.Lerp(10f, 11.5f, v), formant = 1.12f, buzz = 0.55f };
+                case "kid": return new Profile { pitch = Mathf.Lerp(300, 360, v), range = 0.42f, rate = Mathf.Lerp(11f, 12.5f, v), formant = 1.3f, buzz = 0.35f };
+                default: return new Profile { pitch = Mathf.Lerp(118, 158, v), range = 0.25f, rate = Mathf.Lerp(8.5f, 10f, v), formant = Mathf.Lerp(0.94f, 1.04f, v), buzz = 0.6f };
+            }
         }
 
         public static void Stop()
