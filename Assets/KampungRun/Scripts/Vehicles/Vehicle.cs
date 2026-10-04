@@ -34,6 +34,8 @@ namespace KampungRun
         public float turnRate = 115f;
         public float grip = 9f;
         public float driftGrip = 1.4f;
+        /// <summary>Share of the grip left at full lock and top speed: hard corners slide (with skid marks), Hit & Run style.</summary>
+        public float cornerGrip = 0.4f;
         public float suspensionRest = 0.34f;
 
         [Header("Health")]
@@ -279,9 +281,9 @@ namespace KampungRun
                 }
                 if (handbrake) Body.AddForce(-fwd * Mathf.Sign(fs) * Mathf.Min(Mathf.Abs(fs) / dt, 9f) * traction, ForceMode.Acceleration);
 
-                // lateral grip
+                // lateral grip, letting go a little the harder you turn at speed
                 float lat = Vector3.Dot(v, right);
-                float g = handbrake ? driftGrip : grip;
+                float g = handbrake ? driftGrip : grip * Mathf.Lerp(1f, cornerGrip, Mathf.Abs(steer) * Mathf.Clamp01(Mathf.Abs(fs) / maxSpeed));
                 Body.AddForce(-right * lat * Mathf.Min(g, 1f / dt) * traction, ForceMode.Acceleration);
 
                 // steering: drive yaw rate directly (arcade)

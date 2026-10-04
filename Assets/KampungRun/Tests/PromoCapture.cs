@@ -186,6 +186,143 @@ namespace KampungRun.Tests
             Time.captureFramerate = 0;
         }
 
+        /// <summary>Scripted pedals and wheel, pressed the way a player would.</summary>
+        class ScriptDrv : IDriver
+        {
+            public float throttle, steer;
+            public bool handbrake;
+            public void Drive(Vehicle v, out float t, out float s, out bool hb) { t = throttle; s = steer; hb = handbrake; }
+        }
+
+        /// <summary>
+        /// Driving feel, measured, for matching handling and the chase camera against reference footage.
+        /// The player's car (DRIVE_CAR, default saga) runs scripted inputs under the real gameplay camera:
+        /// - run 1, the long avenue south of Chow Kit: standstill, full throttle, cruise, a lane change, braking;
+        /// - run 2, the open kampung padang: a full-lock circle, then a handbrake slide.
+        /// Every frame goes to Tools/promo_frames/x_drive/drive.csv (speed, yaw rate, slip, camera placement and
+        /// the car's place on screen) and every 3rd frame is saved as r&lt;run&gt;_&lt;frame&gt;.jpg.
+        /// </summary>
+        [UnityTest, Timeout(900000)]
+        public IEnumerator RecordDriveFeel()
+        {
+            _rt = new RenderTexture(W, H, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };
+            _tex = new Texture2D(W, H, TextureFormat.RGB24, false);
+            yield return LoadLevel(1);
+            var gm = GameManager.I;
+            var p = gm.Player;
+            var cam = Camera.main;
+            _dir = Path.Combine(Root, "x_drive");
+            if (Directory.Exists(_dir)) Directory.Delete(_dir, true);
+            Directory.CreateDirectory(_dir);
+            string id = string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("DRIVE_CAR")) ? "saga" : System.Environment.GetEnvironmentVariable("DRIVE_CAR");
+            var csv = new System.Text.StringBuilder("run,t,phase,x,z,speed,fwd,heading,yawRate,slip,camDist,camHeight,camLag,camPitch,fov," +
+                                                   "carLeft,carRight,carBottom,carTop,horizon,steer,throttle,handbrake,rearWidthH\n");
+            var ic = System.Globalization.CultureInfo.InvariantCulture;
+
+            // the car's box projected on screen (viewport 0..1, y up) and where the horizon straight ahead sits
+            void Frame(Vehicle car, out float l, out float r, out float b, out float t, out float hz)
+            {
+                var box = car.GetComponent<BoxCollider>();
+                l = b = 1f; r = t = 0f;
+                for (int i = 0; i < 8; i++)
+                {
+                    var c = box.center + Vector3.Scale(box.size * 0.5f, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                    var vp = cam.WorldToViewportPoint(car.transform.TransformPoint(c));
+                    l = Mathf.Min(l, vp.x); r = Mathf.Max(r, vp.x); b = Mathf.Min(b, vp.y); t = Mathf.Max(t, vp.y);
+                }
+                var flat = cam.transform.forward; flat.y = 0;
+                hz = cam.WorldToViewportPoint(cam.transform.position + flat.normalized * 2000f).y;
+            }
+
+            // the width of the car's back as a share of the frame height (what reads as "how big the car is" from behind)
+            float RearWidthH(Vehicle car)
+            {
+                var box = car.GetComponent<BoxCollider>();
+                var h = box.size * 0.5f;
+                var a = cam.WorldToScreenPoint(car.transform.TransformPoint(box.center + new Vector3(-h.x, 0f, -h.z)));
+                var b = cam.WorldToScreenPoint(car.transform.TransformPoint(box.center + new Vector3(h.x, 0f, -h.z)));
+                return Mathf.Abs(b.x - a.x) / cam.pixelHeight;
+            }
+
+            IEnumerator Run(int run, Vehicle car, ScriptDrv drv, (string name, float secs, float throttle, float steer, bool hb)[] phases, List<Vector3> clear)
+            {
+                float t0 = Time.time;
+                int n = 0;
+                foreach (var ph in phases)
+                {
+                    int frames = Mathf.RoundToInt(ph.secs * FPS);
+                    for (int i = 0; i < frames; i++, n++)
+                    {
+                        drv.throttle = ph.throttle; drv.steer = ph.steer; drv.handbrake = ph.hb;
+                        if (clear != null) ClearRoute(clear, 30f, car);
+                        yield return null;
+                        var b = car.Body;
+                        var v = b.linearVelocity; v.y = 0;
+                        var f = car.transform.forward; f.y = 0;
+                        float slip = v.magnitude > 1f ? Vector3.SignedAngle(f, v, Vector3.up) : 0f;
+                        var rel = cam.transform.position - car.transform.position;
+                        var cf = cam.transform.forward; cf.y = 0;
+                        float lag = Vector3.SignedAngle(f, cf, Vector3.up);
+                        Frame(car, out float l, out float r, out float bot, out float top, out float hz);
+                        csv.AppendLine(string.Format(ic, "{0},{1:F3},{2},{3:F2},{4:F2},{5:F2},{6:F2},{7:F1},{8:F1},{9:F1},{10:F2},{11:F2},{12:F1},{13:F1},{14:F0},{15:F3},{16:F3},{17:F3},{18:F3},{19:F3},{20:F2},{21:F2},{22},{23:F3}",
+                            run, Time.time - t0, ph.name, car.transform.position.x, car.transform.position.z, v.magnitude, car.ForwardSpeed,
+                            car.transform.eulerAngles.y, b.angularVelocity.y * Mathf.Rad2Deg, slip,
+                            new Vector2(rel.x, rel.z).magnitude, rel.y, lag, cam.transform.eulerAngles.x, cam.fieldOfView,
+                            l, r, bot, top, hz, car.lastSteer, car.lastThrottle, car.lastHandbrake ? 1 : 0, RearWidthH(car)));
+                        if (n % 3 == 0) Grab($"r{run}_{n:D4}_{ph.name}.jpg");
+                    }
+                }
+            }
+
+            // run 1: the avenue south of Chow Kit (eastbound, 700 m straight)
+            {
+                var route = gm.City.roads.Route(new List<Vector3> { J(1, 14), J(7, 14) });
+                var at = Along(route, 12f, out var fwd, out _);
+                ClearRoute(route, 30f, null);
+                var car = gm.SummonCar(id, at + Vector3.up * 0.6f, Quaternion.LookRotation(fwd));
+                yield return Frames(15);
+                p.EnterVehicle(car, true);
+                var drv = new ScriptDrv();
+                car.driver = drv;
+                yield return Frames(30);
+                ChaseCamera.I.SnapBehind();
+                yield return Run(1, car, drv, new[]
+                {
+                    ("rest", 1.0f, 0f, 0f, false), ("launch", 6.0f, 1f, 0f, false), ("cruise", 1.5f, 1f, 0f, false),
+                    ("laneR", 0.45f, 1f, 1f, false), ("laneL", 0.45f, 1f, -1f, false), ("settle", 1.5f, 1f, 0f, false),
+                    ("brake", 3.0f, -1f, 0f, false),
+                }, route);
+                p.ExitVehicle(false, true);
+                Object.Destroy(car.gameObject);
+                yield return Frames(3);
+            }
+
+            // run 2: the kampung padang (open grass, about 90 x 66 m)
+            {
+                var c = gm.City.places["Padang"];
+                foreach (var t in Object.FindObjectsByType<Vehicle>(FindObjectsSortMode.None))
+                    if (Vector3.Distance(t.transform.position, c) < 60f) Object.Destroy(t.gameObject);
+                var car = gm.SummonCar(id, c + new Vector3(-12f, 0.6f, -20f), Quaternion.LookRotation(Vector3.forward));
+                yield return Frames(15);
+                p.EnterVehicle(car, true);
+                var drv = new ScriptDrv();
+                car.driver = drv;
+                yield return Frames(30);
+                ChaseCamera.I.SnapBehind();
+                yield return Run(2, car, drv, new[]
+                {
+                    // part throttle: ~15 m/s, so the slide stays on the grass
+                    ("rest", 0.5f, 0f, 0f, false), ("roll", 1.2f, 0.6f, 0f, false), ("circle", 3.0f, 0.25f, 1f, false),
+                    ("straight", 0.8f, 0.3f, 0f, false), ("handbrake", 1.2f, 0.2f, -1f, true), ("recover", 1.5f, 0f, 0f, false),
+                }, null);
+                p.ExitVehicle(false, true);
+                Object.Destroy(car.gameObject);
+            }
+            File.WriteAllText(Path.Combine(_dir, "drive.csv"), csv.ToString());
+            Debug.Log($"[Drive] {id}: wrote {Path.Combine(_dir, "drive.csv")}");
+            Time.captureFramerate = 0;
+        }
+
         /// <summary>Sits still with the wheel turned (for looking at the driver's hands).</summary>
         class HoldDrv : IDriver
         {

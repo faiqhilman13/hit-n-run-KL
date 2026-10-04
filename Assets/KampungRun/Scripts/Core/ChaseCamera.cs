@@ -14,7 +14,17 @@ namespace KampungRun
         public float height = 1.6f;
         public float yaw, pitch = 14f;
 
-        float _dist;
+        // Driving, measured against Hit & Run footage: the camera hardly drops back with speed (the car's back is
+        // about 26% of the screen height parked, 22% flat out) but tips down the road, so at speed the horizon
+        // sits about 78% up the screen and the car stays in the lower third.
+        [Header("Driving")]
+        public float drivePitch = 13f;          // at a standstill
+        public float drivePitchFast = 21f;      // flat out
+        public float drivePullBack = 0f;        // extra distance at full speed, as a fraction of `distance`
+        public float driveRise = 0.5f;          // the aim point rises this much at full speed (m)
+        public float driveFullSpeed = 28f;      // m/s
+
+        float _dist, _rise;
         float _lookIdle;
         Vector3 _focus;
         float _shake;
@@ -55,22 +65,27 @@ namespace KampungRun
                 var v = targetBody.linearVelocity;
                 v.y = 0;
                 float spd = v.magnitude;
+                float s = Mathf.Clamp01(spd / driveFullSpeed);
                 // follow velocity heading when moving forward, else the car's nose
                 float heading = target.eulerAngles.y;
                 if (spd > 3f && Vector3.Dot(v, target.forward) > 0) heading = Mathf.Atan2(v.x, v.z) * Mathf.Rad2Deg;
                 if (_lookIdle > 0.8f)
                 {
                     yaw = Mathf.LerpAngle(yaw, heading, dt * Mathf.Lerp(1.5f, 4f, spd / 25f));
-                    pitch = Mathf.Lerp(pitch, 12f, dt * 2f);
+                    pitch = Mathf.Lerp(pitch, Mathf.Lerp(drivePitch, drivePitchFast, s), dt * 2f);
                 }
-                _dist = Mathf.Lerp(_dist, distance + spd * 0.12f, dt * 2f);
+                // the drop-back lags the speed, so a launch pulls the car away from the camera
+                _dist = Mathf.Lerp(_dist, distance * (1f + drivePullBack * s), dt * 2.2f);
+                _rise = Mathf.Lerp(_rise, driveRise * s, dt * 2f);
             }
             else
             {
                 _dist = Mathf.Lerp(_dist, distance, dt * 3f);
+                _rise = Mathf.Lerp(_rise, 0f, dt * 3f);
             }
 
-            _focus = Vector3.Lerp(_focus, target.position + Vector3.up * height, 1f - Mathf.Exp(-dt * 12f));
+            // the aim point stays tight on a car (so it sits low in the frame at speed instead of drifting up)
+            _focus = Vector3.Lerp(_focus, target.position + Vector3.up * (height + _rise), 1f - Mathf.Exp(-dt * (driving ? 30f : 12f)));
             Place(dt);
         }
 

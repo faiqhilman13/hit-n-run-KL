@@ -492,8 +492,12 @@ namespace KampungRun
             var cam = ChaseCamera.I;
             cam.target = v.transform;
             cam.targetBody = v.Body;
-            cam.distance = v.halfLength * 2f + 4.5f;
-            cam.height = 1.6f + v.halfLength * 0.15f;
+            // Hit & Run framing: about 5 m off the back of the car, aimed a little below its roof, so it sits in
+            // the lower part of the frame (ChaseCamera raises the aim and tips down the road with speed)
+            var box = v.GetComponent<BoxCollider>();
+            float top = box ? box.center.y + box.size.y * 0.5f : 1.5f;
+            cam.distance = v.halfLength + 4.9f;
+            cam.height = top * 0.86f;
             _engine = ProcAudio.Loop(ProcAudio.Engine, v.transform, 0.18f);
             ProcAudio.Play(ProcAudio.Blip, v.transform.position, 0.3f);
             GameManager.I.OnPlayerEnteredVehicle(v);
