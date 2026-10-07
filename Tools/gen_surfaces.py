@@ -78,16 +78,14 @@ def finish(img, lo=0.28, hi=0.72):
 
 
 def grass():
-    img = 0.5 + (noise(6) - 0.5) * 0.5 + (noise(24) - 0.5) * 0.25
-    for _ in range(900):                              # little blade strokes
+    """A mown lawn the way Hit & Run paints one: an even field with soft, broad light and dark drifts and
+    a scatter of little blade ticks, kept within a narrow band so it never reads as splatter."""
+    img = 0.5 + (noise(3) - 0.5) * 0.45 + (noise(9) - 0.5) * 0.2
+    for _ in range(420):                              # small blade ticks, two tones
         x, y = rng.uniform(0, N, 2)
-        v = rng.choice([0.2, 0.85, 0.3, 0.75])
-        stroke(img, x, y, rng.uniform(-3, 3), rng.uniform(-9, -4), rng.uniform(0.8, 1.6), v, 0.55)
-    for _ in range(14):                               # darker clover clumps
-        x, y = rng.uniform(0, N, 2)
-        for k in range(5):
-            stroke(img, x + rng.uniform(-6, 6), y + rng.uniform(-6, 6), 1, 1, rng.uniform(3, 5), 0.25, 0.4)
-    return finish(img, 0.22, 0.78)
+        v = rng.choice([0.36, 0.4, 0.62, 0.66])
+        stroke(img, x, y, rng.uniform(-1.5, 1.5), rng.uniform(-5, -3), rng.uniform(0.6, 1.0), v, 0.45)
+    return finish(img, 0.39, 0.61)
 
 
 def asphalt():

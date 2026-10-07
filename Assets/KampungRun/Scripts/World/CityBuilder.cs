@@ -67,6 +67,7 @@ namespace KampungRun
         readonly System.Random _rng = new System.Random(1957); // Lat's first comic year-ish
         City _city;
         StaticBatcher _ground;
+        Arch.ArchCity _arch;
         Transform _props, _kitRoot;
 
         float R(float a, float b) => a + (float)_rng.NextDouble() * (b - a);
@@ -197,6 +198,7 @@ namespace KampungRun
             _props.SetParent(root, false);
             _ground = new StaticBatcher();
             _districts.Clear();
+            _floraAt.Clear();
             var clock = System.Diagnostics.Stopwatch.StartNew();
             var times = new System.Text.StringBuilder();
             void Lap(string what) { times.Append($" {what} {clock.ElapsedMilliseconds}ms"); clock.Restart(); }
@@ -207,6 +209,8 @@ namespace KampungRun
                 var p = KLPatch.Load(lp.name);
                 if (p != null) patches.Add(p);
             }
+            // the modelled buildings (Scripts/World/Arch), by city cell
+            _arch = Arch.ArchCity.Create(root, new Vector2(X0, Z0));
             Lap("load");
             CollectWater(patches);
             BuildRoads();
@@ -229,9 +233,17 @@ namespace KampungRun
             BuildBorder();
             BuildParapets();
             _ground.Build(root, "Ground");
+            ArchColliders();
             Lap("ground");
+            BuildGreenery();
+            Lap("green");
             MergeStatics();
             Lap("merge");
+            _arch.Finish();
+            Lap("arch");
+            // Hit & Run's painted shade: drawn from the finished (merged) city, a texel a metre (two on phones)
+            CityShade.Bake(root, new Rect(X0 - 40f, Z0 - 40f, NX * Pitch + 80f, NZ * Pitch + 80f), GameManager.WebLite ? 2f : 1f);
+            Lap("shade");
             Debug.Log("[City] build times:" + times);
 
             float hx = NX * Pitch * 0.5f + 20, hz = NZ * Pitch * 0.5f + 20;
@@ -244,7 +256,7 @@ namespace KampungRun
         {
             ["road"] = LatMaterials.Pal.Road, ["flyroad"] = LatMaterials.Pal.Road, ["mark_white"] = new Color(0.97f, 0.97f, 0.94f),
             ["walk"] = LatMaterials.Pal.Pavement, ["kerb"] = new Color(0.6f, 0.6f, 0.58f), ["land_paving"] = new Color(0.84f, 0.79f, 0.7f),
-            ["land_park"] = LatMaterials.Pal.Park, ["land_lawn"] = LatMaterials.Pal.Park, ["land_forest"] = new Color(0.3f, 0.56f, 0.26f), ["land_pitch"] = new Color(0.46f, 0.78f, 0.34f),
+            ["land_park"] = LatMaterials.Pal.Park, ["land_lawn"] = LatMaterials.Pal.Park, ["land_forest"] = new Color(0.3f, 0.56f, 0.26f), ["land_pitch"] = new Color(0.45f, 0.70f, 0.31f),
             ["pond"] = LatMaterials.Pal.Water, ["water"] = LatMaterials.Pal.Water, ["bank"] = LatMaterials.Pal.Wall, ["bed"] = new Color(0.26f, 0.3f, 0.32f),
             ["deck"] = LatMaterials.Pal.Wall, ["rail"] = LatMaterials.Pal.Rail, ["barrier"] = new Color(0.9f, 0.88f, 0.84f),
             ["pillar"] = new Color(0.78f, 0.76f, 0.72f), ["guideway"] = new Color(0.88f, 0.87f, 0.83f),
@@ -346,6 +358,12 @@ namespace KampungRun
                 if (md.uv != null) mesh.uv = md.uv;
                 mesh.triangles = md.t;
                 mesh.RecalculateBounds();
+                if (md.key.EndsWith("_col"))
+                {
+                    // physics only: the architecture library models what stands here (flyover parapets, piers)
+                    solids.Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.identity });
+                    continue;
+                }
                 var go = new GameObject(md.key);
                 go.transform.SetParent(root, false);
                 go.isStatic = true;
@@ -356,6 +374,26 @@ namespace KampungRun
                 if (!NoCollide.Contains(md.key)) solids.Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.identity });
             }
             PatchTrees(p, root, solids);
+            // the flyovers' parapets and hammerhead piers, modelled
+            foreach (var (a, b, o) in p.deckEdges)
+                _arch.Add(new Arch.ParapetRun { pts = new[] { a, b }, outward = new Vector3(o.x, 0f, o.y) });
+            foreach (var (pos, heading, top, capW) in p.piers)
+                _arch.Add(new Arch.PierSpec { foot = new Vector3(pos.x, 0f, pos.y), along = new Vector3(heading.x, 0f, heading.y), top = top, capWidth = capW });
+            // the district's buildings: modelled by the architecture library, solid as their footprints
+            if (p.buildings.Count > 0)
+            {
+                var cv = new List<Vector3>();
+                var ct = new List<int>();
+                foreach (var s in p.buildings)
+                {
+                    _arch.Add(s);
+                    Arch.ArchGen.Collider(s, cv, ct);
+                }
+                var bm = new Mesh { name = p.name + "_buildings", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+                bm.SetVertices(cv);
+                bm.SetTriangles(ct, 0);
+                solids.Add(new CombineInstance { mesh = bm, transform = Matrix4x4.identity });
+            }
             if (solids.Count > 0)
             {
                 var cm = new Mesh { name = p.name + "_collider", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
@@ -446,111 +484,55 @@ namespace KampungRun
         }
 
         // ------------------------------------------------------------------ patch trees
-        static Mesh _trunkMesh;
-        static Mesh[] _crownMeshes;
-
         /// <summary>
-        /// The park, forest and street trees of a patch (the file holds only where they stand): a six-sided trunk
-        /// and a lumpy low-poly crown, the pipeline's cartoon tree, merged into one mesh per leaf shade.
+        /// The park, forest and street trees of a patch (the file holds where they stand, their scale and kind),
+        /// modelled by the architecture library's plants (Arch/Flora.cs). Tools/klmap/patches.py picks each one:
+        /// a kind of tree to a street, sized so its crown clears the buildings, and thick over the forest and parks.
+        /// (Kinds 0-2 are the older patches' mixes, picked here.) Their trunks are solid; grass grows round them,
+        /// and the lawns get tufts of their own.
         /// </summary>
         void PatchTrees(KLPatch p, Transform root, List<CombineInstance> solids)
         {
-            if (p.trees.Count == 0) return;
-            if (_trunkMesh == null) BuildTreeTemplates();
             int seed = 17;
             foreach (char ch in p.name) seed = seed * 31 + ch;
             var rng = new System.Random(seed);
-            var trunks = new List<CombineInstance>();
-            var leaves = new[] { new List<CombineInstance>(), new List<CombineInstance>(), new List<CombineInstance>() };
+            var cv = new List<Vector3>();
+            var ct = new List<int>();
             foreach (var t in p.trees)
             {
-                float sc = t.z;
                 int kind = Mathf.RoundToInt(t.w);
-                float trunkH = (kind != 2 ? 2.6f : 4.2f) * sc, rt = 0.32f * sc;
-                trunks.Add(new CombineInstance { mesh = _trunkMesh, transform = Matrix4x4.TRS(new Vector3(t.x, G, t.y), Quaternion.identity, new Vector3(rt, trunkH + 0.6f, rt)) });
-                int shade = kind == 2 ? 2 : rng.NextDouble() < 0.55 ? 0 : 1;
-                float rx = (kind == 0 ? 2.4f : 1.9f) * sc * (0.9f + 0.25f * (float)rng.NextDouble());
-                float ry = rx * (kind == 0 ? 0.72f : 0.9f);
-                var at = new Vector3(t.x, G + trunkH + ry * 0.8f, t.y);
-                leaves[shade].Add(new CombineInstance
+                double r = rng.NextDouble();
+                var fk = kind == 3 ? Arch.FloraKind.RainTree : kind == 4 ? Arch.FloraKind.Angsana
+                       : kind == 5 ? Arch.FloraKind.Palm : kind == 6 ? Arch.FloraKind.Frangipani
+                       : kind == 0 ? (r < 0.7 ? Arch.FloraKind.RainTree : Arch.FloraKind.Angsana)
+                       : kind == 1 ? (r < 0.65 ? Arch.FloraKind.Angsana : r < 0.85 ? Arch.FloraKind.RainTree : Arch.FloraKind.Frangipani)
+                       : (r < 0.72 ? Arch.FloraKind.Angsana : Arch.FloraKind.Palm);
+                var f = new Arch.FloraSpec { pos = new Vector3(t.x, G, t.y), kind = fk, scale = t.z, seed = rng.Next() };
+                _arch.Add(f);
+                Arch.Flora.Collider(f, cv, ct);
+            }
+            // grass tufts over the lawns, parks and woods
+            foreach (var md in p.meshes)
+            {
+                if (md.key != "land_park" && md.key != "land_lawn" && md.key != "land_forest") continue;
+                for (int i = 0; i + 2 < md.t.Length; i += 3)
                 {
-                    mesh = _crownMeshes[rng.Next(_crownMeshes.Length)],
-                    transform = Matrix4x4.TRS(at, Quaternion.Euler(0, (float)rng.NextDouble() * 360f, 0), new Vector3(rx, ry, rx)),
-                });
-            }
-            Mesh Merge(string key, List<CombineInstance> parts, bool shadows)
-            {
-                if (parts.Count == 0) return null;
-                var m = new Mesh { name = p.name + "_" + key, indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
-                m.CombineMeshes(parts.ToArray(), true, true, false);
-                var go = new GameObject(key);
-                go.transform.SetParent(root, false);
-                go.isStatic = true;
-                go.AddComponent<MeshFilter>().sharedMesh = m;
-                var mr = go.AddComponent<MeshRenderer>();
-                mr.sharedMaterial = PatchMaterial(key);
-                mr.shadowCastingMode = shadows ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.Off;
-                return m;
-            }
-            var trunk = Merge("tree_trunk", trunks, false);
-            if (trunk != null) solids.Add(new CombineInstance { mesh = trunk, transform = Matrix4x4.identity });
-            Merge("tree_leaf_a", leaves[0], true);
-            Merge("tree_leaf_b", leaves[1], true);
-            Merge("tree_leaf_c", leaves[2], true);
-        }
-
-        static void BuildTreeTemplates()
-        {
-            // trunk: a unit hexagonal prism (radius 1, height 1), sides only, flat-shaded
-            var v = new List<Vector3>();
-            var n = new List<Vector3>();
-            var tri = new List<int>();
-            for (int i = 0; i < 6; i++)
-            {
-                float a0 = i * Mathf.PI / 3f, a1 = (i + 1) * Mathf.PI / 3f;
-                Vector3 p0 = new Vector3(Mathf.Cos(a0), 0, Mathf.Sin(a0)), p1 = new Vector3(Mathf.Cos(a1), 0, Mathf.Sin(a1));
-                var nn = ((p0 + p1) * 0.5f).normalized;
-                int k = v.Count;
-                v.AddRange(new[] { p0, p1, p1 + Vector3.up, p0 + Vector3.up });
-                n.AddRange(new[] { nn, nn, nn, nn });
-                tri.AddRange(new[] { k, k + 2, k + 1, k, k + 3, k + 2 });
-            }
-            _trunkMesh = new Mesh { name = "PatchTreeTrunk" };
-            _trunkMesh.SetVertices(v); _trunkMesh.SetNormals(n); _trunkMesh.SetTriangles(tri, 0);
-            _trunkMesh.RecalculateBounds();
-
-            // crowns: an icosahedron with its corners pushed in and out a little, four variations
-            float g = (1f + Mathf.Sqrt(5f)) / 2f;
-            var ico = new[]
-            {
-                new Vector3(-1, g, 0), new Vector3(1, g, 0), new Vector3(-1, -g, 0), new Vector3(1, -g, 0), new Vector3(0, -1, g), new Vector3(0, 1, g),
-                new Vector3(0, -1, -g), new Vector3(0, 1, -g), new Vector3(g, 0, -1), new Vector3(g, 0, 1), new Vector3(-g, 0, -1), new Vector3(-g, 0, 1),
-            };
-            int[] faces = { 0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 0, 10, 11, 1, 5, 9, 5, 11, 4, 11, 10, 2, 10, 7, 6, 7, 1, 8,
-                            3, 9, 4, 3, 4, 2, 3, 2, 6, 3, 6, 8, 3, 8, 9, 4, 9, 5, 2, 4, 11, 6, 2, 10, 8, 6, 7, 9, 8, 1 };
-            var rng = new System.Random(1957);
-            _crownMeshes = new Mesh[4];
-            for (int c = 0; c < _crownMeshes.Length; c++)
-            {
-                var pts = new Vector3[ico.Length];
-                for (int i = 0; i < ico.Length; i++) pts[i] = ico[i].normalized * (1f + ((float)rng.NextDouble() - 0.5f) * 0.24f);
-                var cv = new List<Vector3>();
-                var cn = new List<Vector3>();
-                var ct = new List<int>();
-                for (int f = 0; f < faces.Length; f += 3)
-                {
-                    Vector3 a = pts[faces[f]], b = pts[faces[f + 1]], d = pts[faces[f + 2]];
-                    var nn = Vector3.Cross(b - a, d - a).normalized;
-                    if (Vector3.Dot(nn, a + b + d) < 0) { var tmp = b; b = d; d = tmp; nn = -nn; }
-                    int k = cv.Count;
-                    cv.AddRange(new[] { a, b, d });
-                    cn.AddRange(new[] { nn, nn, nn });
-                    ct.AddRange(new[] { k, k + 1, k + 2 });
+                    Vector3 a = md.v[md.t[i]], b = md.v[md.t[i + 1]], c = md.v[md.t[i + 2]];
+                    float area = Vector3.Cross(b - a, c - a).magnitude * 0.5f;
+                    for (float n = area / 70f + (float)rng.NextDouble(); n >= 1f; n -= 1f)
+                    {
+                        float u = (float)rng.NextDouble(), w = (float)rng.NextDouble();
+                        if (u + w > 1f) { u = 1f - u; w = 1f - w; }
+                        _arch.Add(new Arch.FloraSpec { pos = a + (b - a) * u + (c - a) * w, kind = Arch.FloraKind.Tufts, scale = 1f, seed = rng.Next() });
+                    }
                 }
-                var m = new Mesh { name = "PatchTreeCrown" + c };
-                m.SetVertices(cv); m.SetNormals(cn); m.SetTriangles(ct, 0);
-                m.RecalculateBounds();
-                _crownMeshes[c] = m;
+            }
+            if (cv.Count > 0)
+            {
+                var m = new Mesh { name = p.name + "_trunks", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+                m.SetVertices(cv);
+                m.SetTriangles(ct, 0);
+                solids.Add(new CombineInstance { mesh = m, transform = Matrix4x4.identity });
             }
         }
 
@@ -1089,6 +1071,31 @@ namespace KampungRun
                 if (!kampung && lz != Zone.Park && lz != Zone.ChowKit && lz != Zone.Brickfields)
                     StreetLamps(lc);
             }
+            Jejantas(col, row, zone);
+        }
+
+        /// <summary>
+        /// Now and then a jejantas (a covered footbridge) over the main road south of a town block, its stairs down
+        /// the pavements either side. Only between two town blocks, and never where a flyover runs.
+        /// </summary>
+        void Jejantas(int col, int row, Zone zone)
+        {
+            if (row == 0 || !(zone == Zone.Shops || zone == Zone.Office || zone == Zone.Condo || zone == Zone.Mamak)) return;
+            if (((col * 73 + row * 151) % 10) >= 3) return;                         // about three blocks in ten
+            var south = ZoneAt(col, row - 1);
+            if (south == Zone.Patch || south == Zone.River || IsKampungCell(col, row - 1) || IsLandmark(south)) return;
+            foreach (var f in Flyovers)
+                if (!f.ns && f.line == row && f.from <= col && col < f.to) return;
+            var c = BlockCenter(col, row);
+            float x = c.x + ((col + row) % 2 == 0 ? -20f : 20f);
+            var j = new Arch.JejantasSpec
+            {
+                a = new Vector3(x, G, c.z - Block * 0.5f + 1.5f),
+                b = new Vector3(x, G, c.z - Block * 0.5f - Road - 1.5f),
+                height = 6.2f, seed = col * 31 + row,
+            };
+            _arch.Add(j);
+            Arch.Bridgework.Collider(j, _archCv, _archCt);
         }
 
         void BuildZone(Vector3 c, Zone zone)
@@ -1161,16 +1168,44 @@ namespace KampungRun
             return go;
         }
 
-        GameObject Tree(string model, Vector3 pos, float scale = 1f)
+        /// <summary>A tree, modelled by the architecture library's plants (Arch/Flora.cs): no prop, just its trunk's solid.</summary>
+        void Tree(string model, Vector3 pos, float scale = 1f)
         {
-            var go = ModelFactory.Spawn(model, pos, Quaternion.Euler(0, R(0, 360), 0), _props);
-            go.transform.localScale = Vector3.one * scale;
-            SetStatic(go, true);
-            var cap = go.AddComponent<CapsuleCollider>();
-            cap.radius = model == "Prop_RainTree" || model == "Prop_Angsana" ? 0.55f : 0.32f;
-            cap.height = 6f;
-            cap.center = new Vector3(0, 3f, 0);
-            return go;
+            _rng.NextDouble();                                  // (the prop's turn used to draw one: keep the layout's dice as they were)
+            AddFlora(model == "Prop_Angsana" ? Arch.FloraKind.Angsana : model.StartsWith("Prop_Palm") ? Arch.FloraKind.Palm : Arch.FloraKind.RainTree, pos, scale);
+        }
+
+        void AddFlora(Arch.FloraKind kind, Vector3 pos, float scale)
+        {
+            // seeded from where it stands, so adding plants never shifts the rest of the city's dice
+            var f = new Arch.FloraSpec { pos = pos, kind = kind, scale = scale, seed = Mathf.RoundToInt(pos.x * 7.13f) * 73856093 ^ Mathf.RoundToInt(pos.z * 5.31f) * 19349663 };
+            _arch.Add(f);
+            Arch.Flora.Collider(f, _archCv, _archCt);
+            _floraAt.Add(new Vector2(pos.x, pos.z));            // (the street trees and the lots' planting keep clear: Greenery)
+        }
+
+        /// <summary>A scatter of grass tufts over a lot (seeded from the lot, no dice drawn).</summary>
+        void LawnTufts(Vector3 c, int count, float range)
+        {
+            int seed = Mathf.RoundToInt(c.x * 3.1f) * 92837111 ^ Mathf.RoundToInt(c.z * 2.7f) * 689287499;
+            for (int i = 0; i < count; i++)
+            {
+                float x = (Mathf.PerlinNoise(seed * 0.001f + i * 0.73f, 0.31f) - 0.5f) * 2f * range;
+                float z = (Mathf.PerlinNoise(0.57f, seed * 0.001f + i * 0.91f) - 0.5f) * 2f * range;
+                _arch.Add(new Arch.FloraSpec { pos = c + new Vector3(x, G, z), kind = Arch.FloraKind.Tufts, scale = 1f, seed = seed + i * 7919 });
+            }
+        }
+
+        static bool FloraModel(string model, out Arch.FloraKind kind)
+        {
+            switch (model)
+            {
+                case "env_kb_rain_tree": kind = Arch.FloraKind.RainTree; return true;
+                case "env_palm": kind = Arch.FloraKind.Palm; return true;
+                case "env_kb_banana_plant": kind = Arch.FloraKind.Banana; return true;
+                case "env_kb_shrub": kind = Arch.FloraKind.Shrub; return true;
+                default: kind = default; return false;
+            }
         }
 
         void Scatter(Vector3 c, int count, string[] models, List<Vector2> avoid, float avoidR, float range = 17f)
@@ -1192,9 +1227,30 @@ namespace KampungRun
 
         static readonly string[] KbHouses = { "env_kb_house_teal", "env_kb_house_mint", "env_kb_house_blue", "env_kb_house_small" };
 
+        /// <summary>
+        /// A kampung house modelled by the architecture library (Arch/KampungHouse.cs), standing where the kit's house
+        /// of that name stood (same width, front the same way, stair in the same place). Returns a marker object.
+        /// </summary>
+        GameObject House(string kitModel, Vector3 pos, float yaw, int wall = -1)
+        {
+            var h = new Arch.HouseSpec
+            {
+                pos = pos, yaw = yaw, width = kitModel == "env_kb_house_small" ? 6f : 8f, wall = wall,
+                seed = Mathf.RoundToInt(pos.x * 5.7f) * 73856093 ^ Mathf.RoundToInt(pos.z * 3.3f) * 19349663,
+            };
+            _arch.Add(h);
+            Arch.KampungHouse.Collider(h, _archCv, _archCt);
+            var go = new GameObject("KampungHouse");
+            go.transform.SetParent(_props, false);
+            go.transform.SetPositionAndRotation(pos, Quaternion.Euler(0, yaw, 0));
+            return go;
+        }
+
         /// <summary>A KL kit prop that uses its own COL_ proxy (trees, pots, stalls).</summary>
         GameObject KitProp(string model, Vector3 pos, float yaw, float scale = 1f)
         {
+            // the kit's trees and plants are modelled by the architecture library now
+            if (FloraModel(model, out var fk)) { AddFlora(fk, pos, scale); return null; }
             var go = Prop(model, pos, yaw, false, scale);
             ModelFactory.UseProxyCollider(go);
             return go;
@@ -1212,7 +1268,7 @@ namespace KampungRun
                 float yaw = Mathf.Abs(off.x) > Mathf.Abs(off.y) ? (off.x > 0 ? 90 : -90) : (off.y > 0 ? 0 : 180);
                 if (_rng.NextDouble() < 0.5) yaw = off.y > 0 ? 0 : 180;
                 float hy = yaw + R(-6, 6);
-                KitProp(houses[RI(0, houses.Length)], c + new Vector3(p.x, G, p.y), hy);
+                House(houses[RI(0, houses.Length)], c + new Vector3(p.x, G, p.y), hy);
                 // a pot of flowers by the stairs and a banana clump beside the house
                 var front = Quaternion.Euler(0, hy, 0);
                 KitProp(_rng.NextDouble() < 0.5 ? "env_kb_flower_pot" : "env_kb_flower_pot_white",
@@ -1245,13 +1301,13 @@ namespace KampungRun
                 used.Add(p);
             }
             for (int i = 0; i < 4; i++) _city.coinSpots.Add(c + new Vector3(R(-15, 15), 1f, R(-15, 15)));
+            LawnTufts(c, 30, 18f);
         }
 
         void HomeBlock(Vector3 c)
         {
             // Rumah Pak Mat: facing east toward the river road
-            var home = KitProp("env_kb_house_teal", c + new Vector3(-4, G, 0), 90);
-            home.name = "RumahPakMat";
+            House("env_kb_house_teal", c + new Vector3(-4, G, 0), 90, 0).name = "RumahPakMat";
             KitProp("env_kb_rain_tree", c + new Vector3(-8, G, 13), R(0, 360), 1.2f);
             KitProp("env_palm", c + new Vector3(10, G, -14), 0);
             KitProp("env_palm", c + new Vector3(12, G, 12), 70);
@@ -1268,6 +1324,7 @@ namespace KampungRun
             Place("HomeYard", c + new Vector3(10, G, -6));
             Place("PlayerSpawn", c + new Vector3(9, G + 0.1f, 2));
             Face("PlayerSpawn", Quaternion.Euler(0, 90, 0));
+            LawnTufts(c, 30, 18f);
         }
 
         void SurauBlock(Vector3 c)
@@ -1275,6 +1332,7 @@ namespace KampungRun
             Prop("Bld_Surau", c + new Vector3(0, G, 2), 180, true);
             Scatter(c, 6, new[] { "Prop_Palm", "Prop_Palm2" }, new List<Vector2> { new Vector2(0, 2) }, 9f);
             Place("Surau", c + new Vector3(0, G, -6));
+            LawnTufts(c, 20, 18f);
         }
 
         void PadangBlock(Vector3 c)
@@ -1295,6 +1353,73 @@ namespace KampungRun
                 Tree("Prop_RainTree", c + V(t.x, G, t.y), R(1f, 1.3f));
         }
 
+        // ------------------------------------------------------------------ modelled buildings (Scripts/World/Arch)
+        readonly List<Vector3> _archCv = new List<Vector3>();
+        readonly List<int> _archCt = new List<int>();
+
+        /// <summary>A building for the architecture library to model, solid for physics as its footprint.</summary>
+        void AddArch(Arch.BuildingSpec s)
+        {
+            _arch.Add(s);
+            Arch.ArchGen.Collider(s, _archCv, _archCt);
+        }
+
+        /// <summary>The physics of the filler districts' modelled buildings, in one mesh.</summary>
+        void ArchColliders()
+        {
+            if (_archCt.Count == 0) return;
+            var m = new Mesh { name = "FillerBuildings_collider", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+            m.SetVertices(_archCv);
+            m.SetTriangles(_archCt, 0);
+            var go = new GameObject("FillerBuildings");
+            go.transform.SetParent(_city.root, false);
+            go.AddComponent<MeshCollider>().sharedMesh = m;
+        }
+
+        /// <summary>
+        /// A row of shophouse lots modelled by the architecture library: the frontage centred on pos, facing yaw,
+        /// lots `lotW` wide running from `back` to `front` metres along the facing (the five-foot way is the front 1.9 m).
+        /// </summary>
+        void ArchShopRow(Vector3 pos, float yaw, int lots, float lotW, float back, float front, int levels, Arch.BuildingKind kind = Arch.BuildingKind.Shop,
+                         bool vary = true, bool flatRoof = false)
+        {
+            var rot = Quaternion.Euler(0, yaw, 0);
+            Vector3 fw = rot * Vector3.forward, rt = rot * Vector3.right;
+            Vector2 P(float x, float z) { var w = pos + rt * x + fw * z; return new Vector2(w.x, w.z); }
+            for (int i = 0; i < lots; i++)
+            {
+                float x0 = -lots * lotW * 0.5f + i * lotW, x1 = x0 + lotW;
+                int lv = Mathf.Max(1, levels + (_rng.NextDouble() < 0.25 && vary ? 1 : 0));
+                AddArch(new Arch.BuildingSpec
+                {
+                    // front edge first, left to right as seen from the street, then round counter-clockwise
+                    ring = new[] { P(x1, front), P(x0, front), P(x0, back), P(x1, back) },
+                    edges = new[] { Arch.EdgeFlags.Street, i > 0 ? Arch.EdgeFlags.Party : Arch.EdgeFlags.None, Arch.EdgeFlags.None,
+                                    i < lots - 1 ? Arch.EdgeFlags.Party : Arch.EdgeFlags.None },
+                    y0 = G, height = lv * 3.4f, levels = lv, kind = kind, seed = _rng.Next(), flatRoof = flatRoof,
+                });
+            }
+        }
+
+        /// <summary>A modelled block on a rectangle (x, z half sizes) turned by yaw; walls facing away from `lot` face the street.</summary>
+        void ArchBlock(Vector3 centre, float yaw, float hw, float hd, float y0, int levels, Arch.BuildingKind kind, byte colour, Vector3 lot)
+        {
+            var rot = Quaternion.Euler(0, yaw, 0);
+            Vector3 fw = rot * Vector3.forward, rt = rot * Vector3.right;
+            Vector2 P(float x, float z) { var w = centre + rt * x + fw * z; return new Vector2(w.x, w.z); }
+            var ring = new[] { P(hw, hd), P(-hw, hd), P(-hw, -hd), P(hw, -hd) };
+            var edges = new Arch.EdgeFlags[4];
+            for (int i = 0; i < 4; i++)
+            {
+                Vector2 a = ring[i], b = ring[(i + 1) % 4], d = (b - a).normalized;
+                var outward = new Vector2(d.y, -d.x);
+                var mid = (a + b) * 0.5f - new Vector2(lot.x, lot.z);
+                edges[i] = Vector2.Dot(outward, mid) > 2f ? Arch.EdgeFlags.Street : Arch.EdgeFlags.None;
+            }
+            float h = levels <= 4 ? levels * 3.4f : 13.6f + (levels - 4) * 3.4f * 0.62f;
+            AddArch(new Arch.BuildingSpec { ring = ring, edges = edges, y0 = y0, height = h, levels = levels, kind = kind, colour = colour, seed = _rng.Next() });
+        }
+
         void ShopRow(Vector3 c, float along, bool north, bool alongX, int variant)
         {
             // rows sit on the north/south (or east/west) edges, shopfront facing the road
@@ -1303,10 +1428,10 @@ namespace KampungRun
             float yaw;
             if (alongX) { pos = c + new Vector3(along, G, north ? d : -d); yaw = north ? 0 : 180; }
             else { pos = c + new Vector3(north ? d : -d, G, along); yaw = north ? 90 : -90; }
-            var shop = Prop(variant == 0 ? "Bld_ShopRowA" : variant == 1 ? "Bld_ShopRowB" : "Bld_ShopRowC", pos, yaw, true);
+            // three lots of five metres, the five-foot way where the old row's arcade stood
+            ArchShopRow(pos, yaw, 3, 5f, -5f, 6.9f, RI(2, 4));
             var front = Quaternion.Euler(0, yaw, 0) * Vector3.forward;
             var sideDir = Quaternion.Euler(0, yaw, 0) * Vector3.right;
-            ShopSigns(shop);
             // kapcai parked on the five-foot way (kick them over!)
             int bikes = RI(0, 3);
             for (int b = 0; b < bikes; b++)
@@ -1349,50 +1474,46 @@ namespace KampungRun
         static readonly string[] KitAwnings = { "env_awning_teal", "env_awning_green", "env_awning_red", "env_awning_blue" };
         static readonly string[] KitCanopies = { "env_market_canopy_blue", "env_market_canopy_red", "env_market_canopy_teal", "env_market_canopy_yellow" };
 
-        /// <summary>One kit shophouse: facade faces `yaw`, with an awning and a hand-lettered sign.</summary>
-        void KitShop(Vector3 center, float yaw)
+        /// <summary>
+        /// One shop of a Chow Kit row (the rows are modelled: ChowKitBlock): its awning, a trampoline, a coin over
+        /// it and one on the roof if a bounce reaches, and an item spot on the five-foot way.
+        /// </summary>
+        void KitShop(Vector3 center, float yaw, float roof)
         {
             var rot = Quaternion.Euler(0, yaw, 0);
-            var shop = Prop(KitShops[RI(0, KitShops.Length)], center, yaw, false);
-            ModelFactory.UseProxyCollider(shop);
+            RI(0, KitShops.Length);                              // (the kit shop's pick: the dice stay where they were)
             var front = rot * Vector3.forward;
             var awning = Prop(KitAwnings[RI(0, KitAwnings.Length)], center + front * 5.0f + Vector3.up * 3.35f, yaw, false);
-            var go = new GameObject("ShopSign");
-            go.transform.SetParent(shop.transform, false);
-            go.transform.localPosition = new Vector3(0, 3.25f, 3.3f);
-            go.transform.localRotation = Quaternion.Euler(0, 180, 0);
-            var tm = go.AddComponent<TextMesh>();
-            tm.text = ShopNames[(_signIdx++ * 7 + RI(0, 3)) % ShopNames.Length];
-            tm.anchor = TextAnchor.MiddleCenter;
-            tm.characterSize = 0.06f;
-            tm.fontSize = 56;
-            tm.fontStyle = FontStyle.Bold;
-            tm.color = new Color(0.12f, 0.1f, 0.1f);
-            tm.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            go.GetComponent<MeshRenderer>().sharedMaterial = LatMaterials.SignText(tm.font);
+            _signIdx++;
+            RI(0, 3);                                            // (the old hand-lettered sign's pick)
             _city.itemSpots.Add(center + front * 6.3f + Vector3.up * 0.6f);
-            ShopAwningBounce(shop, awning, front);
+            ShopAwningBounce(center, roof, awning, front);
         }
 
         /// <summary>
-        /// Chow Kit (vertical slice): kit shophouses on all four sides, a covered produce
-        /// market on the kerbs, hawker stalls, umbrellas, crates and wires - built only from
-        /// the KL street kit + Chow Kit market modules. The surrounding roads are wet.
+        /// Chow Kit (vertical slice): modelled shophouse rows on all four sides (flat-roofed, two storeys, so the
+        /// awnings bounce you up onto them), a covered produce market on the kerbs, hawker stalls, umbrellas,
+        /// crates and wires. The surrounding roads are wet.
         /// </summary>
         void ChowKitBlock(Vector3 c)
         {
-            // shophouse rows: 7 along north and south, 3 on east and west (corners stay open)
+            // shophouse rows: 7 lots along north and south, 3 on east and west (corners stay open)
+            ArchShopRow(c + new Vector3(0, G, 13.9f), 0, 7, 5f, -5f, 5f, 2, Arch.BuildingKind.Shop, false, true);
+            ArchShopRow(c + new Vector3(0, G, -13.9f), 180, 7, 5f, -5f, 5f, 2, Arch.BuildingKind.Shop, false, true);
+            ArchShopRow(c + new Vector3(13.9f, G, 0), 90, 3, 5f, -5f, 5f, 2, Arch.BuildingKind.Shop, false, true);
+            ArchShopRow(c + new Vector3(-13.9f, G, 0), -90, 3, 5f, -5f, 5f, 2, Arch.BuildingKind.Shop, false, true);
+            float roof = G + 2 * 3.4f + 0.05f;
             for (int i = 0; i < 7; i++)
             {
                 float x = -15f + i * 5f;
-                KitShop(c + new Vector3(x, G, 13.9f), 0);
-                KitShop(c + new Vector3(x, G, -13.9f), 180);
+                KitShop(c + new Vector3(x, G, 13.9f), 0, roof);
+                KitShop(c + new Vector3(x, G, -13.9f), 180, roof);
             }
             for (int i = 0; i < 3; i++)
             {
                 float z = -5f + i * 5f;
-                KitShop(c + new Vector3(13.9f, G, z), 90);
-                KitShop(c + new Vector3(-13.9f, G, z), -90);
+                KitShop(c + new Vector3(13.9f, G, z), 90, roof);
+                KitShop(c + new Vector3(-13.9f, G, z), -90, roof);
             }
             // produce canopies along the north and east kerbs, facing the road
             for (int i = 0; i < 7; i++)
@@ -1747,9 +1868,9 @@ namespace KampungRun
 
         void CondoBlock(Vector3 c)
         {
-            var models = new[] { "Bld_CondoA", "Bld_CondoB", "Bld_CondoC", "Bld_CondoD" };
-            Prop(models[RI(0, 4)], c + new Vector3(-8, G, -8), 0, true);
-            Prop(models[RI(0, 4)], c + new Vector3(9, G, 9), 90, true);
+            // two blocks of flats (8 to 15 storeys), modelled
+            ArchBlock(c + new Vector3(-8, 0, -8), 0, R(6.5f, 8.5f), R(6f, 8f), G, RI(8, 16), Arch.BuildingKind.Flats, (byte)RI(1, 9), c);
+            ArchBlock(c + new Vector3(9, 0, 9), 90, R(6.5f, 8.5f), R(6f, 8f), G, RI(8, 16), Arch.BuildingKind.Flats, (byte)RI(1, 9), c);
             if (_rng.NextDouble() < 0.6) Billboard(c + new Vector3(14, G, -15), _rng.NextDouble() < 0.5 ? 180 : 90);
             Tree("Prop_Angsana", c + new Vector3(10, G, -12), 0.9f);
             Tree("Prop_Angsana", c + new Vector3(-12, G, 12), 0.9f);
@@ -1786,7 +1907,7 @@ namespace KampungRun
             Face("MamakCounter", Quaternion.identity);
             ShopRow(c, -8, false, true, 0);
             ShopRow(c, 8, false, true, 1);
-            Prop("Bld_ShopRowB", c + new Vector3(12, G, 11.5f), 0, true);
+            ArchShopRow(c + new Vector3(12, G, 11.5f), 0, 3, 5f, -5f, 6.9f, 2);
             Sign("RESTORAN\nMAMAK 24 JAM", c + new Vector3(-8, 4.6f, 13.6f), 0);
         }
 
@@ -1833,6 +1954,7 @@ namespace KampungRun
             _ground.Box(c + new Vector3(0, 0.55f, 0), new Vector3(9, 0.5f, 9), LatMaterials.Pal.Water, false, 0f);
             _ground.Box(c + new Vector3(0, 1.6f, 0), new Vector3(0.6f, 2.4f, 0.6f), LatMaterials.Pal.RoadLine, true);
             Scatter(c, 10, new[] { "Prop_RainTree", "Prop_Palm" }, new List<Vector2> { Vector2.zero }, 9f);
+            LawnTufts(c, 40, 19f);
             Place("Park", c + new Vector3(0, G, -8));
         }
 
@@ -1910,29 +2032,6 @@ namespace KampungRun
         };
         int _signIdx;
 
-        /// <summary>Hand-lettered signboards over each of the three shops in a row.</summary>
-        void ShopSigns(GameObject shop)
-        {
-            for (int i = 0; i < 3; i++)
-            {
-                var go = new GameObject("ShopSign");
-                go.transform.SetParent(shop.transform, false);
-                // board sits at Blender (x, -5.46, 3.35); the model is flipped 180 in its wrapper
-                go.transform.localPosition = new Vector3(-(i - 1) * 5f, 3.35f, 5.49f);
-                go.transform.localRotation = Quaternion.Euler(0, 180, 0);
-                var tm = go.AddComponent<TextMesh>();
-                tm.text = ShopNames[(_signIdx++ * 7 + RI(0, 3)) % ShopNames.Length];
-                tm.anchor = TextAnchor.MiddleCenter;
-                tm.alignment = TextAlignment.Center;
-                tm.characterSize = 0.07f;
-                tm.fontSize = 56;
-                tm.fontStyle = FontStyle.Bold;
-                tm.color = new Color(0.98f, 0.97f, 0.9f);
-                tm.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                go.GetComponent<MeshRenderer>().sharedMaterial = LatMaterials.SignText(tm.font);
-            }
-        }
-
         void Billboard(Vector3 pos, float yaw)
         {
             var b = Prop("Prop_Billboard", pos, yaw, false);
@@ -1963,27 +2062,14 @@ namespace KampungRun
         /// </summary>
         void OfficeBlock(Vector3 c)
         {
-            var glass = new[] { new Color(0.42f, 0.58f, 0.78f), new Color(0.36f, 0.64f, 0.68f), new Color(0.52f, 0.58f, 0.66f), new Color(0.3f, 0.45f, 0.62f), new Color(0.82f, 0.84f, 0.86f) };
-            var podC = new[] { new Color(0.9f, 0.86f, 0.78f), new Color(0.82f, 0.8f, 0.76f), new Color(0.95f, 0.93f, 0.88f) };
-            float pod = R(6f, 12f);
-            var podCol = podC[RI(0, podC.Length)];
-            // a glass lobby podium and a curtain-wall tower (the facade textures the real-KL districts use)
-            _ground.TexBox(c + new Vector3(0, G + pod * 0.5f, 0), new Vector3(34f, pod, 34f), podCol, FacadeTex("fac_lobby"), new Vector2(3.6f, 5f), true, 1.6f, 0.3f);
-            float tw = R(16f, 24f), td = R(16f, 24f), th = R(45f, 150f);
-            var g = glass[RI(0, glass.Length)];
+            // a podium of shops and a tower standing on it (glass, or concrete with ribbon windows), modelled
+            int podLv = RI(2, 4);
+            float pod = podLv * 3.4f;
+            ArchBlock(c, 0, 17f, 17f, G, podLv, Arch.BuildingKind.Office, (byte)RI(5, 7), c);
+            float tw = R(8f, 12f), td = R(8f, 12f);
+            int towerLv = RI(14, 50);
             var tc = c + new Vector3(R(-3f, 3f), 0, R(-3f, 3f));
-            _ground.TexBox(tc + new Vector3(0, G + pod + th * 0.5f, 0), new Vector3(tw, th, td), g, FacadeTex("fac_glass"), new Vector2(3f, 3.4f), true, 1.6f, 0.45f);
-            // a few storey bands so the tower reads in the distance
-            for (float y = pod + 18f; y < pod + th - 8f; y += R(24f, 34f))
-                _ground.Box(tc + new Vector3(0, G + y, 0), new Vector3(tw + 0.3f, 0.6f, td + 0.3f), podCol, false, 0f);
-            // crown / setback
-            float ch = R(4f, 12f);
-            _ground.Box(tc + new Vector3(0, G + pod + th + ch * 0.5f, 0), new Vector3(tw * 0.7f, ch, td * 0.7f), new Color(g.r * 0.85f, g.g * 0.85f, g.b * 0.85f), true, 1.6f);
-            if (_rng.NextDouble() < 0.5)
-                _ground.Box(tc + new Vector3(0, G + pod + th + ch + 6f, 0), new Vector3(0.4f, 12f, 0.4f), LatMaterials.Pal.Rail, false, 0f);
-            // roof plant on the podium, a planter and a tree out front
-            for (int i = 0; i < 3; i++)
-                _ground.Box(c + new Vector3(R(-14f, 14f), G + pod + 1f, R(-14f, -10f)), new Vector3(3f, 2f, 3f), new Color(0.7f, 0.72f, 0.74f), false, 1.2f);
+            ArchBlock(tc, 0, tw, td, G + pod, towerLv, Arch.BuildingKind.Office, (byte)(_rng.NextDouble() < 0.7 ? RI(9, 12) : RI(5, 8)), c);
             Tree("Prop_Angsana", c + new Vector3(R(-12f, 12f), G, -19f), R(0.8f, 1f));
             _city.itemSpots.Add(c + new Vector3(0, G + 0.6f, -19.5f));
         }

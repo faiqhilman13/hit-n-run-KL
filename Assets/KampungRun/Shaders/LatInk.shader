@@ -55,12 +55,23 @@ Shader "KampungRun/LatInk"
         SAMPLER(sampler_SurfaceArray);
         half _SurfaceStrength;
 
+        // the architecture library's painted details (Tools/klmap/gen_arch_atlas.py), one slice per ArchTex
+        TEXTURE2D_ARRAY(_ArchArray);
+        SAMPLER(sampler_ArchArray);
+
         // Hit & Run look (set globally by the GameManager): 1 = smooth soft-lit cartoon shading,
         // glossy car paint, no hatching / paper, outlines scaled by _ShadeOutline.
         half _ShadeMode;
         half _ShadeOutline;
         half4 _ShadeSky;       // hemisphere ambient, upper
         half4 _ShadeGround;    // hemisphere ambient, lower
+
+        // the city's painted shade (CityShade.cs): how much sky each spot at street level sees, a texel a metre
+        TEXTURE2D(_CityShade);
+        SAMPLER(sampler_CityShade);
+        float4 _CityShadeRect;     // world x0, z0, 1 / width, 1 / depth
+        half4 _CityShadeParams;    // x strength (0 = off), y share of the sunlight, z band at the foot of walls, w street level
+        half _CityShadeTint;       // how far the shade leans toward the level's shadow colour
 
         // time-of-day look, set globally by the GameManager for every level
         half4 _LatPaper;
@@ -106,6 +117,8 @@ Shader "KampungRun/LatInk"
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
+            // the architecture library's meshes (Scripts/World/Arch): vertex-colour paint over the ArchTex array
+            #pragma multi_compile_local _ _ARCH
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
@@ -113,7 +126,8 @@ Shader "KampungRun/LatInk"
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
-                float2 uv : TEXCOORD0;
+                float3 uv : TEXCOORD0;          // arch meshes: (u, v, texture slice)
+                half4 color : COLOR;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -123,7 +137,8 @@ Shader "KampungRun/LatInk"
                 float3 positionWS : TEXCOORD0;
                 float3 normalWS : TEXCOORD1;
                 float fogFactor : TEXCOORD2;
-                float2 uv : TEXCOORD4;
+                half4 color : TEXCOORD3;
+                float3 uv : TEXCOORD4;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -136,8 +151,15 @@ Shader "KampungRun/LatInk"
                 o.positionCS = p.positionCS;
                 o.positionWS = p.positionWS;
                 o.normalWS = TransformObjectToWorldNormal(v.normalOS);
+            #if defined(_ARCH)
+                o.color = half4(SRGBToLinear(v.color.rgb), v.color.a);
+            #endif
                 o.fogFactor = ComputeFogFactor(p.positionCS.z);
-                o.uv = TRANSFORM_TEX(v.uv, _BaseMap);
+            #if defined(_ARCH)
+                o.uv = v.uv;
+            #else
+                o.uv = float3(TRANSFORM_TEX(v.uv.xy, _BaseMap), 0);
+            #endif
                 return o;
             }
 
@@ -155,6 +177,21 @@ Shader "KampungRun/LatInk"
                 // Far away the lines turn to grey soup; fade to their average coverage.
                 float fade = saturate(1.6 - aa * 3.0);
                 return lerp(halfWidth * 2.0, line_, fade);
+            }
+
+            // Hit & Run's painted shade. Floors take the baked map where they stand (faded out above 2.5 m, so roofs
+            // and flyover decks stay in the light); walls take it from just in front of themselves, fading out
+            // over their first 10 m, with a narrow darker band where they meet the street. Cars opt out.
+            half CityShadeAt(float3 posWS, float3 n)
+            {
+                if (_CityShadeParams.x <= 0.001 || (GetMeshRenderingLayer() & 256u) != 0) return 1.0;
+                float h = max(posWS.y - _CityShadeParams.w, 0.0);
+                float2 uv = (posWS.xz + n.xz * 0.6 - _CityShadeRect.xy) * _CityShadeRect.zw;
+                if (any(uv < 0.0) || any(uv > 1.0)) return 1.0;
+                half g = SAMPLE_TEXTURE2D_LOD(_CityShade, sampler_CityShade, uv, 0).r;
+                half ao = lerp(g, 1.0, saturate(h / lerp(10.0, 2.5, saturate(n.y))));
+                ao *= 1.0 - _CityShadeParams.z * (1.0 - abs(n.y)) * exp2(-h * 3.0);
+                return lerp(1.0, ao, _CityShadeParams.x);
             }
 
             half4 Frag(Varyings i) : SV_Target
@@ -181,12 +218,23 @@ Shader "KampungRun/LatInk"
                 float wash = ValueNoise(i.positionWS * 0.35) * 0.6 + ValueNoise(i.positionWS * 1.7) * 0.4;
                 half3 paper = _LatPaper.a > 0 ? _LatPaper.rgb : _PaperColor.rgb;
                 half3 shadowTint = _LatShadow.a > 0 ? _LatShadow.rgb : _ShadowTint.rgb;
-                half4 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv);
+            #if defined(_ARCH)
+                // architecture: the face's paint (vertex colour) over its painted detail; alpha carries 1 - gloss.
+                // Clean paint: no world-space surface mottling, the detail is in the textures and the geometry.
+                half4 tex = SAMPLE_TEXTURE2D_ARRAY(_ArchArray, sampler_ArchArray, i.uv.xy, i.uv.z);
+                half3 baseCol = i.color.rgb * tex.rgb;
+                half gloss = 1.0 - i.color.a;
+                half surf = 0;
+                half mottAmt = 0;
+            #else
+                half4 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv.xy);
                 half3 baseCol = _BaseColor.rgb * tex.rgb;
                 // KL atlas alpha: 128..255 = gloss, 1..15 = painted surface id, 0 = plain
                 half a255 = tex.a * 255.0;
                 half gloss = a255 > 127.5 ? _Gloss * (a255 - 128.0) / 127.0 : 0.0;
                 half surf = a255 > 127.5 ? _Surface : max(_Surface, floor(a255 + 0.5));
+                half mottAmt = 0.12;
+            #endif
                 half lum = dot(baseCol, half3(0.3, 0.59, 0.11));
                 baseCol = saturate(lerp(lum.xxx, baseCol, saturation));
 
@@ -221,11 +269,15 @@ Shader "KampungRun/LatInk"
                     half wrap = saturate((ndl + 0.45) / 1.45);
                     wrap = wrap * wrap * (3.0 - 2.0 * wrap);                         // soft terminator
                     half sh = lerp(0.35, 1.0, light.shadowAttenuation);            // cast shadows stay light
-                    half3 amb = lerp(_ShadeGround.rgb, _ShadeSky.rgb, n.y * 0.5 + 0.5);
-                    half3 lit = amb + light.color * wrap * sh * 0.78;
+                    half shade = CityShadeAt(i.positionWS, n);                     // painted-in shade (CityShade.cs)
+                    half3 amb = lerp(_ShadeGround.rgb, _ShadeSky.rgb, n.y * 0.5 + 0.5) * shade;
+                    half3 lit = amb + light.color * wrap * sh * 0.78 * lerp(1.0, shade, _CityShadeParams.y);
+                    // shaded corners lean toward the level's shadow colour (its hue only, not its darkness)
+                    half3 tintHue = shadowTint / max(dot(shadowTint, half3(0.3, 0.59, 0.11)), 0.05);
+                    lit *= lerp(half3(1, 1, 1), lerp(tintHue, half3(1, 1, 1), shade), _CityShadeTint);
                     // large, gentle colour variation so flat fills read like painted textures
                     float mott = ValueNoise(i.positionWS * 0.45) * 0.6 + ValueNoise(i.positionWS * 2.3) * 0.4;
-                    half3 c = baseCol * lit * (0.94 + 0.12 * mott * (1.0 - gloss));
+                    half3 c = baseCol * lit * (1.0 - mottAmt * 0.5 + mottAmt * mott * (1.0 - gloss));
                     // glossy paint + chrome: tight highlight, soft sky reflection, rim
                     float3 h = normalize(light.direction + vdir);
                     half spec = pow(saturate(dot(n, h)), lerp(24.0, 90.0, gloss)) * sh;

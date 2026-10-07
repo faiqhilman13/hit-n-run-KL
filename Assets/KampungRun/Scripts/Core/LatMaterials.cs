@@ -69,12 +69,12 @@ namespace KampungRun
             public static readonly Color Road = new Color(0.46f, 0.48f, 0.52f);
             public static readonly Color RoadLine = new Color(1f, 0.95f, 0.55f);
             public static readonly Color Pavement = new Color(0.86f, 0.8f, 0.7f);
-            public static readonly Color Grass = new Color(0.52f, 0.76f, 0.38f);
+            public static readonly Color Grass = new Color(0.47f, 0.68f, 0.32f);
             public static readonly Color Dirt = new Color(0.86f, 0.66f, 0.42f);
             public static readonly Color Water = new Color(0.28f, 0.58f, 0.78f);
             public static readonly Color Wall = new Color(0.8f, 0.74f, 0.66f);
             public static readonly Color Rail = new Color(0.95f, 0.92f, 0.85f);
-            public static readonly Color Park = new Color(0.4f, 0.72f, 0.3f);
+            public static readonly Color Park = new Color(0.42f, 0.64f, 0.29f);
             public static readonly Color Coin = new Color(0.95f, 0.78f, 0.25f);
             public static readonly Color Red = new Color(0.82f, 0.28f, 0.22f);
         }

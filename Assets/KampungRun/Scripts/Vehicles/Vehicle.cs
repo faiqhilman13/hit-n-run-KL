@@ -78,6 +78,8 @@ namespace KampungRun
             Body.angularDamping = 1.5f;
             Body.interpolation = RigidbodyInterpolation.Interpolate;
             Body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            // paint stays clean: the city's baked shade is for the streets, not the cars driving through them
+            foreach (var r in GetComponentsInChildren<Renderer>(true)) r.renderingLayerMask |= CityShade.NoShade;
 
             string[] names = { "Wheel_FL", "Wheel_FR", "Wheel_RL", "Wheel_RR" };
             for (int i = 0; i < 4; i++)

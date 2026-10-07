@@ -4,7 +4,7 @@ Snapshot: 26 September 2026. File identity was checked at approximately 10:47 MY
 
 ## Copy-paste briefing
 
-Continue the existing Unity game in `C:\Users\User\PROJECTS\kampung-game\KampungRun`. Read `docs/AGENT_HANDOFF.md` before changing it. The latest completed task replaced all 13 human character assets with refined, rigged Blender models based on the four approved family concept sheets and matching NPC designs. The replacements are integrated into the saved game, have a successful Windows preview build, and are pushed to `origin/main` at implementation commit `4194bb3`. Existing seating/scene/promo work was preserved in a separate preceding commit, `a0fd323`. Preserve the existing building/environment style. Read the known limitations before claiming exact concept likeness or full-game verification. Two build-hook leftovers and generated Blender/player artifacts remain local. Use `RefinedCharacterBuild.Windows` for a build of the current scene, because the ordinary project build commands regenerate the scene and animator controller.
+Continue the existing Unity game in `C:\Users\User\PROJECTS\kampung-game\KampungRun`. Read `docs/AGENT_HANDOFF.md` before changing it. The latest completed task replaced all 13 human character assets with refined, rigged Blender models based on the four approved family concept sheets and matching NPC designs. The replacements are integrated into the saved game, have a successful Windows preview build, and are pushed to `origin/main` at implementation commit `4194bb3`. Existing seating/scene/promo work was preserved in a separate preceding commit, `a0fd323`. (Since 7 Oct 2026 the buildings, houses, plants and bridges are modelled by the architecture library: see the update at the end; the user asked for that and it supersedes the old box style.) Read the known limitations before claiming exact concept likeness or full-game verification. Two build-hook leftovers and generated Blender/player artifacts remain local. Use `RefinedCharacterBuild.Windows` for a build of the current scene, because the ordinary project build commands regenerate the scene and animator controller.
 
 ## Project and user direction
 
@@ -21,7 +21,7 @@ Continue the existing Unity game in `C:\Users\User\PROJECTS\kampung-game\Kampung
 | Previous remote base | `319cd41` — `Promo v3: the family, KL and driving fun (no car lineup)` |
 | Delivery status | Character replacements integrated and pushed; Windows preview built locally; this handoff is a follow-up documentation commit |
 
-The user approved all four generated family sheets, then requested polished Blender characters to replace the clunky human models, **including NPCs**. They liked the buildings and wanted their style retained. The character pass kept the environment and vehicle art pipeline and existing gameplay choreography. The user has not yet provided a final aesthetic review of the delivered 3D cast.
+The user approved all four generated family sheets, then requested polished Blender characters to replace the clunky human models, **including NPCs**. At the time they liked the buildings and wanted their style retained; on 7 Oct 2026 they asked for better buildings, bridges, shops, houses, grass and trees (see the architecture library update). The character pass kept the environment and vehicle art pipeline and existing gameplay choreography. The user has not yet provided a final aesthetic review of the delivered 3D cast.
 
 The [approved sheets and prompts](character-concepts/round-01/README.md) are for Pak Mat, Mak Som, Along and Adik. The nine other designs extend that direction using the existing characters' roles and clothing; they do not have separately approved orthographic sheets.
 
@@ -364,3 +364,204 @@ The user said the characters "feel like fat stick men" and asked for more fluid 
   | Petaling (`spot=Pasar`) | 37.5 fps | 33.9–39.0 fps |
 
   Pedestrians remain the main cost: Petaling runs at 64 fps with `nopeds`.
+
+## Update — baked "painted" shade, Hit & Run style (7 Oct 2026)
+
+The user downloaded a fan remaster of Hit & Run ("SHAR Remastered" v1.0 by Muckluck, a Lucas Mod Launcher `.lmlm`) and asked whether its characters, skeleton or art could be used. **None of it can ship**: it is Simpsons IP painted over Radical's 2003 models, and our game is public. It also contains no characters: it holds 29 Pure3D files of Level 1 scenery. Treat it like the leaked source: study the technique only, keep any extraction out of the project.
+
+**What the study showed.** Every world surface in Hit & Run uses an unlit shader multiplied by baked vertex colour. That colour is dark at the foot of walls, in corners and down lanes. 85% of its meshes carry baked gradients, and the median vertex brightness is 0.65. The user asked to try that look at Petaling Street.
+
+**CityShade** (`Scripts/World/CityShade.cs`, `Resources/CityShadeBake.shader`):
+- **Height map.** After `CityBuilder.Build` has merged the statics, every static renderer is drawn from straight above into a float height map with `CommandBuffer.DrawRenderer` and an orthographic view. The highest surface wins the depth test. Texels are 1 m over the whole map (2168×2400), or 2 m on phones.
+- **Sky pass.** A GPU pass works out how much sky each texel sees at street level (0.48 m):
+  - It searches the horizon in 16 directions out to 36 m and takes cos² per slice.
+  - Under cover (an awning, a deck, a tree crown, or inside a building), the sky straight up is lost, and only things taller than the cover block the sides.
+  - A 3×3 tent blur smooths the result into an R8 map, `_CityShade`.
+- **Cost.** The bake takes about 85 ms in the editor (4,367 renderers).
+- **In LatInk.** The Hit & Run branch reads the map in `CityShadeAt`:
+  - Floors take the map where they stand, fading it out above 2.5 m, so roofs and flyover decks stay lit.
+  - Walls read it 0.6 m in front of themselves, fading over their first 10 m, with a narrow darker band at their feet.
+  - The shade multiplies all of the ambient light and 85% of the sun.
+  - Shaded areas lean halfway toward the level's shadow hue.
+- **Settings.** The knobs are `CityShade.Look` (strength, share of sun, wall-foot band, street level) and `CityShade.Tint`.
+- **Opt-outs.** Cars opt out with rendering-layer bit 8 (`CityShade.NoShade`, set in `Vehicle.Setup`). Characters use CharacterSoft, so it never touches them.
+- **Bench switches:** `noshade` turns the shade off, as the game was before. `noworldshadow` stops the world casting real-time shadows (Hit & Run's world casts none); characters and cars still cast theirs.
+- **MergeStatics change.** It now disables the renderers it merged straight away; they are still destroyed at the end of the frame. This stops the bake drawing them twice.
+- **Capture.** `ShadeCapture.PetalingShade` (Explicit) renders each view three ways in the same frame and writes them to `Tools/promo_frames/x_shade`. The three variants are before, with the shade, and with the shade but no world shadows. It also saves the map beside a straight-down render, for an alignment check.
+
+**Measured** (`RefinedCharacterBuild.WebGL`, 42 MB; `Tools/web_bench.py`; RTX 3080). The shade itself costs no measurable frame rate. Turning off the world's real-time shadows gains about 10%. In the browser the bake takes 180–285 ms of the load.
+
+| Spot | Before (`noshade`) | Shade | Shade + `noworldshadow` |
+| --- | --- | --- | --- |
+| Petaling (`spot=Pasar`) | 33.6 / 33.5 fps | 37.6 / 30.9 fps | 37.7 / 36.0 fps |
+| Chow Kit | 26.0 fps | 27.4 fps | 29.1 fps |
+| Dataran | — | 49.5 fps | — |
+
+**Verified:** SmokeTests 16/16. The capture views round Petaling, Jamek, Dataran, Pasar Seni, the kampung, Chow Kit and KLCC show no artefacts. Traffic paint is unchanged with the shade on.
+
+**Still open:** whether the world keeps its real-time shadows. Hit & Run casts none, and turning them off is the faster option; this was left for the user to choose. The default is the shade with the world's shadows still on.
+
+## Update — the architecture library: modelled buildings, houses, plants and bridges (7 Oct 2026)
+
+**The user's feedback:**
+- The buildings "look like paint splattered on a rectangle". They asked to "do better with the buildings/bridges/stores/houses", the same way the animation rework went.
+- Then: "work on the grass/plants/trees too, that shit is ass currently".
+
+**Two causes:**
+- **Splatter.** LatInk's world-space painted-surface noise pushed wall colours anywhere from ×0.35 to ×1.7.
+- **Boxes.** Every building was a box carrying one repeated facade tile. Trees were single icosahedron balls on hex sticks. Grass was lime with dark blotches. The kit's banana plant mesh was empty.
+
+**What replaced them:** `Scripts/World/Arch`, a C# library that models every building, house, plant and flyover dressing procedurally. It paints them the Hit & Run way, with flat vertex-colour paint over a painted detail sheet, and streams detail by city cell.
+
+**Core**
+- `ArchMesh` is the builder:
+  - quads and boxes in facade frames;
+  - wall panels with real cut-out openings, each with reveals and a painted back;
+  - extrusions, caps, and ear-clipping triangulation;
+  - smooth-shaded triangles for crowns and trunks.
+- `Frame.Edge(p0, p1)` gives x along a footprint edge (left to right as seen from outside) and z pointing out of the wall. Footprints are counter-clockwise from above. Use `QuadFacing`/`TriFacing` when you're unsure of a face's winding.
+- `ArchTex` lists the slices of `Resources/KLMap/arch_atlas.png`:
+  - The sheet is generated by `Tools/klmap/gen_arch_atlas.py`: 8×8 cells of 256 px, imported as a Texture2DArray by `Editor/Arch/ArchImport.cs`.
+  - The `CELLS` order in the script must match the enum.
+  - The sheet holds glass, shutters, folding doors and roller doors; breeze blocks, grilles and AC units; clay tiles, zinc and planks; kerawang panels; 16 bilingual shop signs and year plaques; shop interiors and awnings; distance-version facade tiles; leaves, palm fronds, bark, banana leaves and blossoms; kerb hazard stripes and road signs.
+- `ArchKit.Material` is a single LatInk material with the `_ARCH` variant. In that variant, base colour = vertex colour × the array slice, alpha = 1 − gloss, and the world-space surface mottling is off.
+- `ArchCity` manages the map in 116 m cells:
+  - Every item's distance version is built at load (about 470k triangles and 0.28 s for the whole map).
+  - Cells within 190 m of the camera are rebuilt at full detail, at most 2.5 ms per frame, nearest first, and swapped in.
+  - `Prime()` builds a cell synchronously; `PlayerController.Teleport` calls it.
+  - Items implement `IArchItem` (`Where`, `Build(mesh, detail)`).
+
+**Generators**
+- **`Shophouse`:** pre-war, Art Deco and 1970s-modern lots.
+  - Five-foot ways on columns, with tiled floors and red lanterns. The arcade runs through the party walls.
+  - Recessed shopfronts (folding doors, roller shutters, or the shop open), breeze-block transoms and signboards.
+  - Windows with architraves, sills and hoods. Cornices, pilasters, and dated Dutch or stepped pediments.
+  - A clay-tile roof with fire walls, or a flat roof with a tank and AC units.
+  - Fronts wider than 7.5 m split into bays.
+  - `Arcade()` gives the five-foot way's geometry so physics can leave it walkable.
+- **`Block`:** offices (curtain-wall or ribbon-window towers with a plant room on the roof); flats (balconies, AC units, laundry poles, a breeze-block stair core); civic buildings (portico); worship (arched windows, hip roof); sheds (zinc).
+- **`KampungHouse`:** a rumah kampung.
+  - Stilts on footings, planked walls, louvred windows under kerawang vents.
+  - A verandah with a balustrade, and the tiled concrete stair.
+  - A steep zinc gable with a carved gable board, white fascia and crossed finial. Sometimes a kitchen wing.
+  - Same footprint, front and stair position as the kit house it replaces. Pak Mat's is teal (`wall = 0`).
+- **`Flora`:** rain tree, angsana, coconut palm, frangipani, banana, shrub, bougainvillea, and grass tufts.
+  - Crowns are lumpy puffs shaded dark below and light above, with painted leaves.
+  - Patch lawns get tufts, about one per 70 m². Fillers get them through `LawnTufts`.
+- **`Bridgework`:**
+  - flyover parapets on the New Jersey profile, with a steel rail and yellow-black kerb, a fascia lip and a girder;
+  - hammerhead piers;
+  - sign gantries;
+  - jejantas footbridges with stairs. You can climb them: `Bridgework.Collider` provides the ramps and deck.
+
+**Data**
+- **Real-KL patches.** `Tools/klmap/patches.py` with `ARCH = True` writes `KLP6`:
+  - Per building: footprint, edge flags (1 street, 2 party, 4 pedestrian street, 8 river), height, levels, kind, colour and seed.
+  - Then flyover deck edges and piers.
+  - Patch meshes whose key ends in `_col` are physics only.
+  - The building meshes (`win_`, `gls_`, `roof_`, `shop`, `lobby`) are no longer written.
+- **Fillers.** `CityBuilder.ArchShopRow` replaces `Bld_ShopRow*` and keeps the old row's footprint, with the arcade where the old arcade stood. Also: `ArchBlock` (condos; office podium plus tower), `House` (in place of `env_kb_house_*`), `Tree` and `AddFlora` (in place of `Prop_RainTree`/`Angsana`/`Palm` and `env_kb_rain_tree`/`env_palm`/`env_kb_banana_plant`/`env_kb_shrub`), `LawnTufts`, and `Jejantas` (about 3 town blocks in 10).
+- **Fillers' physics:** one MeshCollider, `FillerBuildings`, holding every modelled item's solid.
+- **Seeds.** Item seeds come from item positions, so adding items doesn't shift `CityBuilder._rng`. `Tree()` still draws one number so the rest of the layout stays where it was.
+- **Grass.** The grass texture (`Tools/gen_surfaces.py` `grass()`) was repainted into a narrow range. Refill the array with `SurfaceRepaint.Run`, which updates `SurfaceArray.asset` in place and keeps its GUID. ProjectBuilder's builder deletes and recreates the asset, so don't use it for this. `Pal.Grass`/`Park` are a little deeper.
+
+**Tools**
+- `ArchStudio.ReviewBatch` builds a test street (two shophouse rows, blocks, a kampung garden, a jejantas, a gantry and a flyover) and renders it to `Tools/arch_review`, along with `stats.txt` (triangles per item).
+- `ShadeCapture.PetalingShade` (Explicit) now also captures the filler districts, a flyover and Pak Mat's house.
+
+**Triangle budgets** (near / far, from stats.txt):
+
+| Item | Near | Far |
+| --- | --- | --- |
+| Shophouse lot | ~700 | ~40 |
+| 8-storey flats | ~11.7k | ~40 |
+| 24-storey office | ~2.2k | ~40 |
+| Kampung house | ~1.1k | ~120 |
+| Rain tree | ~770 | 28 |
+| Palm | ~550 | ~50 |
+| Jejantas | 460 | 36 |
+
+- **Chow Kit.** `ChowKitBlock` models four rows with `ArchShopRow(..., vary: false, flatRoof: true)`: 7 lots north and south, 3 east and west, all two storeys.
+  - `BuildingSpec.flatRoof` gives a flat roof you can stand on, with the collider top at the roof.
+  - `KitShop` keeps each lot's awning trampoline, item spot and coins. It also rolls the old kit-shop and sign dice, so the rest of the layout stays where it was.
+  - The roof is 6.85 m up, within an awning bounce plus a double jump.
+
+**What's left as it was:** the mamak, the surau, the landmarks, the street kit and props. About 2,000 TextMesh shop signs went with the old rows.
+
+## Update — more trees: KL is a green city (7 Oct 2026, night)
+
+The user's feedback after the architecture library was "MOREEEE TREEEEES, KL IS A VERY GREEN CITY". The city now has about 15,100 more trees: about 8,390 more in the real-KL patches and 6,706 new in the filler districts.
+
+**Real-KL patches** (`Tools/klmap/patches.py`, rerun; it is offline and deterministic).
+
+Trees in the patches went from 4,001 to 12,394:
+
+| Patch | Before | After |
+| --- | --- | --- |
+| Kota Lama | 635 | 2,940 |
+| Lake Gardens | 2,008 | 4,910 |
+| KL Sentral | 418 | 1,889 |
+| Bukit Nanas | 613 | 1,338 |
+| KLCC | 267 | 787 |
+| Bukit Bintang | 60 | 530 |
+
+- **Street trees** (`build_street_trees`):
+  - Every street 6.5 m or wider gets trees on both pavements, 0.8 m in from the kerb, every 9.5–12.5 m.
+  - Each street gets one kind, picked from a hash of its name and its road class:
+    - big roads: rain trees, palms or angsana;
+    - mid roads: angsana or rain trees;
+    - small roads: angsana, frangipani or rain trees.
+  - The pavements along the grid roads round each patch get a row too.
+  - Kept clear: within 11 m of junctions, patch corners, and where patch streets meet the grid; 6 m round named places; landmark clear zones; market canopies; flyover decks and elevated rail (`overhead()`).
+- **Ground fill** (`build_trees`) uses a jittered grid with per-ground mixes (`TREE_MIX`):
+  - forest: 7.5 m spacing, scale 1.05–1.7;
+  - park: 10.5 m;
+  - lawn: 12.5 m;
+  - leftover downtown paving: 15 m, from `self.paving`, saved by `build_infill`.
+- **Fit** (`tree_fitter`):
+  - Every tree is sized so its crown (`CROWN`, radius at scale 1) clears the buildings and overhead decks round it.
+  - A rain tree that won't fit becomes an angsana, then a frangipani, then nothing.
+- **Walking rings** (`clear_walks`, run after `build_rings`):
+  - People stroll the rings 1.6 m in from the kerb, and turn back at anything their forward ray hits. So no trunk collider may cross a ring.
+  - A tree that's too close gets a slimmer trunk: a smaller scale, or the next smaller kind. Only about 70 are dropped.
+- **Tree codes in KLP6:** 3 rain tree, 4 angsana, 5 palm, 6 frangipani. Codes 0–2 are the old in-game mixes. `CityBuilder.PatchTrees` maps both.
+
+**Filler districts** (`Scripts/World/CityBuilder.Greenery.cs`, `BuildGreenery`).
+
+It runs after `ArchColliders`, so physics can see everything that stands. It draws no dice from `_rng`: seeds come from `Hash01` of each position.
+- **Street trees** go down all four pavements of every filler block (not Chow Kit or the landmarks):
+  - 0.9 m in from the kerb, every 11 m, staying 8 m from the corners;
+  - one kind to three blocks of a road: in town 45% rain tree, 35% angsana, 20% palm; in the kampung, mostly palms.
+- **Lot fill** uses a jittered grid per lot:
+  - kampung 7.5 m: palms, "fruit trees" (smaller angsana), bananas, rain trees;
+  - parks 8.5 m;
+  - surau 9 m;
+  - condos 10 m;
+  - offices 11 m;
+  - shop back courts 12 m.
+  - Left as they were: Pak Mat's yard, the mamak, the pasar and the dealer.
+- **The checks a tree must pass, in order:**
+  - Not under cover: a ray from above must reach the ground. A spot deep inside a building touches none of its walls, so this test is what keeps trees out of big podiums.
+  - The trunk capsule is clear of anything solid, Detail layer included (lamps, stops, booths, bins, trunks).
+  - Two crown boxes, one turned 45°, clear anything big (Detail excluded). Otherwise the tree shrinks, then becomes a smaller kind.
+  - It keeps a gap from the trees the blocks already planted (`_floraAt`, recorded in `AddFlora`) and stays clear of named places (5 m) and coin and item spots (1.5 m).
+- **Clear of the walk loops.** People walk 3 m in from the kerb, at the lot centre ±19 m; street trees stand 0.9 m in, and lot trees stay within ±17 m of the lot centre.
+- **Forest belt** (`ForestBelt`): a 70 m strip of forest floor outside the border wall, with two staggered rows of big rain trees, angsana and palms. They are out of reach, so they have no colliders. It closes the views down the roads and the map's edge from the air.
+- **Counts** (editor): 3,293 street trees, 1,753 in the lots and 1,660 round the edge. The pass takes about 140 ms.
+- **WebLite (phones):** half the street trees, and the lot spacing is 1.4× wider.
+
+**Cost.** Items went from 23,172 to 38,241. Distance versions went from 483k to 951k triangles, built in about 0.5 s in the editor.
+
+**Verified:** SmokeTests 16/16 with the Chow Kit rows, the trees and the regenerated patches. `ShadeCapture.PetalingShade` has three new views: 22 Lake Gardens, 23 Bukit Nanas and 24 a high city view. Before/after sheets are in `Tools/promo_frames/city_rework`, which is gitignored.
+
+**Measured** (`RefinedCharacterBuild.WebGL`, 42 MB; `Tools/web_bench.py`; RTX 3080). Frame rate is unchanged within run-to-run noise. Loading is about 0.4 s longer: the greenery pass takes 0.27–0.34 s in the browser, and the distance versions about 0.12 s more.
+
+| Spot | Architecture only | With the trees |
+| --- | --- | --- |
+| Kampung home | 43.8 fps | 38.0 / 51.1 fps |
+| Petaling (`spot=Pasar`) | 39.5 / 36.6 fps | 38.6 / 38.1 fps |
+| Chow Kit | 31.2 / 27.7 fps | 26.8 / 31.4 fps |
+| Dataran | 48.6 fps | 50.5 fps |
+| KLCC (`spot=Towers`) | — | 76.0 fps |
+
+The architecture library on its own also left frame rates where the shade work had them (see the table above).

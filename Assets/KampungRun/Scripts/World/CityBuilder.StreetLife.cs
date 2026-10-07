@@ -66,20 +66,19 @@ namespace KampungRun
         /// Chow Kit's shophouse awnings are trampolines: a coin hangs over every other one, and where the roof
         /// is in reach of a bounce and a double jump, a coin waits up there too - a route over the market.
         /// </summary>
-        void ShopAwningBounce(GameObject shop, GameObject awning, Vector3 front)
+        void ShopAwningBounce(Vector3 shopPos, float roof, GameObject awning, Vector3 front)
         {
             Trampoline(awning, 11f);
             float awningTop = TopOf(awning);
             var over = awning.transform.position;
             if ((_signIdx & 1) == 0) _city.coinSpots.Add(new Vector3(over.x, awningTop + 2.4f, over.z));
-            float roof = TopOf(shop);
             if (!_loggedRoofs)
             {
                 _loggedRoofs = true;
                 Debug.Log($"[StreetLife] Chow Kit awning top {awningTop - G:F2} m, roof {roof - G:F2} m (reachable: {roof - awningTop < BounceReach})");
             }
             if (roof - awningTop < BounceReach)
-                _city.coinSpots.Add(shop.transform.position - front * 1.5f + Vector3.up * (roof - shop.transform.position.y + 1f));
+                _city.coinSpots.Add(shopPos - front * 1.5f + Vector3.up * (roof - shopPos.y + 1f));
         }
 
         int _stallCoins;

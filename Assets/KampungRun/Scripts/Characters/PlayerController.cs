@@ -121,6 +121,7 @@ namespace KampungRun
             if (Transitioning) EndTransition();
             _cc.enabled = false;
             transform.SetPositionAndRotation(pos, rot);
+            Arch.ArchCity.I?.Prime(pos);              // the buildings round the new spot at full detail now, not a beat later
             _yaw = rot.eulerAngles.y;
             _vel = Vector3.zero;
             _stomping = false;

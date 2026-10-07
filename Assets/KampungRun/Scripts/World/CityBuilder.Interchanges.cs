@@ -139,6 +139,12 @@ namespace KampungRun
                     m.SetNormals(kv.Value.n);
                     m.SetTriangles(kv.Value.t, 0);
                     m.RecalculateBounds();
+                    if (kv.Key == Color.clear)
+                    {
+                        // physics only: the architecture library draws what's here
+                        solids.Add(new CombineInstance { mesh = m, transform = Matrix4x4.identity });
+                        continue;
+                    }
                     var go = new GameObject(name + "_part");
                     go.transform.SetParent(root.transform, false);
                     go.isStatic = true;
@@ -165,8 +171,6 @@ namespace KampungRun
         {
             var road = LatMaterials.Pal.Road;
             var wall = LatMaterials.Pal.Wall;
-            var rail = LatMaterials.Pal.Rail;
-            var pier = new Color(0.78f, 0.76f, 0.72f);
             var paint = new Color(0.97f, 0.97f, 0.94f);
             foreach (var f in Flyovers)
             {
@@ -190,6 +194,18 @@ namespace KampungRun
                 for (float s = dn0; s < dn1; s += 4f) ss.Add(s);
                 ss.Add(dn1);
 
+                // the parapet runs either side (modelled by the architecture library: Arch/Bridgework.cs)
+                var runs = new[] { new List<Vector3>(), new List<Vector3>() };
+                var raisedSegs = new List<bool>();
+                for (int n = 0; n < ss.Count; n++)
+                    for (int k = 0; k < 2; k++) runs[k].Add(W(ss[n], (k == 0 ? -1f : 1f) * (FlyHalf - 0.04f), H(ss[n])));
+                for (int n = 0; n < ss.Count - 1; n++) raisedSegs.Add(ss[n] >= up1 - 0.01f && ss[n + 1] <= dn0 + 0.01f);
+                for (int k = 0; k < 2; k++)
+                    _arch.Add(new Arch.ParapetRun { pts = runs[k].ToArray(), raised = raisedSegs.ToArray(), outward = across * (k == 0 ? -1f : 1f), deckDepth = DeckDepth });
+                // sign gantries over each ramp's foot
+                _arch.Add(new Arch.GantrySpec { centre = W(up0 + 5f, 0f, H(up0 + 5f)), across = across, halfWidth = FlyHalf, signs = _flyoverCount * 3 % 8 });
+                _arch.Add(new Arch.GantrySpec { centre = W(dn1 - 5f, 0f, H(dn1 - 5f)), across = across, halfWidth = FlyHalf, signs = (_flyoverCount * 3 + 4) % 8 });
+
                 for (int n = 0; n < ss.Count - 1; n++)
                 {
                     float s0 = ss[n], s1 = ss[n + 1], h0 = H(s0), h1 = H(s1);
@@ -197,15 +213,15 @@ namespace KampungRun
                     solid.Quad(road, W(s0, -FlyHalf, h0), W(s1, -FlyHalf, h1), W(s1, FlyHalf, h1), W(s0, FlyHalf, h0), Vector3.up);
                     foreach (float sd in new[] { -1f, 1f })
                     {
-                        // parapet
-                        solid.Beam(rail, W(s0, sd * (FlyHalf - 0.2f), h0), W(s1, sd * (FlyHalf - 0.2f), h1), 0.4f, 1.0f);
+                        // parapet (physics; its look is the ParapetRun's)
+                        solid.Beam(Color.clear, W(s0, sd * (FlyHalf - 0.2f), h0), W(s1, sd * (FlyHalf - 0.2f), h1), 0.4f, 1.0f);
                         bool raised = s0 >= up1 - 0.01f && s1 <= dn0 + 0.01f;
                         if (!raised)
                             // embankment retaining wall down to the ground
                             solid.Quad(wall, W(s0, sd * FlyHalf, -0.3f), W(s1, sd * FlyHalf, -0.3f), W(s1, sd * FlyHalf, h1), W(s0, sd * FlyHalf, h0), across * sd);
                         else
-                            // deck fascia
-                            solid.Quad(wall, W(s0, sd * FlyHalf, h0 - DeckDepth), W(s1, sd * FlyHalf, h1 - DeckDepth), W(s1, sd * FlyHalf, h1), W(s0, sd * FlyHalf, h0), across * sd);
+                            // deck fascia (physics; the ParapetRun draws it with its lip and the girders)
+                            solid.Quad(Color.clear, W(s0, sd * FlyHalf, h0 - DeckDepth), W(s1, sd * FlyHalf, h1 - DeckDepth), W(s1, sd * FlyHalf, h1), W(s0, sd * FlyHalf, h0), across * sd);
                         // edge line
                         marks.Quad(paint, W(s0, sd * (FlyHalf - 1.2f), h0 + 0.02f), W(s1, sd * (FlyHalf - 1.2f), h1 + 0.02f),
                                    W(s1, sd * (FlyHalf - 1.4f), h1 + 0.02f), W(s0, sd * (FlyHalf - 1.4f), h0 + 0.02f), Vector3.up);
@@ -235,8 +251,8 @@ namespace KampungRun
                     {
                         float s = Mathf.Lerp(a + 6f, b - 6f, piers == 1 ? 0.5f : q / (float)(piers - 1));
                         var foot = W(s, 0f, 0f);
-                        _ground.Box(foot + Vector3.up * (FlyH - DeckDepth) * 0.5f, f.ns ? new Vector3(2.4f, FlyH - DeckDepth, 2.2f) : new Vector3(2.2f, FlyH - DeckDepth, 2.4f), pier, true, 1.4f);
-                        _ground.Box(foot + Vector3.up * (FlyH - DeckDepth - 0.6f), f.ns ? new Vector3(FlyHalf * 1.6f, 1.2f, 2.6f) : new Vector3(2.6f, 1.2f, FlyHalf * 1.6f), pier, false, 1.4f);
+                        _ground.ColliderOnly(foot + Vector3.up * (FlyH - DeckDepth) * 0.5f, new Vector3(1.8f, FlyH - DeckDepth, 1.8f));
+                        _arch.Add(new Arch.PierSpec { foot = foot, along = along, top = FlyH - DeckDepth, capWidth = FlyHalf * 1.6f });
                     }
                     // the space under the flyover: sealed ground (the kind of place a pasar malam sets up)
                     var mid = W((a + b) * 0.5f, 0f, 0f);

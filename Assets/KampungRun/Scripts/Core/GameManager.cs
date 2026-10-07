@@ -139,6 +139,8 @@ namespace KampungRun
             foreach (var flag in flags)
             {
                 if (flag == "noshadow") _sun.shadows = LightShadows.None;
+                else if (flag == "noshade") CityShade.Enable(false);
+                else if (flag == "noworldshadow") CityShade.WorldShadows(City.root, false);
                 else if (flag == "nopost") { var d = _cam.GetUniversalAdditionalCameraData(); d.renderPostProcessing = false; d.antialiasing = AntialiasingMode.None; }
                 else if (flag == "nopeds") { crowdCap = 0; cityDensity = 0f; foreach (var p in new List<Pedestrian>(Pedestrian.All)) if (p) Destroy(p.gameObject); }
                 else if (flag == "notraffic") { trafficCount = 0; foreach (var v in _traffic) if (v) Destroy(v.gameObject); _traffic.Clear(); }

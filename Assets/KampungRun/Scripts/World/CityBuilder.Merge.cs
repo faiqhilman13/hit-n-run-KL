@@ -87,7 +87,8 @@ namespace KampungRun
                     start = end;
                 }
             }
-            foreach (var c in done) if (c) Object.Destroy(c);
+            // gone at the end of the frame; hidden now so nothing drawn before then (the shade bake) sees them twice
+            foreach (var c in done) if (c) { if (c is Renderer r) r.enabled = false; Object.Destroy(c); }
             foreach (var m in _painted.Values) Object.Destroy(m);
             _painted.Clear();
             ColorPalette.Apply();

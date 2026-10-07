@@ -50,6 +50,8 @@ __pycache__/
 /Tools/promo_frames/
 # ---- motion library review renders (AnimationStudio.ReviewBatch / RoundTripBatch)
 /Tools/anim_review/
+# ---- architecture library review renders (ArchStudio.ReviewBatch)
+/Tools/arch_review/
 /Tools/anim_review_roundtrip.txt
 /Tools/promo_out/
 /Tools/_*.jpg

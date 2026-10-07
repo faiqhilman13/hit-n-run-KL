@@ -38,6 +38,11 @@ namespace KampungRun
         public readonly List<Anchor> anchors = new List<Anchor>();
         public readonly List<Vector2[]> water = new List<Vector2[]>();
         public readonly List<Rail> rails = new List<Rail>();
+        /// <summary>The district's buildings, modelled in the game by the architecture library (KLP6 on).</summary>
+        public readonly List<Arch.BuildingSpec> buildings = new List<Arch.BuildingSpec>();
+        /// <summary>Flyover deck edges (their parapets) and piers, for the architecture library to model.</summary>
+        public readonly List<(Vector3 a, Vector3 b, Vector2 outward)> deckEdges = new List<(Vector3, Vector3, Vector2)>();
+        public readonly List<(Vector2 pos, Vector2 heading, float top, float capWidth)> piers = new List<(Vector2, Vector2, float, float)>();
 
         public static KLPatch Load(string name)
         {
@@ -45,7 +50,7 @@ namespace KampungRun
             if (ta == null) { Debug.LogError($"[KLMap] missing patch {name}"); return null; }
             using var br = new BinaryReader(new MemoryStream(ta.bytes));
             var magic = Encoding.ASCII.GetString(br.ReadBytes(4));
-            if (magic != "KLP5") { Debug.LogError($"[KLMap] {name}: bad format {magic} (rerun Tools/klmap/patches.py)"); return null; }
+            if (magic != "KLP5" && magic != "KLP6") { Debug.LogError($"[KLMap] {name}: bad format {magic} (rerun Tools/klmap/patches.py)"); return null; }
             var p = new KLPatch { name = Str(br) };
             float x0 = br.ReadSingle(), z0 = br.ReadSingle(), x1 = br.ReadSingle(), z1 = br.ReadSingle();
             p.rect = Rect.MinMaxRect(x0, z0, x1, z1);
@@ -102,6 +107,35 @@ namespace KampungRun
                 var r = new Rail { kind = Str(br) };
                 r.pts = V3(br, br.ReadInt32());
                 p.rails.Add(r);
+            }
+            if (magic == "KLP6")
+            {
+                int nb = br.ReadInt32();
+                for (int i = 0; i < nb; i++)
+                {
+                    int n = br.ReadInt32();
+                    var s = new Arch.BuildingSpec { ring = V2(br, n), edges = new Arch.EdgeFlags[n] };
+                    var e = br.ReadBytes(n);
+                    for (int k = 0; k < n; k++) s.edges[k] = (Arch.EdgeFlags)e[k];
+                    s.height = br.ReadSingle();
+                    s.levels = br.ReadByte();
+                    s.kind = (Arch.BuildingKind)br.ReadByte();
+                    s.colour = br.ReadByte();
+                    byte flags = br.ReadByte();
+                    s.tiledRoof = (flags & 1) != 0;
+                    s.seed = br.ReadInt32();
+                    p.buildings.Add(s);
+                }
+                if (br.BaseStream.Position < br.BaseStream.Length)
+                {
+                    int ne2 = br.ReadInt32();
+                    for (int i = 0; i < ne2; i++)
+                        p.deckEdges.Add((new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle()), new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle()),
+                                         new Vector2(br.ReadSingle(), br.ReadSingle())));
+                    int np = br.ReadInt32();
+                    for (int i = 0; i < np; i++)
+                        p.piers.Add((new Vector2(br.ReadSingle(), br.ReadSingle()), new Vector2(br.ReadSingle(), br.ReadSingle()), br.ReadSingle(), br.ReadSingle()));
+                }
             }
             return p;
         }

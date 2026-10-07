@@ -22,7 +22,9 @@ from shapely import affinity
 from shapely.geometry import box, LineString, Point, Polygon, MultiPolygon, GeometryCollection, MultiLineString
 from shapely.geometry.polygon import orient
 from shapely.ops import unary_union
+from shapely.prepared import prep
 from shapely.strtree import STRtree
+import zlib
 
 import layout as L
 from osm import OSM, ROAD_CLASSES, levels
@@ -41,6 +43,56 @@ RIVER_W = {'Gombak': 18.0, 'Klang': 22.0}
 
 # facade textures (CityBuilder.Facades): one texture tile is one window bay x one storey, so
 # wall UVs are in bays (u) and storeys (v)
+# Buildings are modelled in the game by the architecture library (Scripts/World/Arch): the patch carries each
+# footprint, its storeys, what it is and what each wall faces, instead of extruded walls with facade textures.
+ARCH = True
+ARCH_KINDS = ['Shop', 'House', 'Flats', 'Office', 'Worship', 'Shed', 'Civic']        # = BuildingKind in C#
+ARCH_COLOURS = ['bld_pink', 'bld_yellow', 'bld_mint', 'bld_blue', 'bld_orange', 'bld_cream', 'bld_white', 'bld_lilac',
+                'bld_glass_blue', 'bld_glass_teal', 'bld_glass_grey', 'bld_concrete']
+EDGE_STREET, EDGE_PARTY, EDGE_WALKWAY, EDGE_WATER = 1, 2, 4, 8                      # = EdgeFlags in C#
+
+# Trees (KL is a green city). The patch carries each tree's spot, scale and kind; CityBuilder.PatchTrees models
+# them with Arch/Flora.cs. Kinds 0-2 are mixes picked in the game (older patches); the rest are one plant each.
+TREE_RAIN, TREE_ANGSANA, TREE_PALM, TREE_FRANGIPANI = 3, 4, 5, 6
+CROWN = {TREE_RAIN: 4.9, TREE_ANGSANA: 3.3, TREE_PALM: 4.0, TREE_FRANGIPANI: 3.1}    # crown radius at scale 1 (m)
+TREE_MIN = {TREE_RAIN: 0.85, TREE_ANGSANA: 0.75, TREE_PALM: 0.85, TREE_FRANGIPANI: 0.6}
+# when a crown won't clear the buildings round it, the next smaller tree is tried
+TREE_SMALLER = {TREE_RAIN: (TREE_RAIN, TREE_ANGSANA, TREE_FRANGIPANI), TREE_ANGSANA: (TREE_ANGSANA, TREE_FRANGIPANI),
+                TREE_PALM: (TREE_PALM, TREE_ANGSANA, TREE_FRANGIPANI), TREE_FRANGIPANI: (TREE_FRANGIPANI,)}
+# (kind, weight) for each kind of ground, and the scale range wanted
+TREE_MIX = {
+    'forest': (((TREE_RAIN, 55), (TREE_ANGSANA, 35), (TREE_PALM, 10)), (1.05, 1.7), 7.5),
+    'park': (((TREE_RAIN, 40), (TREE_ANGSANA, 35), (TREE_PALM, 15), (TREE_FRANGIPANI, 10)), (0.9, 1.5), 10.5),
+    'lawn': (((TREE_ANGSANA, 40), (TREE_FRANGIPANI, 25), (TREE_PALM, 20), (TREE_RAIN, 15)), (0.85, 1.25), 12.5),
+    'paving': (((TREE_ANGSANA, 45), (TREE_PALM, 35), (TREE_RAIN, 20)), (0.85, 1.2), 15.0),
+}
+# street trees by the class of road: big roads get the big rain trees, side streets angsana and frangipani
+STREET_MIX = {
+    'big': ((TREE_RAIN, 55), (TREE_PALM, 25), (TREE_ANGSANA, 20)),
+    'mid': ((TREE_ANGSANA, 50), (TREE_RAIN, 35), (TREE_PALM, 15)),
+    'small': ((TREE_ANGSANA, 45), (TREE_FRANGIPANI, 25), (TREE_RAIN, 20), (TREE_PALM, 10)),
+}
+TREE_SCALE = {TREE_RAIN: (1.15, 1.6), TREE_ANGSANA: (1.0, 1.3), TREE_PALM: (0.95, 1.2), TREE_FRANGIPANI: (0.85, 1.05)}
+
+
+def pick(rng, mix):
+    """A kind from ((kind, weight), ...)."""
+    x = rng.uniform(0, sum(w for _, w in mix))
+    for k, w in mix:
+        x -= w
+        if x <= 0: return k
+    return mix[-1][0]
+
+
+def arch_kind(btype, lv, worship, glass):
+    """Which of the game's building generators an OSM building goes to."""
+    if worship: return 'Worship'
+    if btype in ('house', 'detached', 'terrace', 'bungalow', 'semidetached_house'): return 'House'
+    if btype in ('apartments', 'residential', 'dormitory'): return 'Flats'
+    if btype in ('industrial', 'warehouse', 'garage', 'garages', 'shed', 'hut', 'kiosk', 'carport', 'parking'): return 'Shed'
+    if btype in ('school', 'university', 'college', 'hospital', 'government', 'public', 'civic', 'train_station', 'transportation'): return 'Civic'
+    if lv >= 6: return 'Office' if glass or lv >= 12 or btype in ('commercial', 'office', 'hotel', 'retail') else 'Flats'
+    return 'Shop'
 BAY, FLOOR = 3.6, 3.4         # punched windows (fac_win)
 GLASS_BAY = 3.0               # curtain wall (fac_glass)
 SHOP_H, SHOPS = 4.2, 4        # ground-floor shopfront band; fac_shop is four 3.6 m shops wide
@@ -485,6 +537,8 @@ class PatchBuild:
             parts = [LineString([cs[i], cs[i + 1]]).buffer((r['w'] + 1.0) / 2, cap_style=2)
                      for i in range(len(cs) - 1) if max(hs[i], hs[i + 1]) >= 0.35]
             foot.append(unary_union(parts) if parts else Polygon())
+        self.fly_foot = unary_union([f for f in foot if not f.is_empty] or [Polygon()]).buffer(0)    # (trees keep out)
+        self.bridge_edges, self.piers = [], []        # (ARCH) the parapets and piers the game models over these decks
         for n, r in enumerate(self.fly):
             others = unary_union([f for m, f in enumerate(foot) if m != n and not f.is_empty] or [Polygon()]).buffer(-0.4)
             self._others = others
@@ -505,17 +559,19 @@ class PatchBuild:
             for k in range(1, n + 1):
                 pt = ls.interpolate(k * 24)
                 s = k * 24
-                # height at s
-                acc, y = 0.0, 0.0
+                # height and heading at s
+                acc, y, hd = 0.0, 0.0, (1.0, 0.0)
                 for i in range(len(coords) - 1):
                     seg = math.dist(coords[i], coords[i + 1])
                     if acc + seg >= s:
                         t = (s - acc) / max(seg, 1e-6)
                         y = hs[i] + (hs[i + 1] - hs[i]) * t
+                        hd = ((coords[i + 1][0] - coords[i][0]) / max(seg, 1e-6), (coords[i + 1][1] - coords[i][1]) / max(seg, 1e-6))
                         break
                     acc += seg
                 if y < 3.0 or not self.rect.contains(pt) or ground_road.buffer(0.8).contains(pt) or self.river.contains(pt): continue
                 self.pillar(pt.x, pt.y, y - 0.9, 1.8)
+                if ARCH: self.piers.append((pt.x, pt.y, hd[0], hd[1], y - 0.9, w * 0.9))
 
     def deck_segment(self, a, b, width):
         a, b = np.array(a, float), np.array(b, float)
@@ -537,10 +593,15 @@ class PatchBuild:
             e0, e1 = a + side * s * 0.96, b + side * s * 0.96
             others = getattr(self, '_others', None)
             if others is not None and not others.is_empty and others.contains(Point((e0[0] + e1[0]) / 2, (e0[2] + e1[2]) / 2)): continue
-            self.box_along(tuple(e0), tuple(e1), 0.35, 1.0, 'barrier')
+            if ARCH:
+                # the game models the parapet (Arch/Bridgework.cs); the box stays as its solid
+                self.box_along(tuple(e0), tuple(e1), 0.35, 1.0, 'barrier_col')
+                self.bridge_edges.append((tuple(a + side * s), tuple(b + side * s), (side[0] * s / (width / 2), side[2] * s / (width / 2))))
+            else:
+                self.box_along(tuple(e0), tuple(e1), 0.35, 1.0, 'barrier')
 
     def pillar(self, x, z, top, size):
-        m = self.meshes['pillar']
+        m = self.meshes['pillar_col' if ARCH else 'pillar']
         h = size / 2
         c = [(x - h, z - h), (x + h, z - h), (x + h, z + h), (x - h, z + h)]
         for (x0, z0), (x1, z1) in zip(c, c[1:] + c[:1]):
@@ -601,6 +662,7 @@ class PatchBuild:
         self.clear = clear
         inner = self.rect.buffer(-1.0, join_style=2)
         self.building_polys = []
+        self.arch = []
         self.canopies = []
         for b in self.osm.buildings:
             if not b['poly'].intersects(self.win): continue
@@ -640,6 +702,18 @@ class PatchBuild:
         h = 3.4 * lv if lv <= 4 else 13.6 + (lv - 4) * 3.4 * 0.62
         h = min(h, 190.0)
         y0, y1 = TOP, TOP + h
+        if ARCH:
+            # the game models it: record what it is (its walls get classified once every building is known)
+            if worship: colour, roof = 'bld_white', 'roof_green' if btype == 'mosque' else 'roof_terracotta'
+            elif lv >= 12: colour, roof = (rng.choice(self.OFFICE[:3]) if rng.random() < 0.7 else rng.choice(self.OFFICE)), 'roof_concrete'
+            elif lv >= 6: colour, roof = rng.choice(['bld_cream', 'bld_white', 'bld_concrete', 'bld_glass_grey', 'bld_mint', 'bld_blue']), 'roof_concrete'
+            else: colour, roof = rng.choice(self.PASTEL), rng.choice(['roof_terracotta', 'roof_terracotta', 'roof_concrete'])
+            glass = colour.startswith('bld_glass')
+            self.arch.append(dict(g=orient(g, 1.0), h=h, lv=max(1, int(round(lv))), kind=arch_kind(btype, lv, worship, glass),
+                                  colour=ARCH_COLOURS.index(colour) + 1 if colour in ARCH_COLOURS else 0,
+                                  tiled=roof == 'roof_terracotta', glass=glass, seed=rng.randint(0, 2 ** 31 - 1)))
+            self.building_polys.append((g, h, colour, roof))
+            return
         if worship:
             wall, roof = 'bld_white', 'roof_green' if btype == 'mosque' else 'roof_terracotta'
             self.meshes[wall].walls(g, y0, y1)
@@ -759,6 +833,41 @@ class PatchBuild:
                     x += w + 3.0
             free = free.difference(unary_union([g.buffer(0.01) for g, *_ in self.building_polys[-self.infill:]] or [Polygon()])) if self.infill else free
         if ground == 'paving' and not free.is_empty: self.meshes['land_paving'].flat(free, TOP)
+        self.paving = free if ground == 'paving' else Polygon()       # (a tree here and there: build_trees)
+
+    # -------------------------------------------------------------- what each building's walls face
+    def classify_edges(self):
+        """For each modelled building, what each footprint edge faces: a street or pavement (its front), the next
+        building (a party wall, left blank), a pedestrian street, the river."""
+        if not self.arch: return
+        polys_ = [b['g'] for b in self.arch]
+        tree = STRtree(polys_)
+        street = unary_union([self.road, self.walk, self.ped]).buffer(0)
+        river = self.river.buffer(4.0)
+        for i, b in enumerate(self.arch):
+            ring = list(b['g'].exterior.coords)[:-1]
+            flags = []
+            for j in range(len(ring)):
+                (x0, z0), (x1, z1) = ring[j], ring[(j + 1) % len(ring)]
+                dx, dz = x1 - x0, z1 - z0
+                ln = math.hypot(dx, dz)
+                if ln < 1e-6:
+                    flags.append(0)
+                    continue
+                ox, oz = dz / ln, -dx / ln                          # outward of a counter-clockwise ring
+                mx, mz = (x0 + x1) / 2, (z0 + z1) / 2
+                near, far = Point(mx + ox * 0.5, mz + oz * 0.5), Point(mx + ox * 2.5, mz + oz * 2.5)
+                f = 0
+                for k in tree.query(near):
+                    if k != i and polys_[k].buffer(0.05).contains(near):
+                        f |= EDGE_PARTY
+                        break
+                if not f:
+                    if street.contains(far) or street.contains(near): f |= EDGE_STREET
+                    if self.ped.contains(far): f |= EDGE_WALKWAY
+                    if river.contains(far): f |= EDGE_WATER
+                flags.append(f)
+            b['ring'], b['edges'] = ring, flags
 
     # -------------------------------------------------------------- car park bays
     def build_parking_marks(self):
@@ -792,44 +901,129 @@ class PatchBuild:
 
     # -------------------------------------------------------------- street trees
     def build_street_trees(self):
-        """Rain trees along the pavements of the bigger roads, 0.8 m in from the kerb."""
+        """
+        KL's street trees down both pavements of the streets, 0.8 m in from the kerb about every 11 m: one kind to a
+        street, as the city plants them (rain trees on the big roads, angsana and frangipani on the side streets, a
+        palm boulevard now and then), each sized so its crown clears the buildings. Then a row down the pavements
+        along the grid roads round the patch.
+        """
         rng = random.Random(len(self.p.name) * 31)
-        blocked = unary_union([g.buffer(1.8) for g, *_ in self.building_polys] + [c.buffer(1.0) for c in self.canopies] +
-                              [self.clear, self.river.buffer(2.0), self.road.buffer(0.6)]).buffer(0)
-        walk = self.walk.buffer(-0.3)
-        junctions = self.junction_points()
-        jt = STRtree(junctions) if junctions else None
+        fit = self.tree_fitter()
+        blocked = prep(unary_union([g.buffer(1.6) for g, *_ in self.building_polys] + [c.buffer(1.0) for c in self.canopies] +
+                                   [self.clear, self.river.buffer(2.0), self.road.buffer(0.5), self.overhead()] + self.place_spots(6)).buffer(0))
+        walk = prep(self.walk.buffer(-0.3))
+        rect = prep(self.rect)
+        # junctions, the patch's corners and where its streets meet the grid roads: crossings, kept clear
+        junctions = self.junction_points() + [Point(c) for c in self.rect.exterior.coords]
         for r in self.ground:
-            if r['w'] < 10: continue
+            for c in (r['g'].coords[0], r['g'].coords[-1]):
+                if self.rect.exterior.distance(Point(c)) < 4: junctions.append(Point(c))
+        jt = STRtree(junctions)
+        grid = defaultdict(list)                    # trees already standing (parks along a road): 5 m apart
+        for x, z, *_ in self.trees: grid[(int(x // 5), int(z // 5))].append((x, z))
+
+        def clear_of_trees(q, r=5.0):
+            gx, gz = int(q.x // 5), int(q.y // 5)
+            return not any((x - q.x) ** 2 + (z - q.y) ** 2 < r * r
+                           for i in (-1, 0, 1) for j in (-1, 0, 1) for x, z in grid[(gx + i, gz + j)])
+
+        def plant(q, kind, scale):
+            if not rect.contains(q) or not walk.contains(q) or blocked.contains(q) or not clear_of_trees(q): return
+            if any(junctions[i].distance(q) < 11 for i in jt.query(q.buffer(11))): return
+            k, s = fit(q, kind, scale)
+            if k is None: return
+            self.trees.append((q.x, q.y, s, k))
+            grid[(int(q.x // 5), int(q.y // 5))].append((q.x, q.y))
+
+        def row(ln, kind):
+            lo, hi = TREE_SCALE[kind]
+            s = rng.uniform(3, 9)
+            while s < ln.length:
+                q = ln.interpolate(s)
+                s += rng.uniform(9.5, 12.5)
+                plant(q, kind, rng.uniform(lo, hi))
+
+        for r in self.ground:
+            if r['w'] < 6.5: continue
+            cls = r['cls']
+            size = 'big' if cls in ('trunk', 'trunk_link', 'primary', 'primary_link', 'motorway', 'motorway_link') else \
+                   'mid' if cls in ('secondary', 'secondary_link', 'tertiary', 'tertiary_link') else 'small'
+            name = r['tags'].get('name') or str(r['id'])
+            kind = pick(random.Random(zlib.crc32(name.encode('utf-8'))), STREET_MIX[size])
             for side in (-1, 1):
                 try:
                     off = r['g'].offset_curve(side * (r['w'] / 2 + 0.8), join_style='mitre')
                 except Exception:
                     continue
                 for ln in lines(off):
-                    s = rng.uniform(4, 12)
-                    while s < ln.length:
-                        q = ln.interpolate(s)
-                        s += rng.uniform(15, 22)
-                        if not self.rect.contains(q) or not walk.contains(q) or blocked.contains(q): continue
-                        if jt is not None and any(junctions[i].distance(q) < 14 for i in jt.query(q.buffer(14))): continue
-                        self.trees.append((q.x, q.y, rng.uniform(0.8, 1.1), 2 if rng.random() < 0.6 else 1))
+                    row(ln, kind)
+        edge = list(self.rect.buffer(-0.9, join_style=2).exterior.coords)
+        for i in range(len(edge) - 1):
+            row(LineString([edge[i], edge[i + 1]]), pick(random.Random(zlib.crc32(f'{self.p.name}:{i}'.encode())), STREET_MIX['big']))
 
     # -------------------------------------------------------------- trees
+    def place_spots(self, r):
+        """Discs of radius r round the named places in the patch (where missions and landmarks stand)."""
+        out = []
+        for name in PLACES + list(LANDMARKS):
+            if name in L.REAL:
+                x, z = self.p.frame.to_game(*L.REAL[name])
+                out.append(Point(x, z).buffer(r))
+        return out
+
+    def overhead(self):
+        """What passes over the ground that a tree can't grow into: flyover decks and the elevated railways (the
+        guideways are built later, by build_rails, with the same rules)."""
+        if not hasattr(self, '_overhead'):
+            parts = [getattr(self, 'fly_foot', Polygon())]
+            reach = self.rect.buffer(L.ROAD / 2, join_style=2)
+            for rl in self.osm.rails:
+                kind, t = rl['kind'], rl['tags']
+                if kind not in RAIL_H or t.get('tunnel') == 'yes' or t.get('layer', '0').startswith('-'): continue
+                if kind == 'light_rail' and t.get('bridge') not in ('yes', 'viaduct') and t.get('layer', '0') in ('0', ''): continue
+                if not rl['line'].intersects(self.win): continue
+                parts.append(self.T(rl['line']).intersection(reach).buffer(1.2 if kind == 'monorail' else 4.0))
+            self._overhead = unary_union([p for p in parts if not p.is_empty] or [Polygon()]).buffer(0)
+        return self._overhead
+
+    def tree_fitter(self):
+        """fit(q, kind, scale) -> (kind, scale): the tree, starting from `kind` and going smaller, whose crown
+        clears the buildings and decks round q; (None, 0) if not even a frangipani fits."""
+        polys_ = [g for g, *_ in self.building_polys] + polys(self.overhead())
+        bt = STRtree(polys_) if polys_ else None
+
+        def fit(q, kind, scale):
+            d = 99.0
+            if bt is not None:
+                for i in bt.query(q.buffer(9.0)): d = min(d, polys_[i].distance(q))
+            for k in TREE_SMALLER[kind]:
+                s = min(scale if k == kind else TREE_SCALE[k][1], (d - 0.4) / CROWN[k])
+                if s >= TREE_MIN[k]: return k, s
+            return None, 0.0
+        return fit
+
     def build_trees(self):
+        """Trees over the forest, parks and lawns on a jittered grid (thickest in the forest), and one here and there
+        on the open paving downtown, each sized so its crown clears the buildings."""
         self.trees = []
-        blocked = unary_union([self.road.buffer(2.5), self.river.buffer(3), self.ponds.buffer(1), self.clear] +
-                              [g.buffer(2.0) for g, *_ in self.building_polys]).buffer(0)
-        for kind, spacing, models in (('forest', 10.5, (0, 0, 1)), ('park', 16.0, (0, 1, 2))):
-            area = self.landkind.get(kind)
+        fit = self.tree_fitter()
+        blocked = prep(unary_union([self.road.buffer(2.5), self.river.buffer(3), self.ponds.buffer(1), self.clear] +
+                                   [g.buffer(1.8) for g, *_ in self.building_polys] + [c.buffer(1.5) for c in self.canopies] +
+                                   [self.overhead()] + self.place_spots(6)).buffer(0))
+        for ground in ('forest', 'park', 'lawn', 'paving'):
+            area = getattr(self, 'paving', None) if ground == 'paving' else self.landkind.get(ground)
             if area is None or area.is_empty: continue
+            mix, (lo, hi), spacing = TREE_MIX[ground]
+            inside = prep(area)
             x0, z0, x1, z1 = area.bounds
             rng = random.Random(len(self.trees) + 7)
             for x in np.arange(x0, x1, spacing):
                 for z in np.arange(z0, z1, spacing):
                     p = Point(x + rng.uniform(-spacing * 0.4, spacing * 0.4), z + rng.uniform(-spacing * 0.4, spacing * 0.4))
-                    if area.contains(p) and not blocked.contains(p):
-                        self.trees.append((p.x, p.y, rng.uniform(0.85, 1.35), rng.choice(models)))
+                    kind, scale = pick(rng, mix), rng.uniform(lo, hi)
+                    if not inside.contains(p) or blocked.contains(p): continue
+                    k, s = fit(p, kind, scale)
+                    if k is not None: self.trees.append((p.x, p.y, s, k))
 
     def tree_meshes(self):
         """Cartoon trees merged into the patch: a six-sided trunk and a lumpy low-poly canopy (two leaf shades)."""
@@ -959,6 +1153,32 @@ class PatchBuild:
                 q = q.simplify(0.6)
                 if q.length > 30: self.rings.append((list(q.exterior.coords)[:-1], 1))
 
+    TRUNK = {0: 0.4, 1: 0.3, 2: 0.3, TREE_RAIN: 0.4, TREE_ANGSANA: 0.3, TREE_PALM: 0.25, TREE_FRANGIPANI: 0.18}   # Flora.Collider
+
+    def clear_walks(self):
+        """People stroll the rings and turn back at whatever their path runs into: no trunk may stand on one. A tree
+        too close gets a slimmer trunk (smaller, or the next smaller kind); one that can't is dropped."""
+        segs = []
+        for ring, _ in self.rings:
+            for a, b in zip(ring, ring[1:] + ring[:1]):
+                segs.append(LineString([a, b]))
+        if not segs: return
+        st = STRtree(segs)
+        keep = []
+        for x, z, sc, k in self.trees:
+            q = Point(x, z)
+            d = min((segs[i].distance(q) for i in st.query(q.buffer(1.2))), default=9.0) - 0.15
+            if self.TRUNK.get(k, 0.4) * sc <= d:
+                keep.append((x, z, sc, k))
+                continue
+            for k2 in TREE_SMALLER.get(k, ()):
+                s2 = min(sc if k2 == k else TREE_SCALE[k2][1], d / self.TRUNK[k2])
+                if s2 >= TREE_MIN[k2]:
+                    keep.append((x, z, s2, k2))
+                    break
+        self.dropped_on_walks = len(self.trees) - len(keep)
+        self.trees = keep
+
     # -------------------------------------------------------------- landmarks + places
     def build_anchors(self):
         self.anchors = []
@@ -1038,12 +1258,14 @@ class PatchBuild:
         self.build_markings()
         self.build_buildings()
         self.build_infill()
+        self.classify_edges()
         self.build_parking_marks()
         self.build_trees()
         self.build_street_trees()
         # (tree meshes are built in the game from self.trees: CityBuilder.PatchTrees)
         self.build_graph()
         self.build_rings()
+        self.clear_walks()
         self.build_anchors()
         self.build_rails()
         return self
@@ -1060,12 +1282,17 @@ def write_patch(pb, path):
       int nAnchors; per anchor: name(str), model(str), 2f pos, 2f road place
       int nWater; per ring: int n, n*2f (river outlines, reaching under the surrounding grid roads)
       int nRails; per line: kind(str), int n, n*3f (elevated LRT / monorail centre lines)
+      int nBuildings; per building (modelled in the game, Scripts/World/Arch): int n, n*2f footprint (counter-clockwise),
+        n bytes edge flags (1 street, 2 party wall, 4 pedestrian street, 8 river), f height, byte levels, byte kind
+        (ARCH_KINDS), byte colour (ARCH_COLOURS + 1, 0 = any), byte flags (1 tiled roof, 2 glass), int seed
+      int nEdges; per flyover deck edge: 3f, 3f (its ends at road level), 2f outward | int nPiers; per pier: 2f (x, z), 2f heading, f deck underside, f cap width
+      (keys ending _col are physics only: the game models what stands there)
     str = int byte length + utf-8
     """
     def s(x):
         b = x.encode('utf-8')
         return struct.pack('<i', len(b)) + b
-    out = bytearray(b'KLP5')
+    out = bytearray(b'KLP6')
     out += s(pb.p.name) + struct.pack('<4f', *pb.p.rect)
     meshes = [(k, m) for k, m in pb.meshes.items() if m.t]
     out += struct.pack('<i', len(meshes))
@@ -1102,6 +1329,19 @@ def write_patch(pb, path):
     for kind, pts in pb.rail_lines:
         out += s(kind) + struct.pack('<i', len(pts))
         for x, y, z in pts: out += struct.pack('<3f', x, y, z)
+    arch = [b for b in getattr(pb, 'arch', []) if 'ring' in b and len(b['ring']) >= 3]
+    out += struct.pack('<i', len(arch))
+    for b in arch:
+        out += struct.pack('<i', len(b['ring']))
+        for x, z in b['ring']: out += struct.pack('<2f', x, z)
+        out += bytes(b['edges'])
+        out += struct.pack('<fBBBBi', b['h'], min(255, b['lv']), ARCH_KINDS.index(b['kind']), b['colour'],
+                           (1 if b['tiled'] else 0) | (2 if b['glass'] else 0), b['seed'])
+    edges, piers = getattr(pb, 'bridge_edges', []), getattr(pb, 'piers', [])
+    out += struct.pack('<i', len(edges))
+    for (a, b, o) in edges: out += struct.pack('<8f', a[0], a[1], a[2], b[0], b[1], b[2], o[0], o[1])
+    out += struct.pack('<i', len(piers))
+    for pr in piers: out += struct.pack('<6f', *pr)
     with open(path, 'wb') as f: f.write(out)
     return len(out)
 
@@ -1185,6 +1425,10 @@ if __name__ == '__main__':
         size = write_patch(pb, os.path.join(RES, p.name + '.bytes'))
         preview(pb, os.path.join(OUT, p.name + '.png'))
         tris = sum(len(m.t) // 3 for m in pb.meshes.values())
+        kinds = defaultdict(int)
+        for b in getattr(pb, 'arch', []): kinds[b['kind']] += 1
+        fronts = sum(1 for b in getattr(pb, 'arch', []) if any(f & EDGE_STREET for f in b.get('edges', [])))
+        print(f'{p.name:12s} modelled {dict(kinds)}, {fronts} with a street front')
         print(f'{p.name:12s} {size / 1e6:5.2f} MB  tris={tris:7d}  buildings={len(pb.building_polys):4d} (infill {pb.infill})  fly={len(pb.fly):3d}  '
-              f'nodes={len(pb.gnodes):4d} edges={len(pb.gedges):4d} links={len(pb.glinks):3d} rings={len(pb.rings):3d} trees={len(pb.trees):4d} '
+              f'nodes={len(pb.gnodes):4d} edges={len(pb.gedges):4d} links={len(pb.glinks):3d} rings={len(pb.rings):3d} trees={len(pb.trees):4d} (-{getattr(pb, "dropped_on_walks", 0)} on walks) '
               f'anchors={[a[0] for a in pb.anchors]}')
