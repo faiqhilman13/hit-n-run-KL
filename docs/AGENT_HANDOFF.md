@@ -565,3 +565,8 @@ It runs after `ArchColliders`, so physics can see everything that stands. It dra
 | KLCC (`spot=Towers`) | — | 76.0 fps |
 
 The architecture library on its own also left frame rates where the shade work had them (see the table above).
+
+**Released 7 Oct 2026:**
+- **GitHub:** `50ca1ff`, the shade, the architecture library, Chow Kit and the trees in one commit.
+- **itch:** html5 1.13.0 (build #2081752).
+- **Re-run bench:** a Chrome bench re-run just before the push measured low: home 25 fps, Chow Kit 11 fps. The user was running Crusader Kings 3 and Defender was scanning the new build, so even CPU-only load steps took twice as long. The clean numbers are the table above.
