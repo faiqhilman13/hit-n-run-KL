@@ -509,9 +509,11 @@ def menara_kl():
     m.cyl((0, 0, zt + 20), 2.0, 1.6, 9.0, "white", seg=10)
     m.tube((0, 0, zt + 24), (0, 0, H), 1.1, 0.15, "steel", seg=8)
     if not lo:
-        for f in (0.25, 0.5, 0.72):
+        for k in range(6):
+            f = (k + 0.5) / 6.5
             z = zt + 24 + (H - zt - 24) * f
-            m.cyl((0, 0, z), 1.4 - f, 1.4 - f, 0.8, "white", seg=8)
+            r = 1.1 - 0.95 * f + 0.12
+            m.cyl((0, 0, z), r, r * 0.95, (H - zt - 24) / 13, "bf_red", seg=8)
         m.ball((0, 0, H), (0.4, 0.4, 0.4), "lamp_red", seg=8, rings=5)
     return m
 
@@ -521,11 +523,17 @@ SAS_TOWER_X = 9.0     # the clock tower along the front (authoring), from the OS
 
 
 def sas_arcade(m, x0, x1, y, z, h, n, pointed=False):
-    """A verandah of arches on the front face (y), painted dark in a white surround."""
+    """A verandah of horseshoe arches on the front face (y): dark openings between cream piers, a cream arch ring."""
     w = (x1 - x0) / n
+    lo = lod()
     for i in range(n):
         x = x0 + (i + 0.5) * w
-        arch_window(m, x, y, z + 0.35, w * 0.62, h - 0.9, "window_dark", frame="white", pointed=pointed, seg=8 if not lod() else 4)
+        arch_window(m, x, y, z + 0.35, w * 0.5, h - 1.0, "window_dark", frame="cream", pointed=pointed, seg=8 if not lo else 4)
+        if not lo:
+            m.box((x0 + i * w, y - 0.18, z + (h - 0.6) / 2), (0.55, 0.36, h - 0.6), "cream")
+    if not lo:
+        m.box((x1, y - 0.18, z + (h - 0.6) / 2), (0.55, 0.36, h - 0.6), "cream")
+        m.box(((x0 + x1) / 2, y - 0.3, z + 0.9), (x1 - x0, 0.25, 0.9), "cream")     # balustrade
 
 
 def sas_wing(m, x0, x1, y0, y1, z_top, floors=2):
@@ -627,122 +635,140 @@ PS_CX = 14.5          # the hall's middle (authoring), from the OSM footprint at
 
 
 def pasar_seni():
-    """Central Market: the Art Deco hall in powder blue and white - a long two-storey block with fluted pilasters,
-    the stepped central gable with its three tall windows and the clock, ribbed corner towers, a sawtooth roof
-    behind."""
+    """Central Market: the long Art Deco hall in powder blue - big white-framed window bays of dark glass between blue
+    piers, a ribbed white frieze along the parapet, the stepped blue centre bay with CENTRAL MARKET over a tall
+    entrance in fluted white jambs, the flag on top; sawtooth roof lights behind."""
     m = K.Mesher()
+    lo = lod()
     cx = PS_CX
-    W, D, H = 78.0, 40.0, 12.0
+    W, D, H = 78.0, 40.0, 11.0
+    fy = 3.0 - D / 2                       # the front wall
     body = rect(cx, 3.0, W, D)
     prism(m, body, 0, H, "deco_blue", cap_color="concrete")
-    band(m, body, 0, 1.0, 0.25, "white")
-    band(m, body, H - 1.2, 1.2, 0.35, "white", top=True)
-    band(m, body, 4.6, 0.6, 0.25, "white", top=True)
-    # fluted white pilasters and tall window bays along the front and the ends
-    n = 13
-    for i in range(n + 1):
-        x = cx - W / 2 + i * W / n
-        m.box((x, -17.2, H / 2), (1.0, 0.8, H + 0.6), "white")
-        if not lod():
-            for dx in (-0.3, 0.0, 0.3):
-                m.box((x + dx, -17.65, H / 2), (0.12, 0.1, H - 1.0), "deco_blue")
-        if i < n:
-            xm = x + W / n / 2
-            m.box((xm, -17.1, 2.6), (3.2, 0.3, 3.2), "window_dark")
-            m.box((xm, -17.1, 8.4), (3.2, 0.3, 4.6), "glass")
-            if not lod():
-                for k in range(3):
-                    m.box((xm, -17.3, 6.6 + k * 1.6), (3.3, 0.12, 0.14), "white")
-    # the stepped central frontispiece: three tall windows, the clock, a crest of setbacks
-    fx, fy = cx, -18.5
-    for k, (w, h) in enumerate(((22.0, 15.5), (15.0, 18.0), (9.0, 20.5))):
-        m.box((fx, fy + k * 0.4, h / 2), (w, 3.4 - k * 0.6, h), "white" if k != 1 else "deco_blue")
-    for dx in (-3.6, 0, 3.6):
-        m.box((fx + dx, fy - 1.8, 9.0), (2.4, 0.3, 11.0), "glass")
-        if not lod():
-            for k in range(5):
-                m.box((fx + dx, fy - 1.95, 4.5 + k * 2.2), (2.5, 0.1, 0.16), "white")
-    m.cyl((fx, fy - 0.9, 17.6), 1.5, 1.5, 0.3, "white", seg=16, rot=(math.pi / 2, 0, 0))
-    m.cyl((fx, fy - 1.05, 17.6), 1.2, 1.2, 0.3, "charcoal", seg=16, rot=(math.pi / 2, 0, 0))
-    m.box((fx, fy - 1.9, 13.6), (12.0, 0.4, 1.4), "sign_blank")                 # the CENTRAL MARKET board
-    m.box((fx, fy - 2.2, 4.0), (10.0, 1.6, 0.4), "white")                       # entrance canopy
-    m.box((fx, fy - 1.85, 1.8), (6.0, 0.2, 3.4), "window_dark")
-    # ribbed Art Deco corner towers
-    for x in (cx - W / 2 + 2.5, cx + W / 2 - 2.5):
-        prism(m, rect(x, -14.5, 6.0, 6.0), 0, H + 4.0, "white", cap_color="deco_blue")
-        for k in range(3):
-            prism(m, rect(x, -14.5, 6.0 - k * 1.4, 6.0 - k * 1.4), H + 4.0 + k * 1.2, H + 5.2 + k * 1.2,
-                  "deco_blue" if k % 2 == 0 else "white")
-        if not lod():
-            for dx in (-1.6, 0, 1.6):
-                m.box((x + dx, -17.55, H / 2 + 2), (0.5, 0.2, H + 2.0), "deco_blue")
-    # the sawtooth roof lights
-    if True:
-        for i in range(6):
-            x = cx - W / 2 + 8 + i * (W - 16) / 5
-            m.prism((x, 4.0, H), (5.0, D - 8, 2.6), "white", rot=(0, 0, math.pi / 2))
+    band(m, body, 0, 0.8, 0.2, "white")
+    # the ribbed frieze under the parapet
+    band(m, body, H - 2.6, 2.0, 0.25, "white", top=True)
+    if not lo:
+        for k in range(4):
+            band(m, body, H - 2.4 + k * 0.48, 0.16, 0.35, "maybank_grey")
+    band(m, body, H - 0.4, 0.4, 0.3, "deco_blue", top=True)
+    # window bays: white frames round dark glass, with a little Deco motif on each pier
+    bays = [(-34, -24), (-20, -10), (10, 20), (24, 34)]
+    for b0, b1 in bays:
+        for s in (1, -1):
+            x0, x1 = cx + b0 * s, cx + b1 * s
+            xm, w = (x0 + x1) / 2, abs(x1 - x0)
+            m.box((xm, fy - 0.15, 4.4), (w, 0.3, 6.6), "white")
+            m.box((xm, fy - 0.3, 4.2), (w - 1.2, 0.2, 5.6), "jade_green" if False else "petronas_glass")
+            if not lo:
+                for k in range(1, 4):
+                    m.box((xm - w / 2 + k * w / 4, fy - 0.42, 4.2), (0.12, 0.1, 5.6), "white")
+                m.box((xm, fy - 0.42, 4.2), (w - 1.2, 0.1, 0.12), "white")
+    if not lo:
+        for x in (-22, -8, 8, 22, -36, 36):
+            m.box((cx + x, fy - 0.2, 5.5), (0.6, 0.2, 1.8), "white")
+            m.ball((cx + x, fy - 0.25, 6.6), (0.45, 0.15, 0.45), "white", seg=8, rings=4)
+    # the stepped centre bay
+    for k, (w, h) in enumerate(((17.0, H + 1.6), (13.0, H + 2.8), (9.0, H + 3.8), (5.0, H + 4.6))):
+        m.box((cx, fy - 0.6 - k * 0.05, h / 2), (w, 1.4, h), "deco_blue")
+        m.box((cx, fy - 0.62 - k * 0.05, h - 0.15), (w + 0.2, 1.45, 0.3), "white")
+    m.box((cx, fy - 1.4, 9.2), (11.0, 0.2, 1.4), "sign_blank")        # CENTRAL MARKET (lettered in the game)
+    # the entrance: fluted white jambs round a tall dark doorway with a Deco grille
+    m.box((cx, fy - 1.35, 3.5), (6.2, 0.3, 7.0), "white")
+    if not lo:
+        for dx in (-2.6, -2.1, 2.1, 2.6):
+            m.box((cx + dx, fy - 1.55, 3.5), (0.22, 0.2, 7.0), "maybank_grey")
+    m.box((cx, fy - 1.55, 3.0), (3.8, 0.2, 6.0), "window_dark")
+    if not lo:
+        for k in range(4):
+            m.box((cx, fy - 1.68, 4.0 + k * 0.5), (3.0 - k * 0.6, 0.1, 0.25), "petronas_glass")
+        m.tube((cx, fy - 0.4, H + 4.6), (cx, fy - 0.4, H + 12.0), 0.08, 0.06, "steel", seg=6)
+        flag_malaysia(m, cx + 0.1, fy - 0.4, H + 11.8, 2.6, 1.3, thick=0.06)
+    # stepped ends of the front
+    for s in (1, -1):
+        m.box((cx + s * (W / 2 - 1.5), fy - 0.4, (H + 1.2) / 2), (3.0, 1.0, H + 1.2), "deco_blue")
+    # sawtooth roof lights (ridges run front to back)
+    for i in range(7):
+        x = cx - W / 2 + 7 + i * (W - 14) / 6
+        m.prism((x, 4.0, H), (D - 8, 4.6, 2.4), "white", rot=(0, 0, math.pi / 2))
     # the covered way (Laluan Kasturi) along the front
-    m.box((cx - 10, -20.8, 4.6), (46, 3.6, 0.4), "deco_blue")
-    if not lod():
+    m.box((cx - 10, fy - 4.2, 4.6), (46, 4.0, 0.35), "deco_blue")
+    if not lo:
         for i in range(8):
-            m.tube((cx - 32 + i * 6.3, -22.4, 0), (cx - 32 + i * 6.3, -22.4, 4.4), 0.15, 0.15, "white", seg=6)
+            m.tube((cx - 32 + i * 6.3, fy - 5.8, 0), (cx - 32 + i * 6.3, fy - 5.8, 4.4), 0.15, 0.15, "white", seg=6)
     return m
 
 
 # ============================================================================ Petaling Street gate + canopy
 def petaling_gate():
-    """The Chinatown gate over Jalan Petaling: red pillars on white bases, a green glazed-tile roof in two tiers
-    with upswept eaves and a gold ridge, the name board and lanterns. Spans 14 m along X."""
+    """The Chinatown gate over Jalan Petaling: red pillars on white bases, the blue JALAN PETALING board in a red and
+    gold frame, a green glazed-tile roof in two tiers with upswept eaves and a gold ridge, red lanterns."""
     m = K.Mesher()
+    lo = lod()
     span = 13.0
     for s in (1, -1):
         x = s * span / 2
         m.box((x, 0, 0.5), (1.8, 1.8, 1.0), "marble")
         m.cyl((x, 0, 4.2), 0.55, 0.55, 6.6, "bf_red", seg=12)
         m.box((x, 0, 7.6), (1.4, 1.4, 0.4), "gold")
+    m.box((0, 0, 6.2), (span, 0.8, 0.6), "bf_red")
     m.box((0, 0, 7.9), (span + 2.0, 1.1, 1.0), "bf_red")
     m.box((0, 0, 8.6), (span + 1.0, 0.8, 0.5), "gold")
-    m.box((0, -0.55, 7.0), (7.0, 0.3, 1.8), "gold")                     # the name board
-    m.box((0, -0.72, 7.0), (6.4, 0.1, 1.4), "bf_red")
+    # the name board: blue in a red and gold frame, hung between the beams
+    m.box((0, -0.5, 6.9), (8.0, 0.3, 2.2), "bf_red")
+    m.box((0, -0.62, 6.9), (7.4, 0.2, 1.8), "gold")
+    m.box((0, -0.72, 6.9), (6.8, 0.15, 1.4), "flag_blue")
+    m.box((0, -0.5, 5.4), (9.0, 0.25, 0.9), "sign_blank")      # the welcome banner under it
     for tier, (z, w, d, h) in enumerate(((9.2, span + 4.0, 3.6, 1.5), (11.0, span * 0.6, 2.6, 1.3))):
         m.box((0, 0, z - 0.3), (w - 1.0, d - 1.4, 0.6), "bf_red")
         m.prism((0, 0, z), (w, d, h), "jade_green")
         m.box((0, 0, z + h + 0.1), (w * 0.9, 0.35, 0.35), "gold")
-        if not lod():
+        if not lo:
             for s in (1, -1):
                 for t in (1, -1):
                     m.tube((s * (w / 2 - 0.3), t * (d / 2 - 0.2), z + 0.1), (s * (w / 2 + 0.8), t * (d / 2 + 0.4), z + 1.0),
                            0.18, 0.06, "jade_green", seg=5)
                 m.ball((s * w * 0.44, 0, z + h + 0.5), (0.35, 0.2, 0.45), "gold", seg=8, rings=5)
-    if not lod():
-        for x in (-4.5, -1.5, 1.5, 4.5):
-            m.ball((x, -0.9, 6.4), (0.45, 0.45, 0.55), "lantern_red", seg=10, rings=7)
-            m.cyl((x, -0.9, 6.95), 0.22, 0.22, 0.12, "gold", seg=8)
-            m.tube((x, -0.9, 7.0), (x, -0.9, 7.4), 0.03, 0.03, "gold", seg=4)
+    if not lo:
+        for y in (-0.9, 0.9):
+            for x in (-5.4, -3.6, 3.6, 5.4):
+                m.ball((x, y, 6.6), (0.42, 0.42, 0.52), "lantern_red", seg=10, rings=7)
+                m.cyl((x, y, 7.12), 0.2, 0.2, 0.12, "gold", seg=8)
     return m
 
 
 def petaling_canopy():
-    """One 10 m bay of the Petaling Street canopy: green translucent-look barrel roof on steel portal frames over the
-    street (14 m across X; runs along Y). Modules join end to end."""
+    """One 10 m bay of the Petaling Street canopy: a tall curved roof of green glass on steel trusses high over the
+    street (14 m across X; runs along Y), strings of red lanterns under it. Modules join end to end."""
     m = K.Mesher()
-    span, L, z0 = 14.0, 10.0, 9.0
-    n = 8 if not lod() else 4
-    # the barrel: a shallow arc of panels
+    lo = lod()
+    span, L, z0 = 14.0, 10.0, 12.0
+    n = 8 if not lo else 4
+    pts = []
+    for i in range(n + 1):
+        a = math.pi * (0.12 + 0.76 * i / n)
+        pts.append(Vector((math.cos(a) * span / 2 / math.cos(math.pi * 0.12), 0, math.sin(a) * 3.6)))
     for i in range(n):
-        a0, a1 = math.pi * (0.15 + 0.7 * i / n), math.pi * (0.15 + 0.7 * (i + 1) / n)
-        p0 = Vector((math.cos(a0) * span / 2 / math.cos(math.pi * 0.15), 0, math.sin(a0) * 2.8))
-        p1 = Vector((math.cos(a1) * span / 2 / math.cos(math.pi * 0.15), 0, math.sin(a1) * 2.8))
+        p0, p1 = pts[i], pts[i + 1]
         mid = (p0 + p1) / 2
         ang = math.atan2(p1.z - p0.z, p1.x - p0.x)
-        m.box((mid.x, 0, z0 + mid.z), ((p1 - p0).length + 0.05, L, 0.18), "canopy_green", rot=(0, -ang, 0))
-    # the portal frames at each end
-    for y in (-L / 2 + 0.2, L / 2 - 0.2):
+        m.box((mid.x, 0, z0 + mid.z), ((p1 - p0).length + 0.05, L, 0.16), "canopy_green", rot=(0, -ang, 0))
+        if not lo:
+            m.box((mid.x, -L / 2 + 0.2, z0 + mid.z - 0.25), ((p1 - p0).length + 0.05, 0.25, 0.4), "steel", rot=(0, -ang, 0))
+    for y in (-L / 2 + 0.2,):
         for s in (1, -1):
-            m.box((s * span * 0.5, y, z0 / 2 + 0.6), (0.35, 0.35, z0 + 1.2), "lamp_green")
-        m.box((0, y, z0 + 0.9), (span + 0.4, 0.3, 0.35), "lamp_green")
+            m.box((s * span * 0.5, y, z0 / 2 + 0.8), (0.4, 0.4, z0 + 1.6), "steel")
+            if not lo:
+                m.tube((s * span * 0.5, y, z0 - 2.5), (s * span * 0.3, y, z0 + 1.2), 0.15, 0.15, "steel", seg=4)
     for s in (1, -1):
-        m.box((s * span * 0.5, 0, z0 + 0.95), (0.3, L, 0.3), "lamp_green")
+        m.box((s * span * 0.5, 0, z0 + 1.0), (0.3, L, 0.35), "steel")
+    if not lo:
+        # lantern strings across the street
+        for y in (-2.5, 2.5):
+            m.tube((-span * 0.45, y, z0 - 2.0), (span * 0.45, y, z0 - 2.0), 0.03, 0.03, "wire_black", seg=4)
+            for k in range(5):
+                x = -span * 0.36 + k * span * 0.18
+                m.ball((x, y, z0 - 2.6), (0.38, 0.38, 0.48), "lantern_red", seg=8, rings=6)
     return m
 
 
@@ -865,44 +891,79 @@ def stadium_negara():
 
 # ============================================================================ Menara Maybank
 def maybank():
-    """Menara Maybank on Jalan Tun Perak: a white tower on a diamond plan whose two halves rise to different heights
-    and are cut off on the slant like the hilt of a keris, with ribbon windows, on a podium."""
+    """Menara Maybank on Jalan Tun Perak: two white slabs side by side, one a little taller, a dark recess running up
+    the joint between them, the whole tower flaring out at its foot like the hilt of a keris; vertical fins, white
+    lattice bands, the yellow sign at the top, and the Malay pavilion roof at the base. The tower stands square to
+    the footprint's diamond (45 degrees)."""
     m = K.Mesher()
     H = 159.0                        # 244 m x 0.65
     lo = lod()
-    pod = [(0.2, 38.4), (-35.2, 1.5), (-10.6, -22.0), (-19.4, -31.2), (2.3, -51.4), (22.7, -29.9), (13.5, -21.1), (37.1, 3.3)]
-    prism(m, pod, 0, 10.0, "maybank_grey", cap_color="concrete")
-    band(m, pod, 1.0, 3.4, 0.12, "glass")
-    band(m, pod, 9.4, 0.6, 0.4, "white", top=True)
-    s = 19.0
-    halves = [([(0, s), (-s, 0), (0, -s)], H, H - 22.0, "white"),
-              ([(0, s), (0, -s), (s, 0)], H - 18.0, H - 34.0, "maybank_grey")]
-    for pts, ztop_hi, ztop_lo, col in halves:
-        pts = ccw(moved(pts, 1.0, 2.0))
-        prism(m, pts, 10.0, ztop_lo, col, top=False)
-        tmp = bmesh.new()
-        lo_v = [tmp.verts.new((x, y, ztop_lo)) for x, y in pts]
-        far = max(range(3), key=lambda i: abs(pts[i][0] - 1.0))
-        hi_v = [tmp.verts.new((x, y, ztop_hi if i == far else ztop_lo + (ztop_hi - ztop_lo) * 0.35)) for i, (x, y) in enumerate(pts)]
-        for i in range(3):
-            j = (i + 1) % 3
-            tmp.faces.new((lo_v[i], lo_v[j], hi_v[j], hi_v[i]))
-        tmp.faces.new(hi_v)
-        m._merge(tmp, col)
+    cx, cy = 1.0, 0.0
+    r2 = math.sqrt(0.5)
+
+    def P(u, v):                     # tower frame -> authoring (turned 45 degrees onto the diamond)
+        return (cx + (u - v) * r2, cy + (u + v) * r2)
+
+    def R(u0, u1, v0, v1):
+        return [P(u0, v0), P(u1, v0), P(u1, v1), P(u0, v1)]
+    zf = 30.0                        # top of the flare
+    blocks = [(-14.0, 0.0, -13.0, 13.0, H), (0.0, 14.0, -11.0, 15.0, H - 11.0)]
+    for u0, u1, v0, v1, top in blocks:
+        cu, cv = (u0 + u1) / 2, (v0 + v1) / 2
+        # the flare: wide at the ground, drawn in to the shaft
+        k = 1.55
+        base = R(cu + (u0 - cu) * k, cu + (u1 - cu) * k, cv + (v0 - cv) * k, cv + (v1 - cv) * k)
+        loft(m, [(base, 0.0), (R(u0, u1, v0, v1), zf)], "white", close_top=False)
+        prism(m, R(u0, u1, v0, v1), zf, top, "white", cap_color="concrete")
         if not lo:
-            z = 14.0
-            while z < ztop_lo - 2:
-                band(m, pts, z, 1.4, 0.12, "petronas_glass")
-                z += 4.2
-    m.box((1.0, 2.0, H / 2 - 4), (1.2, 2 * s - 2, H - 30), "white")
-    m.box((-6.5, -11.0, H - 34), (8.0, 0.4, 5.0), "crate_yellow", rot=(0, 0, math.pi / 4))
+            # dark glazing between white fins on every face, and the lattice bands
+            for (a0, a1, b0, b1, along_u) in ((u0, u1, v0, v0, True), (u0, u1, v1, v1, True), (u0, u0, v0, v1, False), (u1, u1, v0, v1, False)):
+                n = 10 if along_u else 12
+                for i in range(n):
+                    t = (i + 0.5) / n
+                    if along_u:
+                        uu, vv = a0 + (a1 - a0) * t, a0 * 0 + b0
+                        out = -0.15 if b0 == v0 else 0.15
+                        x, y = P(uu, vv + out)
+                        m.box((x, y, (zf + top - 6) / 2), (0.3 * (a1 - a0) / n, 0.3, top - zf - 8), "charcoal", rot=(0, 0, math.pi / 4))
+                    else:
+                        uu, vv = a0, b0 + (b1 - b0) * t
+                        out = -0.15 if a0 == u0 else 0.15
+                        x, y = P(uu + out, vv)
+                        m.box((x, y, (zf + top - 6) / 2), (0.3, 0.3 * (b1 - b0) / n, top - zf - 8), "charcoal", rot=(0, 0, math.pi / 4))
+            for z in (zf + 1.5, 0.62 * H):
+                band(m, R(u0, u1, v0, v1), z, 3.0, 0.25, "white", top=True)
+                for i in range(int((u1 - u0) / 1.6)):
+                    x, y = P(u0 + 0.8 + i * 1.6, v0 - 0.3)
+                    m.box((x, y, z + 1.5), (0.7, 0.2, 0.7), "maybank_grey", rot=(math.pi / 4, 0, math.pi / 4))
+            # fins down the flare
+            for i in range(9):
+                t = (i + 0.5) / 9
+                uu = u0 + (u1 - u0) * t
+                a = P(cu + (uu - cu) * k, cv + (v0 - cv) * k - 0.2)
+                b = P(uu, v0 - 0.2)
+                m.tube((a[0], a[1], 0.2), (b[0], b[1], zf), 0.25, 0.25, "maybank_grey", seg=4)
+    # the dark recess up the joint on the front
+    x, y = P(0.0, -13.3)
+    m.box((x, y, (zf + H - 22) / 2 + 4), (2.6, 0.8, H - 22 - zf), "charcoal", rot=(0, 0, math.pi / 4))
+    # the yellow sign on the taller slab
+    x, y = P(-7.0, -13.4)
+    m.box((x, y, H - 5.0), (11.0, 0.5, 4.0), "crate_yellow", rot=(0, 0, math.pi / 4))
+    if not lo:
+        x, y = P(-7.0, -13.7)
+        m.box((x, y, H - 5.0), (7.0, 0.2, 1.2), "charcoal", rot=(0, 0, math.pi / 4))
+    # the Malay pavilion roof at the foot of the front
+    x, y = P(0.0, -26.0)
+    m.box((x, y, 3.0), (10.0, 10.0, 6.0), "cream", rot=(0, 0, math.pi / 4))
+    m.cyl((x, y, 9.5), 10.0, 0.6, 7.0, "wood_dark", seg=4, rot=(0, 0, 0))
+    m.cyl((x, y, 14.0), 3.0, 0.3, 3.0, "wood_dark", seg=4)
     return m
 
 
 # ============================================================================ Dayabumi
 def dayabumi():
-    """Dayabumi: the white tower dressed in a screen of pointed Islamic arches, on an eight-point plan of two
-    overlapping squares, with an arched crown, on its podium beside the river."""
+    """Dayabumi: the white tower folded into sixteen points, each face a tall recessed panel of Islamic screen under a
+    pointed arch, the folds rising to a crown of points, pointed-arch windows round its foot; on its podium."""
     m = K.Mesher()
     H = 102.0                        # 157 m x 0.65
     lo = lod()
@@ -910,39 +971,42 @@ def dayabumi():
            (27.1, -1.1), (23.3, -24.0), (37.5, -44.0), (34.1, -61.9), (24.3, -68.4), (29.1, -76.8), (-20.8, -67.3)]
     prism(m, pod, 0, 9.0, "white", cap_color="concrete")
     band(m, pod, 1.0, 3.2, 0.12, "glass")
-    band(m, pod, 8.4, 0.6, 0.4, "sandstone", top=True)
+    band(m, pod, 8.4, 0.6, 0.4, "maybank_grey", top=True)
     tx, ty = 8.0, -36.0
     R = 15.0
-    plan = []
-    for k in range(8):
-        a = k * math.pi / 4
-        plan.append((tx + math.cos(a) * R, ty + math.sin(a) * R))
-        a2 = a + math.pi / 8
-        plan.append((tx + math.cos(a2) * R * 0.8, ty + math.sin(a2) * R * 0.8))
-    prism(m, plan, 9.0, H, "white", cap_color="concrete")
-    if not lo:
-        rows = int((H - 14) / 6.5)
-        for row in range(rows):
-            z = 11.0 + row * 6.5
-            for i in range(16):
-                (x0, y0), (x1, y1) = plan[i], plan[(i + 1) % 16]
-                a = math.atan2(y1 - y0, x1 - x0)
-                L = math.hypot(x1 - x0, y1 - y0)
-                arch_window(m, (x0 + x1) / 2 + math.sin(a) * 0.05, (y0 + y1) / 2 - math.cos(a) * 0.05, z, L * 0.62, 5.4,
-                            "petronas_glass", pointed=True, rot=a, seg=6)
-    else:
-        band(m, plan, 12, H - 18, 0.1, "petronas_glass")
-    crown = scaled(plan, 0.85, tx, ty)
-    prism(m, crown, H, H + 7.0, "white", cap_color="white")
-    if not lo:
-        for i in range(16):
-            (x0, y0), (x1, y1) = crown[i], crown[(i + 1) % 16]
-            a = math.atan2(y1 - y0, x1 - x0)
-            L = math.hypot(x1 - x0, y1 - y0)
-            arch_window(m, (x0 + x1) / 2 + math.sin(a) * 0.05, (y0 + y1) / 2 - math.cos(a) * 0.05, H + 0.6, L * 0.6, 5.6,
-                        "window_dark", pointed=True, rot=a, seg=6)
-    m.cyl((tx, ty, H + 8.0), 4.0, 2.0, 2.0, "white", seg=12)
-    m.tube((tx, ty, H + 9), (tx, ty, H + 18), 0.4, 0.1, "steel", seg=6)
+    n = 16
+    plan = [(tx + math.cos(i / (2 * n) * TAU) * (R if i % 2 == 0 else R * 0.86),
+             ty + math.sin(i / (2 * n) * TAU) * (R if i % 2 == 0 else R * 0.86)) for i in range(2 * n)]
+    plan = ccw(plan)
+    # walls, with the points rising above the valleys at the top
+    tmp = bmesh.new()
+    lo_v = [tmp.verts.new((x, y, 9.0)) for x, y in plan]
+    hi_v = []
+    for i, (x, y) in enumerate(plan):
+        r = math.hypot(x - tx, y - ty)
+        hi_v.append(tmp.verts.new((x, y, H + (5.0 if r > R * 0.93 else 0.0))))
+    for i in range(2 * n):
+        j = (i + 1) % (2 * n)
+        tmp.faces.new((lo_v[i], lo_v[j], hi_v[j], hi_v[i]))
+    c = tmp.verts.new((tx, ty, H - 1.0))
+    for i in range(2 * n):
+        j = (i + 1) % (2 * n)
+        tmp.faces.new((hi_v[i], hi_v[j], c))
+    m._merge(tmp, "white")
+    # the recessed screen panels with their pointed heads, and the arched windows round the foot
+    for i in range(2 * n):
+        (x0, y0), (x1, y1) = plan[i], plan[(i + 1) % (2 * n)]
+        a = math.atan2(y1 - y0, x1 - x0)
+        L = math.hypot(x1 - x0, y1 - y0)
+        nx, ny = math.sin(a), -math.cos(a)
+        mx, my = (x0 + x1) / 2 + nx * 0.06, (y0 + y1) / 2 + ny * 0.06
+        if not lo:
+            arch_window(m, mx, my, 17.0, L * 0.5, H - 26.0, "maybank_grey", pointed=True, rot=a, seg=6, depth=0.1)
+            arch_window(m, mx + nx * 0.02, my + ny * 0.02, 10.0, L * 0.55, 6.0, "petronas_glass", frame="white", pointed=True,
+                        rot=a, seg=6, depth=0.12)
+        else:
+            m.box((mx, my, H / 2 + 4), (L * 0.5, 0.15, H - 26), "maybank_grey", rot=(0, 0, a))
+    m.tube((tx, ty, H - 1), (tx, ty, H + 10), 0.4, 0.1, "steel", seg=6)
     return m
 
 
@@ -996,4 +1060,320 @@ KIT_LANDMARKS3.update({
     "env_lm3_maybank": (maybank, None),
     "env_lm3_dayabumi": (dayabumi, None),
     "env_lm3_pavilion": (pavilion_kl, None),
+})
+
+
+# ============================================================================ Merdeka 118
+def merdeka118():
+    """Merdeka 118: the faceted blue-glass supertall. Its plan is an octagon of long and short sides and every storey
+    band is turned half a facet from the last, so the faces fold into diamonds; it swells a little a third of the way
+    up and draws in to the crown, from which the long faceted spire rises. Podium round its foot. (679 m x 0.65)"""
+    m = K.Mesher()
+    lo = lod()
+    H = 440.0
+    zr = 0.76 * H                    # the crown (roof); the spire takes the rest
+    pod = [(0.1, 62.0), (-35.8, -28.9), (-18.6, -41.9), (6.2, -47.9), (9.2, -43.9), (4.4, -32.8), (26.9, -7.3), (32.3, 26.5),
+           (49.5, 39.5), (46.8, 45.6), (31.5, 56.0), (22.3, 59.4)]
+    prism(m, pod, 0, 16.0, "petronas_glass", cap_color="concrete")
+    band(m, pod, 15.2, 0.8, 0.4, "white", top=True)
+    band(m, pod, 5.0, 0.6, 0.3, "white")
+    cx, cy, R = 4.0, 6.0, 22.0
+
+    def plan(r, turn):
+        pts = []
+        for i in range(8):
+            a = turn + i / 8 * TAU
+            k = 1.0 if i % 2 == 0 else 0.86
+            pts.append((cx + math.cos(a) * r * k, cy + math.sin(a) * r * k))
+        return pts
+    prof = [(0.0, 0.92), (0.08, 1.0), (0.2, 1.06), (0.32, 1.08), (0.44, 1.04), (0.55, 0.96), (0.64, 0.86), (0.71, 0.74),
+            (0.76, 0.6)]
+    rings = []
+    steps = 18 if not lo else 9
+    for s in range(steps + 1):
+        f = s / steps * 0.76
+        # interpolate the swelling profile
+        for (f0, k0), (f1, k1) in zip(prof, prof[1:]):
+            if f0 <= f <= f1:
+                k = k0 + (k1 - k0) * (f - f0) / (f1 - f0)
+                break
+        rings.append((plan(R * k, (s % 2) * TAU / 16), max(16.0, f * H)))
+    # skin it as triangles so the alternate rings fold into diamonds
+    tmp = bmesh.new()
+    vr = [[tmp.verts.new((x, y, z)) for x, y in ccw(pts)] for pts, z in rings]
+    for a, b in zip(vr, vr[1:]):
+        for i in range(8):
+            j = (i + 1) % 8
+            tmp.faces.new((a[i], a[j], b[i]))
+            tmp.faces.new((a[j], b[j], b[i]))
+    m._merge(tmp, "petronas_glass")
+    if not lo:
+        # silver lines up the folds
+        for a, b in zip(rings, rings[1:]):
+            for i in range(8):
+                p0 = Vector((a[0][i][0], a[0][i][1], a[1]))
+                p1 = Vector((b[0][i][0], b[0][i][1], b[1]))
+                m.tube(p0, p1, 0.25, 0.25, "petronas_steel", seg=4)
+    # the crown: a slanted cap and the spire, faceted, to the tip
+    top = rings[-1]
+    zc = top[1]
+    loft(m, [(top[0], zc), (plan(R * 0.42, TAU / 16), zc + 12), (plan(R * 0.22, 0), zc + 24)], "petronas_glass", close_top=True)
+    m.tube((cx, cy, zc + 20), (cx, cy, H), 3.4, 0.25, "petronas_steel", seg=8 if not lo else 4)
+    if not lo:
+        m.ball((cx, cy, H), (0.6, 0.6, 0.6), "lamp_red", seg=6, rings=4)
+    return m
+
+
+# ============================================================================ KL Sentral
+def kl_sentral():
+    """KL Sentral: the big station block under its long, low-pitched grey metal roof with skylight ridges, glass
+    walls round the concourse, the taxi and bus canopies and the entrance canopy on the front. (yaw 332)"""
+    m = K.Mesher()
+    lo = lod()
+    x0, x1, y0, y1 = -38.0, 97.0, -60.0, 38.0
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    W, D = x1 - x0, y1 - y0
+    body = rect(cx, cy, W, D)
+    prism(m, body, 0, 14.0, "white", cap_color="concrete")
+    band(m, body, 1.0, 4.5, 0.15, "glass")
+    band(m, body, 7.5, 4.5, 0.15, "glass")
+    band(m, body, 13.2, 0.8, 0.5, "white", top=True)
+    # the roof: long low barrel ridges running along X, metal grey with skylights on top
+    n = 5
+    for i in range(n):
+        y = y0 + (i + 0.5) * D / n
+        m.prism((cx, y, 14.0), (W + 2.0, D / n + 0.6, 5.0), "maybank_grey")
+        m.box((cx, y, 18.9), (W - 6, 2.2, 0.4), "glass")
+    # end gables and a ridge
+    for x in (x0 - 1.0, x1 + 1.0):
+        m.box((x, cy, 15.5), (0.6, D + 2, 3.0), "maybank_grey")
+    # front canopy (entrance) and taxi canopies
+    m.box((cx, y0 - 7.0, 7.0), (40.0, 14.0, 0.6), "white")
+    if not lo:
+        for x in (-12, 0, 12):
+            for y in (-5, -13):
+                m.tube((cx + x, y0 + y, 0), (cx + x, y0 + y, 7.0), 0.35, 0.35, "steel", seg=8)
+    for s in (-1, 1):
+        m.box((cx + s * 50, y0 - 5.0, 5.0), (30, 10, 0.5), "steel")
+        if not lo:
+            for x in (-12, 0, 12):
+                m.tube((cx + s * 50 + x, y0 - 8.5, 0), (cx + s * 50 + x, y0 - 8.5, 5.0), 0.25, 0.25, "steel", seg=6)
+    m.box((cx, y0 - 0.4, 12.2), (24.0, 0.6, 2.6), "sign_blank")
+    # the rail tracks leave from the ends
+    for x in (x0 - 4.0, x1 + 4.0):
+        m.box((x, cy + 10, 7.5), (8.0, 30.0, 1.0), "concrete")
+    return m
+
+
+# ============================================================================ Muzium Negara
+def muzium_negara():
+    """Muzium Negara: a long Malay palace under steep mauve-brown tiled roofs with crossed gable horns; the tall cream
+    central gable over the entrance stair with its tall windows; long brown-and-gold mural panels along the walls;
+    a terrace and the stair in front. (yaw 180: the front to the road)"""
+    m = K.Mesher()
+    lo = lod()
+    W, D = 70.0, 17.0
+    m.box((0, 0, 0.8), (W + 4, D + 6, 1.6), "concrete")
+    for k in range(6):
+        m.box((0, -D / 2 - 3.0 - k * 0.6, 1.6 - (k + 1) * 0.27 + 0.13), (12, 0.6, 0.27 * (6 - k) * 1.0 + 0.27), "concrete")
+    body = rect(0, 0, W, D)
+    prism(m, body, 1.6, 9.5, "cream", cap_color="cream")
+    # mural panels along the front and back
+    for s in (1, -1):
+        for x0, x1 in ((-33, -8), (8, 33)):
+            m.box(((x0 + x1) / 2, s * (D / 2 + 0.06), 6.0), (x1 - x0, 0.15, 4.6), "tile_brown")
+            if not lo:
+                for k in range(8):
+                    x = x0 + (k + 0.5) * (x1 - x0) / 8
+                    m.box((x, s * (D / 2 + 0.15), 6.0 + (0.8 if k % 2 else -0.6)), (1.6, 0.1, 1.6), "brass")
+                    m.box((x + 0.9, s * (D / 2 + 0.15), 6.0 - (0.9 if k % 2 else -0.5)), (0.9, 0.1, 1.2), "wood_dark")
+    if not lo:
+        for i in range(17):
+            x = -34 + i * 4.25
+            m.box((x, -D / 2 - 0.3, 5.0), (0.3, 0.3, 7.0), "white")
+    # the long roofs: steep gables along X, eaves overhanging
+    roof = "roof_mauve"
+    m.prism((0, 0, 9.5), (W + 3.0, D + 5.0, 8.5), roof)
+    for s in (1, -1):
+        m.prism((s * (W / 2 + 0.6), 0, 9.5), (1.2, D + 5.0, 8.5), roof)
+    # the tall central gable block and its roof
+    m.box((0, -1.0, 9.0), (14.0, D + 2.0, 14.0), "cream")
+    m.box((0, -D / 2 - 1.05, 9.0), (6.0, 0.2, 12.0), "window_dark")
+    if not lo:
+        for dx in (-2.2, 0, 2.2):
+            m.box((dx, -D / 2 - 1.2, 9.0), (0.4, 0.2, 12.0), "cream")
+        for dx in (-2.6, 0, 2.6):
+            m.prism((dx, -D / 2 - 1.3, 3.0), (0.3, 2.4, 1.4), "white", rot=(0, 0, math.pi / 2))
+        m.cyl((0, -D / 2 - 1.15, 14.8), 0.8, 0.8, 0.2, "gold", seg=10, rot=(math.pi / 2, 0, 0))
+    gz = 16.0
+    m.prism((0, -1.0, gz), (D + 8.0, 17.0, 12.0), roof, rot=(0, 0, math.pi / 2))
+    m.box((0, -D / 2 - 4.6, gz + 0.2), (13.0, 0.5, 0.5), "wood_dark")
+    # crossed horns at each gable tip
+    for (x, y, z) in ((0, -D / 2 - 5.0, gz + 12.0), (0, D / 2 + 3.0, gz + 12.0), (W / 2 + 1.0, 0, 18.0), (-W / 2 - 1.0, 0, 18.0)):
+        for s in (1, -1):
+            m.tube((x - s * 0.6, y, z - 0.6), (x + s * 1.4, y, z + 2.2), 0.18, 0.12, "wood_dark", seg=5)
+    return m
+
+
+# ============================================================================ Masjid Negara
+def masjid_negara():
+    """Masjid Negara: the turquoise eighteen-point folded umbrella roof over the prayer hall (gold ridges), the wide
+    flat roof of little concrete domes over the verandahs, white grilles, reflecting pools, and the slim 73 m
+    minaret with its pencil top. (yaw 202: the front to the road)"""
+    m = K.Mesher()
+    lo = lod()
+    site = [(-32.4, -16.0), (-32.3, -8.6), (-38.3, -8.6), (-37.7, 40.0), (-12.2, 39.8), (-11.8, 69.5), (-3.4, 69.5), (-3.5, 56.3),
+            (18.7, 56.1), (18.9, 69.7), (27.6, 69.6), (27.4, 38.5), (35.8, 38.5), (35.6, -8.8), (26.8, -8.8), (26.8, -17.1),
+            (45.2, -17.1), (45.1, -24.9), (28.3, -24.8), (28.1, -44.8), (18.5, -44.8), (18.8, -8.7), (-22.8, -8.5), (-23.2, -44.3),
+            (-31.9, -44.2), (-31.7, -25.1), (-53.9, -24.9), (-53.7, -15.9)]
+    prism(m, site, 0, 1.4, "white", cap_color="marble")
+    # the verandah roof: a flat slab on columns, dotted with little domes
+    slab = offset(site, -0.5)
+    prism(m, slab, 7.2, 8.0, "white", top=False, bottom=True)
+    cap(m, slab, 8.0, "concrete")
+    if not lo:
+        band(m, slab, 1.4, 5.8, 0.1, "concrete_dark")
+    # (dome grid is laid by a point-in-polygon test written here to stay dependency free)
+    def inside(px, py, poly):
+        c = False
+        n = len(poly)
+        for i in range(n):
+            (x0, y0), (x1, y1) = poly[i], poly[(i + 1) % n]
+            if (y0 > py) != (y1 > py) and px < (x1 - x0) * (py - y0) / (y1 - y0 + 1e-9) + x0:
+                c = not c
+        return c
+    if not lo:
+        for gx in range(-52, 46, 6):
+            for gy in range(-44, 70, 6):
+                x, y = gx + 3.0, gy + 3.0
+                if -26 < x < 26 and -6 < y < 38:
+                    continue
+                if inside(x, y, slab):
+                    m.ball((x, y, 8.0), (2.2, 2.2, 1.2), "white", seg=8, rings=3)
+    # the prayer hall walls (white grilles) and the umbrella
+    hx, hy = 0.0, 15.0
+    prism(m, circle(22.0, 18, hx, hy), 1.4, 10.0, "white")
+    if not lo:
+        band(m, circle(22.0, 18, hx, hy), 2.0, 6.5, 0.12, "dome_blue")
+    star = []
+    for i in range(36):
+        a = i / 36 * TAU
+        r = 26.0 if i % 2 == 0 else 20.5
+        star.append((hx + math.cos(a) * r, hy + math.sin(a) * r))
+    inner = [(hx + (x - hx) * 0.18, hy + (y - hy) * 0.18) for x, y in star]
+    tmp = bmesh.new()
+    lo_ring = []
+    for i, (x, y) in enumerate(star):
+        lo_ring.append(tmp.verts.new((x, y, 9.5 if i % 2 == 0 else 12.5)))
+    apex = tmp.verts.new((hx, hy, 22.0))
+    for i in range(36):
+        j = (i + 1) % 36
+        tmp.faces.new((lo_ring[i], lo_ring[j], apex))
+    tmp.faces.new(list(reversed(lo_ring)))
+    m._merge(tmp, "verdigris")
+    if not lo:
+        for i in range(0, 36, 2):
+            x, y = star[i]
+            m.tube((x, y, 9.6), (hx, hy, 22.0), 0.25, 0.15, "gold", seg=4)
+    m.cyl((hx, hy, 22.6), 1.2, 0.3, 1.6, "gold", seg=8)
+    # reflecting pools in front
+    m.box((-10, -36, 0.9), (16, 14, 0.2), "tarp_blue")
+    m.box((40, -21, 1.0), (10, 6, 0.2), "tarp_blue")
+    # the minaret: a slim twelve-point shaft, a balcony and the pencil top
+    mx, my = -46.0, -21.0
+    m.cyl((mx, my, 0.8), 5.0, 5.0, 1.6, "tarp_blue", seg=16)
+    shaft = star_n(12, 2.2, 1.8)
+    prism(m, moved(shaft, mx, my), 1.4, 38.0, "white")
+    if not lo:
+        for z in (10.0, 20.0, 30.0):
+            band(m, moved(shaft, mx, my), z, 0.4, 0.15, "concrete_dark")
+    m.cyl((mx, my, 38.6), 3.0, 3.0, 1.2, "white", seg=16)
+    m.cyl((mx, my, 41.0), 2.2, 2.2, 3.6, "dome_blue", seg=12)
+    m.cyl((mx, my, 43.3), 2.6, 2.6, 1.0, "white", seg=12)
+    m.cyl((mx, my, 46.5), 2.2, 0.15, 5.4, "verdigris", seg=12)
+    m.tube((mx, my, 49), (mx, my, 51.5), 0.1, 0.05, "gold", seg=4)
+    return m
+
+
+# ============================================================================ Batu Caves (outlying block: x LandmarkScale)
+def batu_caves():
+    """Batu Caves: the sheer grey limestone cliff with jungle on its ledges and the dark cave mouth up top, the 272
+    rainbow steps climbing to it, and Lord Murugan in gold beside the foot of the stairs (a third of the cliff's
+    height), on his plinth in the temple plaza. Same block conventions as kit 2 (the game scales it x2)."""
+    m = K.Mesher()
+    lo = lod()
+    rng = random.Random(5)
+    # the cliff: a fluted wall of vertical rock buttresses, leaning back, lumpy on top
+    for i in range(16):
+        x = -19 + i * 2.55
+        dep = rng.uniform(5, 9)
+        h = rng.uniform(24, 34) - abs(x) * 0.25
+        y0 = 6.0 + rng.uniform(-1.0, 1.5)
+        m.box((x, y0 + dep / 2 + 2, h / 2), (3.2, dep + 4, h), "limestone" if i % 3 else "limestone_dark",
+              taper=(0.85, 0.6), rot=(0.06, 0, rng.uniform(-0.08, 0.08)))
+        if not lo:
+            m.box((x + 0.9, y0 - 0.1, h * 0.45), (0.5, 0.6, h * 0.8), "limestone_dark", rot=(0.06, 0, 0))
+    m.box((0, 18, 14), (42, 14, 28), "limestone_dark")
+    # jungle on the ledges and the top
+    for i in range(22 if not lo else 8):
+        x = rng.uniform(-19, 19)
+        z = rng.uniform(18, 33) - abs(x) * 0.2
+        m.ball((x, rng.uniform(7, 14), z), (rng.uniform(2.0, 3.6), rng.uniform(1.6, 2.6), rng.uniform(1.4, 2.4)),
+               "leaf" if i % 2 else "leaf_dark", seg=8, rings=5, smooth=True)
+    # the cave mouth
+    m.ball((0, 5.6, 20.5), (4.6, 1.4, 4.0), "window_dark", seg=12, rings=8, smooth=True)
+    # the rainbow stairs up to it, with handrails and the landings
+    rainbow = ["bf_red", "shop_orange", "crate_yellow", "leaf", "shop_teal", "bf_blue", "magenta", "shop_pink"]
+    n = 40 if not lo else 20
+    for k in range(n):
+        t = k / n
+        y = -10 + t * 15.5
+        z = 0.25 + t * 19.6
+        m.box((0, y, z), (6.4, 16.0 / n + 0.02, 0.52), rainbow[k % len(rainbow)])
+    m.box((0, -2.2, 9.0), (6.4, 17.5, 1.0), "concrete_dark", rot=(math.atan2(19.6, 15.5), 0, 0))
+    for s in (1, -1):
+        m.box((s * 3.5, -2.2, 10.0), (0.6, 25.0, 1.0), "limestone", rot=(math.atan2(19.6, 15.5), 0, 0))
+    # the plaza and the temple gateway at the foot of the stairs
+    m.box((0, -15, 0.15), (36, 12, 0.3), "pavement")
+    for s in (1, -1):
+        m.box((s * 4.4, -11.5, 2.4), (1.2, 1.2, 4.8), "white")
+    m.box((0, -11.5, 5.2), (10.2, 1.4, 1.0), "bf_red")
+    m.box((0, -11.5, 6.0), (8.4, 1.2, 0.6), "gold")
+    if not lo:
+        for k in range(5):
+            m.box((0, -11.5, 6.6 + k * 0.5), (7.0 - k * 1.3, 1.0, 0.5), rainbow[k])
+    # Lord Murugan: a standing golden figure (human proportions, a crown, the vel spear) on a plinth
+    sx, sy = -10.5, -11.5
+    g = "gold"
+    m.box((sx, sy, 1.4), (6.0, 6.0, 2.8), "marble")
+    m.box((sx, sy, 3.0), (5.0, 5.0, 0.4), "bf_red")
+    z0 = 3.2
+    S = 14.0                       # statue height (model units)
+    m.box((sx, sy, z0 + 0.25), (3.0, 2.0, 0.5), g)                                      # feet
+    for dx in (-0.55, 0.55):
+        m.tube((sx + dx, sy, z0 + 0.5), (sx + dx * 0.9, sy, z0 + S * 0.46), 0.55, 0.62, g, seg=8)   # legs
+    m.cyl((sx, sy, z0 + S * 0.36), 1.6, 1.0, S * 0.22, g, seg=10)                        # dhoti
+    m.ball((sx, sy, z0 + S * 0.6), (1.25, 0.85, S * 0.15), g, seg=10, rings=7, smooth=True)   # torso
+    m.ball((sx, sy, z0 + S * 0.71), (1.6, 0.9, 0.6), g, seg=10, rings=5, smooth=True)    # shoulders
+    m.tube((sx, sy, z0 + S * 0.74), (sx, sy, z0 + S * 0.79), 0.4, 0.4, g, seg=8)        # neck
+    m.ball((sx, sy - 0.05, z0 + S * 0.84), (0.62, 0.66, 0.78), g, seg=10, rings=8, smooth=True)   # head
+    m.cyl((sx, sy, z0 + S * 0.94), 0.62, 0.25, 1.3, g, seg=10)                           # crown
+    m.ball((sx, sy, z0 + S * 0.99), (0.2, 0.2, 0.3), g, seg=6, rings=4)
+    m.ball((sx, sy + 0.5, z0 + S * 0.86), (1.4, 0.2, 1.4), g, seg=10, rings=5)          # halo
+    # arms: the right raised holding the vel, the left at the side in blessing
+    m.tube((sx + 1.4, sy, z0 + S * 0.7), (sx + 2.0, sy - 0.3, z0 + S * 0.55), 0.35, 0.3, g, seg=6)
+    m.tube((sx + 2.0, sy - 0.3, z0 + S * 0.55), (sx + 2.2, sy - 0.9, z0 + S * 0.68), 0.3, 0.26, g, seg=6)
+    m.tube((sx - 1.4, sy, z0 + S * 0.7), (sx - 1.7, sy - 0.2, z0 + S * 0.5), 0.35, 0.3, g, seg=6)
+    m.tube((sx - 1.7, sy - 0.2, z0 + S * 0.5), (sx - 1.6, sy - 1.0, z0 + S * 0.45), 0.3, 0.26, g, seg=6)
+    m.tube((sx + 2.3, sy - 1.0, z0 + 0.3), (sx + 2.3, sy - 1.0, z0 + S * 1.12), 0.14, 0.12, g, seg=6)   # the vel
+    m.poly_extrude([(0, 0), (0.5, 0.9), (0, 2.2), (-0.5, 0.9)], 0.15, g, loc=(sx + 2.3, sy - 1.0, z0 + S * 1.12))
+    return m
+
+
+KIT_LANDMARKS3.update({
+    "env_lm3_merdeka118": (merdeka118, None),
+    "env_lm3_kl_sentral": (kl_sentral, None),
+    "env_lm3_muzium_negara": (muzium_negara, None),
+    "env_lm3_masjid_negara": (masjid_negara, None),
+    "env_lm3_batu_caves": (batu_caves, None),
 })

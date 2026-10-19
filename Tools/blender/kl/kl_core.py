@@ -124,6 +124,7 @@ PALETTE_LM3 = [
     ("petronas_glass", (0.40, 0.55, 0.70)), ("deco_blue", (0.46, 0.72, 0.88)), ("canopy_green", (0.38, 0.70, 0.52)),
     ("maybank_grey", (0.62, 0.64, 0.68)), ("sandstone", (0.90, 0.80, 0.60)), ("dome_blue", (0.16, 0.48, 0.70)),
     ("lantern_red", (0.90, 0.14, 0.10)), ("verdigris", (0.36, 0.66, 0.58)), ("lamp_green", (0.20, 0.55, 0.32)),
+    ("roof_mauve", (0.52, 0.30, 0.30)), ("temple_orange", (0.92, 0.50, 0.14)), ("bronze_dark", (0.28, 0.22, 0.16)),
 ]
 PAL_INDEX = {name: i for i, (name, _) in enumerate(PALETTE)}
 assert len(PALETTE) <= LM3_BASE, "the palette has run into the landmark cells (LM3_BASE)"
@@ -145,7 +146,7 @@ SURFACE = {
     "leaf": "leaves", "leaf_dark": "leaves", "banana_leaf": "leaves", "trunk": "timber",
     "limestone": "concrete", "limestone_dark": "concrete", "brick_red": "brick", "marble": "plaster",
     "pitch_green": "grass", "jade_green": "roof",
-    "sandstone": "plaster", "deco_blue": "plaster", "copper": "roof", "copper_dark": "roof",
+    "sandstone": "plaster", "deco_blue": "plaster", "copper": "roof", "copper_dark": "roof", "roof_mauve": "roof", "temple_orange": "roof",
 }
 # atlas alpha = gloss for the Hit & Run shader (car paint, chrome, glass and lamps shine;
 # everything else - skin, cloth, tyres, buildings - stays matte)

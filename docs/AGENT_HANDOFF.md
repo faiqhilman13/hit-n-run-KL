@@ -908,3 +908,48 @@ The user said the cars were "a bit too simplistic", then asked for a compact, li
 - The Iriz still reads a little MPV-like.
 - The `Body_LOD1` stand-in has opaque windows, so distant cars hide their drivers.
 - Optional parts enabled after a `Recolor` keep the base palette. None of them use `car_paint`.
+
+## Update: landmarks against their real counterparts (19-20 Oct 2026, branch `landmarks-pass`)
+
+**Asked.** Make the landmarks recognisable, in proportion and detailed, and keep the Simpsons/Hit & Run cartoon look. Fix placement and scale against the real layout. Colliders must match what is drawn: no invisible walkable tops.
+
+**What changed**
+- **Kit 3:** `Tools/blender/kl/kl_landmarks3.py`, built as `env_kl_landmarks3`.
+  - Build: `blender -b --factory-startup -P Tools/blender/kl/kl_build.py -- env_kl_landmarks3`. Add `:mod,mod` to build only some modules.
+  - The models are at game scale (real × 0.65) on their real OSM footprints. `Tools/klmap/landmark_footprint.py <Anchor> <yaw>` prints a footprint in a model's authoring frame. It needs `kl_osm*.json`, copied from the main tree.
+  - In game: Petronas Towers plus Suria KLCC (8-point star plan, setbacks, crown and pinnacle, bustles, double-deck skybridge with its arch), Menara KL, Sultan Abdul Samad, the Dataran flagpole, Pasar Seni, the Petaling Street gates and canopy, KL Railway Station, Stadium Negara, Menara Maybank, Dayabumi and Pavilion.
+  - All have `_LOD1` versions.
+  - Palette: new colours live in cells 232+ (`kl_core.PALETTE_LM3`), so other kits can keep appending without clashing. `kl_palette.png`/`.json` were regenerated.
+- **CityBuilder** (landmark tables and functions only):
+  - `LandmarkModels` overrides the patch files' models and adds models for place-only anchors.
+  - `LandmarkFit (0, 0, yaw)` now means "unscaled".
+  - `LandmarkExtras` places the flagpole.
+  - `PetalingStreet` and `PetalingCanopy()` build the canopy along the OSM centreline, with a gate at each end.
+  - `LandmarkSites` and `ClearLandmarkSites()` remove the patch's own buildings and trees from a new model's footprint.
+  - **Colliders:** `LandmarkSolid()` gives every `env_` landmark, filler `Landmark()` blocks included, a MeshCollider from its `_LOD1` meshes. This replaces the COL_ boxes, capsules and stadium wall boxes the collider audit flagged.
+  - Yaws fixed: Sultan Abdul Samad faces Dataran (281); the station faces Jalan Sultan Hishamuddin (287).
+- **GameAssets.** `Editor/LandmarkAssets.Register` (`-executeMethod`) adds `env_lm3_*` to GameAssets in name order.
+- **Review tools.**
+  - `Tests/LandmarkCapture` (Explicit): set `LM_SET=<set>`. It writes `Tools/promo_frames/landmarks/<set>/` with street, near, air and air2 views of every landmark.
+  - `Tools/landmark_sheet.py` makes reference-vs-game sheets.
+  - Reference photos are in `Tools/references/landmarks/<name>/`; `SOURCES.md` lists them, mostly CC BY/BY-SA.
+
+**Verified**
+- LandmarkCapture passes. The city builds with all the new models; the "site cleared" log shows Petronas 12, the station 3, Pavilion 4, Maybank, Dayabumi and Stadium Negara 1–2 each.
+- Sheets: `Tools/promo_frames/landmarks/sheets/` (before vs r3, gitignored).
+- **Not run:** SmokeTests on the final state, and the lead's ColliderAudit (mesh colliders should bring the landmarks to about 0, but this wasn't measured).
+
+**Known gaps / next**
+- **Written but not wired** in `kl_landmarks3.py`:
+  - Kit 3: Merdeka 118 (faceted diamond folds), KL Sentral (the current `env_lm_kl_sentral` is a stretched grey box at `LandmarkFit` 118/80), Muzium Negara (mauve roofs, crossed horns), Masjid Negara (18-point umbrella, a roof of small domes, pencil minaret) and Batu Caves (cliff and a figure statue).
+  - Kit 2: Thean Hou (orange roofs, balustrades), Istana Negara (chevron dome, grey wing roofs), Masjid Jamek (white arcade, terrace to the confluence) and Stadium Merdeka (striped stands, scalloped grandstand) are rewritten in `kl_landmarks2.py`, but their FBXs were not re-exported.
+  - **To finish:**
+    1. Build them.
+    2. Run `LandmarkAssets.Register`.
+    3. Map them:
+       - `LandmarkModels["Merdeka118"/"KLSentral"/"MuziumNegara"/"MasjidNegara"]`, with `LandmarkFit` (0, 0, 0 / 332 / 180 / 202).
+       - Batu Caves goes in `BatuCavesBlock`, which also has a pedestal box and stair ramp to recheck.
+    4. Re-capture.
+- **Triangles:** KL Railway Station is heavy (~37k LOD0, ~16k LOD1, mostly chhatri posts and arches); trim it. The Petronas LOD0 is ~29k.
+- **Kit sheets:** the kit-sheet preview renders come out blank for these very large modules. Judge them with LandmarkCapture instead.
+- **Capture framing:** the street view sometimes picks a blocked spot (Petaling, Pasar Seni), and the tall towers want a closer "top" view.
