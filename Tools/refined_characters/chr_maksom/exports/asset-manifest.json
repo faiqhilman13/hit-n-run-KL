@@ -2,8 +2,8 @@
   "asset": "chr_maksom",
   "height_m": 1.57,
   "mesh_height_m": 1.57,
-  "triangles": 79208,
-  "lod1_triangles": 22178,
+  "triangles": 86840,
+  "lod1_triangles": 24315,
   "bones": 23,
   "clips": [
     "chr_maksom|_tpose",
@@ -30,7 +30,7 @@
     "Blink"
   ],
   "bounds_m": [
-    1.6616082191467285,
+    1.6840542554855347,
     0.5784345865249634,
     1.5700000524520874
   ],

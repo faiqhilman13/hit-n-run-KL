@@ -34,11 +34,13 @@ namespace KampungRun.Arch
         public float x0, x1, y0, y1, depth;
         public ArchTex back;
         public Color32 backCol, revealCol;
+        /// <summary>A real way through (a walk-in doorway): reveals but nothing painted at the back.</summary>
+        public bool open;
 
         public Opening(float x0, float x1, float y0, float y1, float depth, ArchTex back, Color32 backCol, Color32 revealCol)
         {
             this.x0 = x0; this.x1 = x1; this.y0 = y0; this.y1 = y1; this.depth = depth;
-            this.back = back; this.backCol = backCol; this.revealCol = revealCol;
+            this.back = back; this.backCol = backCol; this.revealCol = revealCol; open = false;
         }
     }
 
@@ -60,6 +62,14 @@ namespace KampungRun.Arch
 
         public int Count => V.Count;
 
+        /// <summary>
+        /// Faces built while this is set are an interior's (Interior.cs): LatInk lights them as a warm lamp-lit room,
+        /// whatever the sun and the city's painted shade say (the flag rides in the texture slice, +100).
+        /// </summary>
+        public bool Inside;
+        public const float InsideFlag = 100f;
+        float Slice(ArchTex tex) => (float)tex + (Inside ? InsideFlag : 0f);
+
         public void Clear() { V.Clear(); N.Clear(); C.Clear(); UV.Clear(); T.Clear(); }
 
         public void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color32 col, ArchTex tex,
@@ -73,7 +83,7 @@ namespace KampungRun.Arch
             V.Add(a); V.Add(b); V.Add(c); V.Add(d);
             N.Add(nrm); N.Add(nrm); N.Add(nrm); N.Add(nrm);
             C.Add(col); C.Add(col); C.Add(col); C.Add(col);
-            float s = (float)tex;
+            float s = Slice(tex);
             UV.Add(new Vector3(u0, v0, s)); UV.Add(new Vector3(u1, v0, s)); UV.Add(new Vector3(u1, v1, s)); UV.Add(new Vector3(u0, v1, s));
             T.Add(i); T.Add(i + 3); T.Add(i + 2);
             T.Add(i); T.Add(i + 2); T.Add(i + 1);
@@ -90,7 +100,7 @@ namespace KampungRun.Arch
             V.Add(a); V.Add(b); V.Add(c);
             N.Add(nrm); N.Add(nrm); N.Add(nrm);
             C.Add(col); C.Add(col); C.Add(col);
-            float s = (float)tex;
+            float s = Slice(tex);
             UV.Add(new Vector3(ua.x, ua.y, s)); UV.Add(new Vector3(ub.x, ub.y, s)); UV.Add(new Vector3(uc.x, uc.y, s));
             T.Add(i); T.Add(i + 1); T.Add(i + 2);
         }
@@ -104,7 +114,7 @@ namespace KampungRun.Arch
             V.Add(a); V.Add(b); V.Add(c);
             N.Add(na); N.Add(nb); N.Add(nc);
             C.Add(ca); C.Add(cb); C.Add(cc);
-            float s = (float)tex;
+            float s = Slice(tex);
             UV.Add(new Vector3(ua.x, ua.y, s)); UV.Add(new Vector3(ub.x, ub.y, s)); UV.Add(new Vector3(uc.x, uc.y, s));
             T.Add(i); T.Add(i + 1); T.Add(i + 2);
         }
@@ -272,7 +282,7 @@ namespace KampungRun.Arch
                 Quad(f.P(h.x0, h.y1, z), f.P(h.x1, h.y1, z), f.P(h.x1, h.y1, zb), f.P(h.x0, h.y1, zb), Shade(h.revealCol, 0.8f), ArchTex.White);
                 Quad(f.P(h.x0, h.y0, zb), f.P(h.x1, h.y0, zb), f.P(h.x1, h.y0, z), f.P(h.x0, h.y0, z), h.revealCol, ArchTex.White);
             }
-            Rect(f, h.x0, h.x1, h.y0, h.y1, zb, h.backCol, h.back);
+            if (!h.open) Rect(f, h.x0, h.x1, h.y0, h.y1, zb, h.backCol, h.back);
         }
 
         /// <summary>The walls of a footprint ring (counter-clockwise) from y0 to y1, outward-facing.</summary>

@@ -400,12 +400,15 @@ namespace KampungRun.Tests
             Assert.AreEqual(Pedestrian.All.Count, humanoidPeds, "some pedestrians still use legacy models");
             // palette-swap costume: the batik and sarong cells get repainted on this instance only
             var costume = GameData.Costumes.Find(c => c.id == "pakmat_raya");
-            var smr = p.GetComponentInChildren<SkinnedMeshRenderer>();
+            // (the body mesh, not the brow/lash cards an MPFB character also carries)
+            var smr = System.Array.Find(p.GetComponentsInChildren<SkinnedMeshRenderer>(), r => r.sharedMesh && r.sharedMesh.blendShapeCount > 0)
+                      ?? p.GetComponentInChildren<SkinnedMeshRenderer>();
             var before = smr.sharedMaterial;
+            bool ownAtlas = AtlasRecolor.Has(before);
             ModelFactory.Recolor(p.gameObject, costume.swaps);
             Assert.AreNotSame(before, smr.sharedMaterial, "costume did not swap the material");
-            Assert.IsTrue(KLPalette.IsKL(smr.sharedMaterial) &&
-                smr.sharedMaterial.GetTexture("_BaseMap") != before.GetTexture("_BaseMap"), "costume did not repaint the palette");
+            Assert.IsTrue((ownAtlas || KLPalette.IsKL(smr.sharedMaterial)) &&
+                smr.sharedMaterial.GetTexture("_BaseMap") != before.GetTexture("_BaseMap"), "costume did not repaint the atlas");
 
             var cc = ChaseCamera.I;
             var home = gm.City.places["Home"];

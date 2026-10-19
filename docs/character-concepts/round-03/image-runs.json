@@ -1,0 +1,754 @@
+{
+  "schema_version": 1,
+  "stage": "IMAGE REFERENCE",
+  "status": "partial_blocked_plan_limit",
+  "scope": {
+    "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+    "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+    "response_format": "json"
+  },
+  "created_at": "2026-09-26T06:39:24.113Z",
+  "brief_path": "docs/character-concepts/round-03/brief.json",
+  "intermediate_mesh_inputs": true,
+  "meshes_created": false,
+  "execution_guard": {
+    "max_flash_quote_cu": 100,
+    "source": "child execution guard; not a user-stated budget"
+  },
+  "reference": {
+    "source_path": "Tools/refined_characters/chr_pakmat/ref/threequarter.png",
+    "bytes": 208917,
+    "sha256": "b5c71dc544cf776353e92414b22513cb183e437c0bf9233a88fc409e46412fcb",
+    "width": 512,
+    "height": 704,
+    "viewed": true,
+    "visual_notes": "One full-body Pak Mat in three-quarter view, black songkok and moustache, orange leafy batik, green checked continuous sarong and brown open-toe sandals; clear isolated subject.",
+    "upload_parameters": {
+      "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+      "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+      "response_format": "json",
+      "file_name": "pakmat-identity-threequarter.png",
+      "content_type": "image/png",
+      "kind": "image",
+      "file_size": 208917
+    },
+    "upload_id": "upl_2Y9b6fUSBCDWqb7d8aaevX1u",
+    "asset_id": "asset_Jg6p6JCiuyTtLfY3KnaAGTPE",
+    "put_http_status": 200,
+    "put_verified_at": "2026-09-26T06:39:26.915Z",
+    "complete_parameters": {
+      "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+      "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+      "response_format": "json",
+      "upload_id": "upl_2Y9b6fUSBCDWqb7d8aaevX1u"
+    },
+    "upload_status": "imported",
+    "app_url": "https://app.scenario.com/assets?openAssetId=asset_Jg6p6JCiuyTtLfY3KnaAGTPE&teamId=team_3x1GhFd1Xhc6VYjwTNXbohCm&projectId=proj_65fEAfifv7xVSJfnoZE3EVnE",
+    "display_parameters": {
+      "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+      "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+      "response_format": "json",
+      "asset_id": "asset_Jg6p6JCiuyTtLfY3KnaAGTPE",
+      "format": "json"
+    }
+  },
+  "pricing": {
+    "flash": [
+      {
+        "id": "A",
+        "tool_parameters": {
+          "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+          "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+          "response_format": "json",
+          "model_id": "model_google-gemini-3-1-flash",
+          "parameters": {
+            "prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: Around 4.5 heads tall. Broad pear-shaped torso with a weighty low belly; continuous rounded shoulders and tapered arms; sculpted cheeks and mature eyelids; expressive medium-sized almond eyes, warm asymmetry in the smile and a carefully shaped moustache. Soft matte skin, convincing but simplified woven batik, supple cloth folds that follow the belly and sarong wrap, tidy sculpted hair. Refined contemporary family-animation modelling, appealing and expressive without toy-like plastic gloss.",
+            "referenceImages": [
+              "asset_Jg6p6JCiuyTtLfY3KnaAGTPE"
+            ],
+            "aspectRatio": "2:3",
+            "resolution": "1K",
+            "thinkingLevel": "HIGH",
+            "numOutputs": 1,
+            "useGoogleSearch": false
+          },
+          "wait": false,
+          "dry_run": true
+        },
+        "response": {
+          "dry_run": true,
+          "model_id": "model_google-gemini-3-1-flash",
+          "job": {},
+          "creativeUnitsCost": 13,
+          "creativeUnitsDiscount": 0
+        }
+      },
+      {
+        "id": "B",
+        "tool_parameters": {
+          "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+          "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+          "response_format": "json",
+          "model_id": "model_google-gemini-3-1-flash",
+          "parameters": {
+            "prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: Around 4.75 heads tall. Squarer shoulders flowing into the belly, a wedge-shaped nose, deliberate angular cheek planes, graphic eyebrows and moustache, slightly elongated hands. A dimensional character sculpt with crisp two- or three-tone shading, restrained dark accents and broad organized colour shapes. Enlarge and simplify the batik leaves and sarong checks for readability. Clean designed planes rather than low-poly facets; make the sculpture and fabric thickness clearly three-dimensional even with comic shading.",
+            "referenceImages": [
+              "asset_Jg6p6JCiuyTtLfY3KnaAGTPE"
+            ],
+            "aspectRatio": "2:3",
+            "resolution": "1K",
+            "thinkingLevel": "HIGH",
+            "numOutputs": 1,
+            "useGoogleSearch": false
+          },
+          "wait": false,
+          "dry_run": true
+        },
+        "response": {
+          "dry_run": true,
+          "model_id": "model_google-gemini-3-1-flash",
+          "job": {},
+          "creativeUnitsCost": 13,
+          "creativeUnitsDiscount": 0
+        }
+      },
+      {
+        "id": "C",
+        "tool_parameters": {
+          "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+          "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+          "response_format": "json",
+          "model_id": "model_google-gemini-3-1-flash",
+          "parameters": {
+            "prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: Around 4 heads tall. Compact bean-shaped torso, broad soft hands and feet, a squashy expressive nose, sculpted cheeks with subtle intentional asymmetry and mature eyelids. A tactile stop-motion miniature character: very fine clay-like skin surface, visibly woven cotton batik and sarong, soft rolled seams, small natural fabric puckers and textured sandal leather. Keep materials subtle, carefully crafted and scale-appropriate; no coarse cracks, exaggerated fingerprints, visible armature or separated joints.",
+            "referenceImages": [
+              "asset_Jg6p6JCiuyTtLfY3KnaAGTPE"
+            ],
+            "aspectRatio": "2:3",
+            "resolution": "1K",
+            "thinkingLevel": "HIGH",
+            "numOutputs": 1,
+            "useGoogleSearch": false
+          },
+          "wait": false,
+          "dry_run": true
+        },
+        "response": {
+          "dry_run": true,
+          "model_id": "model_google-gemini-3-1-flash",
+          "job": {},
+          "creativeUnitsCost": 13,
+          "creativeUnitsDiscount": 0
+        }
+      },
+      {
+        "id": "D",
+        "tool_parameters": {
+          "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+          "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+          "response_format": "json",
+          "model_id": "model_google-gemini-3-1-flash",
+          "parameters": {
+            "prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: Around 5.75 heads tall. More natural shoulder-to-hand anatomy, longer legs, a weighty rounded belly and believable neck transition; restrained eye and nose size, subtle signs of middle age in cheeks and lids, a natural moustache silhouette. Stylized premium game-character rendering rather than a photograph: shaped planes, soft skin response, fine cotton weave, sewn seams, a naturally hanging sarong and believable sandals. Preserve warmth and cartoon readability while removing oversized mascot proportions.",
+            "referenceImages": [
+              "asset_Jg6p6JCiuyTtLfY3KnaAGTPE"
+            ],
+            "aspectRatio": "2:3",
+            "resolution": "1K",
+            "thinkingLevel": "HIGH",
+            "numOutputs": 1,
+            "useGoogleSearch": false
+          },
+          "wait": false,
+          "dry_run": true
+        },
+        "response": {
+          "dry_run": true,
+          "model_id": "model_google-gemini-3-1-flash",
+          "job": {},
+          "creativeUnitsCost": 13,
+          "creativeUnitsDiscount": 0
+        }
+      }
+    ],
+    "lite": [
+      {
+        "id": "A",
+        "tool_parameters": {
+          "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+          "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+          "response_format": "json",
+          "model_id": "model_google-gemini-3-1-flash-lite-image",
+          "parameters": {
+            "prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: Around 4.5 heads tall. Broad pear-shaped torso with a weighty low belly; continuous rounded shoulders and tapered arms; sculpted cheeks and mature eyelids; expressive medium-sized almond eyes, warm asymmetry in the smile and a carefully shaped moustache. Soft matte skin, convincing but simplified woven batik, supple cloth folds that follow the belly and sarong wrap, tidy sculpted hair. Refined contemporary family-animation modelling, appealing and expressive without toy-like plastic gloss.",
+            "referenceImages": [
+              "asset_Jg6p6JCiuyTtLfY3KnaAGTPE"
+            ],
+            "aspectRatio": "2:3",
+            "thinkingLevel": "HIGH",
+            "numOutputs": 1
+          },
+          "wait": false,
+          "dry_run": true
+        },
+        "response": {
+          "dry_run": true,
+          "model_id": "model_google-gemini-3-1-flash-lite-image",
+          "job": {},
+          "creativeUnitsCost": 7,
+          "creativeUnitsDiscount": 0
+        }
+      },
+      {
+        "id": "B",
+        "tool_parameters": {
+          "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+          "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+          "response_format": "json",
+          "model_id": "model_google-gemini-3-1-flash-lite-image",
+          "parameters": {
+            "prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: Around 4.75 heads tall. Squarer shoulders flowing into the belly, a wedge-shaped nose, deliberate angular cheek planes, graphic eyebrows and moustache, slightly elongated hands. A dimensional character sculpt with crisp two- or three-tone shading, restrained dark accents and broad organized colour shapes. Enlarge and simplify the batik leaves and sarong checks for readability. Clean designed planes rather than low-poly facets; make the sculpture and fabric thickness clearly three-dimensional even with comic shading.",
+            "referenceImages": [
+              "asset_Jg6p6JCiuyTtLfY3KnaAGTPE"
+            ],
+            "aspectRatio": "2:3",
+            "thinkingLevel": "HIGH",
+            "numOutputs": 1
+          },
+          "wait": false,
+          "dry_run": true
+        },
+        "response": {
+          "dry_run": true,
+          "model_id": "model_google-gemini-3-1-flash-lite-image",
+          "job": {},
+          "creativeUnitsCost": 7,
+          "creativeUnitsDiscount": 0
+        }
+      },
+      {
+        "id": "C",
+        "tool_parameters": {
+          "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+          "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+          "response_format": "json",
+          "model_id": "model_google-gemini-3-1-flash-lite-image",
+          "parameters": {
+            "prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: Around 4 heads tall. Compact bean-shaped torso, broad soft hands and feet, a squashy expressive nose, sculpted cheeks with subtle intentional asymmetry and mature eyelids. A tactile stop-motion miniature character: very fine clay-like skin surface, visibly woven cotton batik and sarong, soft rolled seams, small natural fabric puckers and textured sandal leather. Keep materials subtle, carefully crafted and scale-appropriate; no coarse cracks, exaggerated fingerprints, visible armature or separated joints.",
+            "referenceImages": [
+              "asset_Jg6p6JCiuyTtLfY3KnaAGTPE"
+            ],
+            "aspectRatio": "2:3",
+            "thinkingLevel": "HIGH",
+            "numOutputs": 1
+          },
+          "wait": false,
+          "dry_run": true
+        },
+        "response": {
+          "dry_run": true,
+          "model_id": "model_google-gemini-3-1-flash-lite-image",
+          "job": {},
+          "creativeUnitsCost": 7,
+          "creativeUnitsDiscount": 0
+        }
+      },
+      {
+        "id": "D",
+        "tool_parameters": {
+          "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+          "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+          "response_format": "json",
+          "model_id": "model_google-gemini-3-1-flash-lite-image",
+          "parameters": {
+            "prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: Around 5.75 heads tall. More natural shoulder-to-hand anatomy, longer legs, a weighty rounded belly and believable neck transition; restrained eye and nose size, subtle signs of middle age in cheeks and lids, a natural moustache silhouette. Stylized premium game-character rendering rather than a photograph: shaped planes, soft skin response, fine cotton weave, sewn seams, a naturally hanging sarong and believable sandals. Preserve warmth and cartoon readability while removing oversized mascot proportions.",
+            "referenceImages": [
+              "asset_Jg6p6JCiuyTtLfY3KnaAGTPE"
+            ],
+            "aspectRatio": "2:3",
+            "thinkingLevel": "HIGH",
+            "numOutputs": 1
+          },
+          "wait": false,
+          "dry_run": true
+        },
+        "response": {
+          "dry_run": true,
+          "model_id": "model_google-gemini-3-1-flash-lite-image",
+          "job": {},
+          "creativeUnitsCost": 7,
+          "creativeUnitsDiscount": 0
+        }
+      }
+    ],
+    "quoted_flash_total_cu": 52,
+    "quoted_lite_total_cu": 28,
+    "lite_note": "Fixed 1K; schema has no resolution or useGoogleSearch fields. Dry priced only."
+  },
+  "spentCU": 39,
+  "runs": [
+    {
+      "id": "A",
+      "label": "Warm animated film",
+      "status": "success",
+      "job_id": "job_xtW8trcjhEZpZ6vzMyLnwzJ7",
+      "asset_ids": [
+        "asset_uAcnHTEffHMB41pKQUvsjQQy"
+      ],
+      "model_run_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "model_id": "model_google-gemini-3-1-flash",
+        "parameters": {
+          "prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: Around 4.5 heads tall. Broad pear-shaped torso with a weighty low belly; continuous rounded shoulders and tapered arms; sculpted cheeks and mature eyelids; expressive medium-sized almond eyes, warm asymmetry in the smile and a carefully shaped moustache. Soft matte skin, convincing but simplified woven batik, supple cloth folds that follow the belly and sarong wrap, tidy sculpted hair. Refined contemporary family-animation modelling, appealing and expressive without toy-like plastic gloss.",
+          "referenceImages": [
+            "asset_Jg6p6JCiuyTtLfY3KnaAGTPE"
+          ],
+          "aspectRatio": "2:3",
+          "resolution": "1K",
+          "thinkingLevel": "HIGH",
+          "numOutputs": 1,
+          "useGoogleSearch": false
+        },
+        "wait": false,
+        "dry_run": false
+      },
+      "launch_started_at": "2026-09-26T06:40:43.789Z",
+      "launch_response": {
+        "model_id": "model_google-gemini-3-1-flash",
+        "job_id": "job_xtW8trcjhEZpZ6vzMyLnwzJ7",
+        "status": "in-progress"
+      },
+      "quotedCU": 13,
+      "last_wait": {
+        "jobId": "job_xtW8trcjhEZpZ6vzMyLnwzJ7",
+        "jobType": "custom",
+        "status": "success",
+        "progress": 1,
+        "createdAt": "2026-09-26T06:40:46.227Z",
+        "updatedAt": "2026-09-26T06:41:28.882Z",
+        "modelId": "model_google-gemini-3-1-flash",
+        "assetIds": [
+          "asset_uAcnHTEffHMB41pKQUvsjQQy"
+        ],
+        "cuCost": 13
+      },
+      "completion": {
+        "jobId": "job_xtW8trcjhEZpZ6vzMyLnwzJ7",
+        "jobType": "custom",
+        "status": "success",
+        "progress": 1,
+        "createdAt": "2026-09-26T06:40:46.227Z",
+        "updatedAt": "2026-09-26T06:41:28.882Z",
+        "modelId": "model_google-gemini-3-1-flash",
+        "assetIds": [
+          "asset_uAcnHTEffHMB41pKQUvsjQQy"
+        ],
+        "cuCost": 13
+      },
+      "billedCU": 13,
+      "app_url": "https://app.scenario.com/assets?openAssetId=asset_uAcnHTEffHMB41pKQUvsjQQy&teamId=team_3x1GhFd1Xhc6VYjwTNXbohCm&projectId=proj_65fEAfifv7xVSJfnoZE3EVnE",
+      "display_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "asset_id": "asset_uAcnHTEffHMB41pKQUvsjQQy",
+        "format": "display"
+      },
+      "download_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "asset_id": "asset_uAcnHTEffHMB41pKQUvsjQQy"
+      },
+      "review": {
+        "inspected_via": "asset_display",
+        "identity": "pass: adult warm-brown Pak Mat with black songkok, hair and moustache, orange batik, green checked sarong and brown sandals",
+        "anatomy": "pass in visible view: full body, continuous shoulders/arms/hands, separate visible hands and two feet; no floating joints",
+        "sarong": "pass: continuous overlapping calf-length wrap",
+        "framing": "pass: plain warm-grey background, mild three-quarter low A-pose, no pedestal, text or props",
+        "style": "partial: matte skin and dimensional woven cloth are present; facial expression is restrained and proportions appear longer/more grounded than the requested 4.5-head warm animated-film direction",
+        "parent_review_required": true,
+        "mesh_readiness": "Candidate only; style conformity needs parent review before reconstruction. Back/profile volume unverified from this single image."
+      },
+      "local_path": "docs/character-concepts/round-03/references/A.png",
+      "download_validation": {
+        "http_status": 200,
+        "decoded": true,
+        "width": 848,
+        "height": 1264,
+        "format": "PNG",
+        "bytes": 1321534,
+        "sha256": "43578fd5621304e0fddee3c00bc7d844e4b6fca9bfedbd1529e326bd0c25d21b"
+      },
+      "dimensions": {
+        "width": 848,
+        "height": 1264
+      },
+      "reference_consumed_verified": true,
+      "output_properties": {
+        "size": 1321534,
+        "width": 848,
+        "height": 1264
+      },
+      "generated_seed": 796373281,
+      "asset_get_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "asset_id": "asset_uAcnHTEffHMB41pKQUvsjQQy"
+      }
+    },
+    {
+      "id": "B",
+      "label": "Graphic comic",
+      "status": "success",
+      "job_id": "job_bVksTS4QQCqrAoJ8B34v59j2",
+      "asset_ids": [
+        "asset_HRRwXXjNkHn7dL5bJLjaJiXr"
+      ],
+      "model_run_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "model_id": "model_google-gemini-3-1-flash",
+        "parameters": {
+          "prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: Around 4.75 heads tall. Squarer shoulders flowing into the belly, a wedge-shaped nose, deliberate angular cheek planes, graphic eyebrows and moustache, slightly elongated hands. A dimensional character sculpt with crisp two- or three-tone shading, restrained dark accents and broad organized colour shapes. Enlarge and simplify the batik leaves and sarong checks for readability. Clean designed planes rather than low-poly facets; make the sculpture and fabric thickness clearly three-dimensional even with comic shading.",
+          "referenceImages": [
+            "asset_Jg6p6JCiuyTtLfY3KnaAGTPE"
+          ],
+          "aspectRatio": "2:3",
+          "resolution": "1K",
+          "thinkingLevel": "HIGH",
+          "numOutputs": 1,
+          "useGoogleSearch": false
+        },
+        "wait": false,
+        "dry_run": false
+      },
+      "launch_started_at": "2026-09-26T06:41:43.660Z",
+      "launch_response": {
+        "model_id": "model_google-gemini-3-1-flash",
+        "job_id": "job_bVksTS4QQCqrAoJ8B34v59j2",
+        "status": "in-progress"
+      },
+      "quotedCU": 13,
+      "last_wait": {
+        "jobId": "job_bVksTS4QQCqrAoJ8B34v59j2",
+        "jobType": "custom",
+        "status": "success",
+        "progress": 1,
+        "createdAt": "2026-09-26T06:41:45.744Z",
+        "updatedAt": "2026-09-26T06:42:09.092Z",
+        "modelId": "model_google-gemini-3-1-flash",
+        "assetIds": [
+          "asset_HRRwXXjNkHn7dL5bJLjaJiXr"
+        ],
+        "cuCost": 13
+      },
+      "completion": {
+        "jobId": "job_bVksTS4QQCqrAoJ8B34v59j2",
+        "jobType": "custom",
+        "status": "success",
+        "progress": 1,
+        "createdAt": "2026-09-26T06:41:45.744Z",
+        "updatedAt": "2026-09-26T06:42:09.092Z",
+        "modelId": "model_google-gemini-3-1-flash",
+        "assetIds": [
+          "asset_HRRwXXjNkHn7dL5bJLjaJiXr"
+        ],
+        "cuCost": 13
+      },
+      "billedCU": 13,
+      "local_path": "docs/character-concepts/round-03/references/B.png",
+      "download_validation": {
+        "http_status": 200,
+        "decoded": true,
+        "width": 848,
+        "height": 1264,
+        "format": "PNG",
+        "bytes": 1222735,
+        "sha256": "c6b744c237686ca3b9bba37a1f90c864a07f59948f1efc313d7f6d6684fecf2b"
+      },
+      "dimensions": {
+        "width": 848,
+        "height": 1264
+      },
+      "reference_consumed_verified": true,
+      "output_properties": {
+        "size": 1222735,
+        "width": 848,
+        "height": 1264
+      },
+      "generated_seed": 18168851,
+      "app_url": "https://app.scenario.com/assets?openAssetId=asset_HRRwXXjNkHn7dL5bJLjaJiXr&teamId=team_3x1GhFd1Xhc6VYjwTNXbohCm&projectId=proj_65fEAfifv7xVSJfnoZE3EVnE",
+      "display_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "asset_id": "asset_HRRwXXjNkHn7dL5bJLjaJiXr",
+        "format": "display"
+      },
+      "asset_get_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "asset_id": "asset_HRRwXXjNkHn7dL5bJLjaJiXr"
+      },
+      "download_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "asset_id": "asset_HRRwXXjNkHn7dL5bJLjaJiXr"
+      },
+      "review": {
+        "inspected_via": "asset_display",
+        "identity": "pass: recognizable Pak Mat with all wardrobe and facial identifiers",
+        "anatomy": "pass in visible view: one complete adult, connected arms/hands and two separated feet; hands visible but closer to the torso than A",
+        "sarong": "pass: continuous overlapping green checked wrap with folded tie",
+        "framing": "pass: full body, mild three-quarter, warm-grey background, soft shadow, no pedestal, text or props; opposite facing direction to A",
+        "style": "partial-to-good: angular wedge nose and cheek planes, graphic brows/moustache and enlarged batik shapes; broad toon shading reads dimensional, but some cheek planes look faceted and proportions remain compact and close to baseline rather than clearly 4.75 heads",
+        "parent_review_required": true,
+        "mesh_readiness": "Candidate only; parent should review graphic-plane treatment and arm clearance before reconstruction. Back/profile volume unverified."
+      }
+    },
+    {
+      "id": "C",
+      "label": "Handmade miniature",
+      "status": "success",
+      "job_id": "job_ZYRnFNsoYiNnvGC8ZuWEBrTs",
+      "asset_ids": [
+        "asset_bpVLm5zmNKfqDv43SmwScNun"
+      ],
+      "model_run_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "model_id": "model_google-gemini-3-1-flash",
+        "parameters": {
+          "prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: Around 4 heads tall. Compact bean-shaped torso, broad soft hands and feet, a squashy expressive nose, sculpted cheeks with subtle intentional asymmetry and mature eyelids. A tactile stop-motion miniature character: very fine clay-like skin surface, visibly woven cotton batik and sarong, soft rolled seams, small natural fabric puckers and textured sandal leather. Keep materials subtle, carefully crafted and scale-appropriate; no coarse cracks, exaggerated fingerprints, visible armature or separated joints.",
+          "referenceImages": [
+            "asset_Jg6p6JCiuyTtLfY3KnaAGTPE"
+          ],
+          "aspectRatio": "2:3",
+          "resolution": "1K",
+          "thinkingLevel": "HIGH",
+          "numOutputs": 1,
+          "useGoogleSearch": false
+        },
+        "wait": false,
+        "dry_run": false
+      },
+      "launch_started_at": "2026-09-26T06:42:49.540Z",
+      "launch_response": {
+        "model_id": "model_google-gemini-3-1-flash",
+        "job_id": "job_ZYRnFNsoYiNnvGC8ZuWEBrTs",
+        "status": "in-progress"
+      },
+      "quotedCU": 13,
+      "last_wait": {
+        "jobId": "job_ZYRnFNsoYiNnvGC8ZuWEBrTs",
+        "jobType": "custom",
+        "status": "success",
+        "progress": 1,
+        "createdAt": "2026-09-26T06:42:51.982Z",
+        "updatedAt": "2026-09-26T06:43:18.241Z",
+        "modelId": "model_google-gemini-3-1-flash",
+        "assetIds": [
+          "asset_bpVLm5zmNKfqDv43SmwScNun"
+        ],
+        "cuCost": 13
+      },
+      "completion": {
+        "jobId": "job_ZYRnFNsoYiNnvGC8ZuWEBrTs",
+        "jobType": "custom",
+        "status": "success",
+        "progress": 1,
+        "createdAt": "2026-09-26T06:42:51.982Z",
+        "updatedAt": "2026-09-26T06:43:18.241Z",
+        "modelId": "model_google-gemini-3-1-flash",
+        "assetIds": [
+          "asset_bpVLm5zmNKfqDv43SmwScNun"
+        ],
+        "cuCost": 13
+      },
+      "billedCU": 13,
+      "local_path": "docs/character-concepts/round-03/references/C.png",
+      "download_validation": {
+        "http_status": 200,
+        "decoded": true,
+        "width": 848,
+        "height": 1264,
+        "format": "PNG",
+        "bytes": 1333619,
+        "sha256": "172634566f7896ea786756970c328e56fc8abb681bc2b6d5302f7ed73e1b3882"
+      },
+      "dimensions": {
+        "width": 848,
+        "height": 1264
+      },
+      "reference_consumed_verified": true,
+      "output_properties": {
+        "size": 1333619,
+        "width": 848,
+        "height": 1264
+      },
+      "generated_seed": 1083585850,
+      "app_url": "https://app.scenario.com/assets?openAssetId=asset_bpVLm5zmNKfqDv43SmwScNun&teamId=team_3x1GhFd1Xhc6VYjwTNXbohCm&projectId=proj_65fEAfifv7xVSJfnoZE3EVnE",
+      "display_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "asset_id": "asset_bpVLm5zmNKfqDv43SmwScNun",
+        "format": "display"
+      },
+      "asset_get_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "asset_id": "asset_bpVLm5zmNKfqDv43SmwScNun"
+      },
+      "download_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "asset_id": "asset_bpVLm5zmNKfqDv43SmwScNun"
+      },
+      "review": {
+        "inspected_via": "asset_display",
+        "identity": "pass: mature friendly-weary Pak Mat with black songkok, hair and moustache, orange leaf batik, green checked wrap and brown sandals",
+        "anatomy": "pass in visible view: one complete adult, rounded connected anatomy, visible separate hands/feet and no detached joints; finger forms are simplified",
+        "sarong": "pass: continuous calf-length overlapping wrap",
+        "framing": "pass: full-body three-quarter on light warm-grey with soft light, no pedestal, text or props; faces opposite A",
+        "style": "good: compact rounded body, sleepy mature eyelids, soft cheeks, subtle fine skin texture, visible woven cloth and textured sandal straps; handmade surface treatment is restrained, with no coarse cracks or armature",
+        "parent_review_required": true,
+        "mesh_readiness": "Candidate only; parent should review hand simplification and final preferred art direction. Back/profile volume unverified."
+      }
+    },
+    {
+      "id": "D",
+      "label": "Grounded stylized",
+      "status": "blocked_plan_limit",
+      "job_id": null,
+      "asset_ids": [],
+      "model_run_parameters": {
+        "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+        "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+        "response_format": "json",
+        "model_id": "model_google-gemini-3-1-flash",
+        "parameters": {
+          "prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: Around 5.75 heads tall. More natural shoulder-to-hand anatomy, longer legs, a weighty rounded belly and believable neck transition; restrained eye and nose size, subtle signs of middle age in cheeks and lids, a natural moustache silhouette. Stylized premium game-character rendering rather than a photograph: shaped planes, soft skin response, fine cotton weave, sewn seams, a naturally hanging sarong and believable sandals. Preserve warmth and cartoon readability while removing oversized mascot proportions.",
+          "referenceImages": [
+            "asset_Jg6p6JCiuyTtLfY3KnaAGTPE"
+          ],
+          "aspectRatio": "2:3",
+          "resolution": "1K",
+          "thinkingLevel": "HIGH",
+          "numOutputs": 1,
+          "useGoogleSearch": false
+        },
+        "wait": false,
+        "dry_run": false
+      },
+      "launch_started_at": "2026-09-26T06:43:45.202Z",
+      "launch_response": {
+        "content": [
+          {
+            "type": "text",
+            "text": "⚠ Scenario error (trace_id: mcpt_1eVBF8nL29LEL4iC7t1sqmZH). For a diagnostic report, run diagnostics_run."
+          },
+          {
+            "type": "text",
+            "text": "Error: 429 {\"reason\":\"You have reached your plan's limit. Please upgrade your plan to continue using this feature.\",\"name\":\"PlanLimitReachedError\",\"details\":{\"actionLimit\":50,\"actionName\":\"custom-generation\",\"actionValue\":39,\"limitScope\":\"team\",\"plan\":\"free\",\"nextPlan\":\"cu-basic\"}}"
+          }
+        ],
+        "isError": true
+      },
+      "quotedCU": 13,
+      "error": {
+        "http_status": 429,
+        "name": "PlanLimitReachedError",
+        "reason": "You have reached your plan's limit. Please upgrade your plan to continue using this feature.",
+        "details": {
+          "actionLimit": 50,
+          "actionName": "custom-generation",
+          "actionValue": 39,
+          "limitScope": "team",
+          "plan": "free",
+          "nextPlan": "cu-basic"
+        },
+        "trace_id": "mcpt_1eVBF8nL29LEL4iC7t1sqmZH"
+      },
+      "billedCU": 0
+    }
+  ],
+  "pending_job_ids": [],
+  "failed_jobs": [
+    {
+      "variant": "D",
+      "job_id": null,
+      "status": "launch_rejected",
+      "error": {
+        "http_status": 429,
+        "name": "PlanLimitReachedError",
+        "reason": "You have reached your plan's limit. Please upgrade your plan to continue using this feature.",
+        "details": {
+          "actionLimit": 50,
+          "actionName": "custom-generation",
+          "actionValue": 39,
+          "limitScope": "team",
+          "plan": "free",
+          "nextPlan": "cu-basic"
+        },
+        "trace_id": "mcpt_1eVBF8nL29LEL4iC7t1sqmZH"
+      }
+    }
+  ],
+  "parent_review": [
+    "Review A-C images before any mesh generation.",
+    "A proportions/style lean grounded rather than the intended warm animated-film direction.",
+    "B has graphic cheek planes that may read as faceted; B/C hand and arm clearance need review.",
+    "A faces opposite B/C; camera/framing are similar but not identical.",
+    "D was not generated: exact plan-limit error recorded; parent must decide next step. No billing changes or quota retries performed."
+  ],
+  "updated_at": "2026-09-26T06:45:42.124Z",
+  "concurrency_policy": "Conservative one in-flight generation at a time; retire each through jobs_wait before launching the next.",
+  "usage_verification": {
+    "tool_parameters": {
+      "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+      "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+      "response_format": "json",
+      "scope": "project"
+    },
+    "totals": {
+      "totalCU": 39,
+      "totalDiscountCU": 0,
+      "totalBeforeDiscountCU": 39,
+      "timeRange": "last-thirty-one-days",
+      "users": 1
+    },
+    "modelUsages": [
+      {
+        "modelId": "model_google-gemini-3-1-flash",
+        "modelName": "Gemini 3.1 🍌",
+        "totalCU": 39,
+        "totalJobs": 3,
+        "totalApiKeyCU": 0,
+        "totalDiscountCU": 0,
+        "totalApiKeyDiscountCU": 0
+      }
+    ]
+  },
+  "diagnostics_parameters": {
+    "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+    "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+    "response_format": "json",
+    "observed_trace_ids": [
+      "mcpt_1eVBF8nL29LEL4iC7t1sqmZH"
+    ]
+  },
+  "spentCU_source": "Scenario scoped usage consumption verified against three jobs_wait cuCost values of 13 CU each.",
+  "completed_at": "2026-09-26T06:45:42.124Z",
+  "stage_outcome": "Three original PNG image references saved and visually reviewed; fourth launch blocked by team plan quota. No 3D jobs, paid critics, repair rounds or upscales."
+}

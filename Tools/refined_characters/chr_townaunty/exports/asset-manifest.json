@@ -2,8 +2,8 @@
   "asset": "chr_townaunty",
   "height_m": 1.56,
   "mesh_height_m": 1.56,
-  "triangles": 79152,
-  "lod1_triangles": 22161,
+  "triangles": 88688,
+  "lod1_triangles": 24832,
   "bones": 23,
   "clips": [
     "chr_townaunty|_tpose",
@@ -30,8 +30,8 @@
     "Blink"
   ],
   "bounds_m": [
-    1.6616082191467285,
-    0.5784350633621216,
+    1.6840543746948242,
+    0.5948242545127869,
     1.559999942779541
   ],
   "palette": "kl_character_palette.png",

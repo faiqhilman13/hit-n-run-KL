@@ -2,8 +2,8 @@
   "asset": "chr_pakmat",
   "height_m": 1.66,
   "mesh_height_m": 1.66,
-  "triangles": 76484,
-  "lod1_triangles": 21415,
+  "triangles": 100883,
+  "lod1_triangles": 28247,
   "bones": 23,
   "clips": [
     "chr_pakmat|_tpose",
@@ -30,8 +30,8 @@
     "Blink"
   ],
   "bounds_m": [
-    1.844408392906189,
-    0.636991024017334,
+    1.8668546676635742,
+    0.6923797130584717,
     1.659999966621399
   ],
   "palette": "kl_character_palette.png",

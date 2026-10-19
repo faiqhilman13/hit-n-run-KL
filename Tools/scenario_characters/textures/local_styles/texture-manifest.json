@@ -1,0 +1,407 @@
+{
+  "generator_version": 4,
+  "color_space": "basecolor: sRGB; ORM/normal: linear",
+  "normal_convention": "OpenGL +Y tangent space",
+  "variants": {
+    "A": {
+      "label": "Warm animated film",
+      "maps": {
+        "batik": {
+          "basecolor": "A\\batik_basecolor.png",
+          "orm": "A\\batik_orm.png",
+          "normal": "A\\batik_normal.png"
+        },
+        "sarong": {
+          "basecolor": "A\\sarong_basecolor.png",
+          "orm": "A\\sarong_orm.png",
+          "normal": "A\\sarong_normal.png"
+        },
+        "skin": {
+          "basecolor": "A\\skin_basecolor.png",
+          "orm": "A\\skin_orm.png",
+          "normal": "A\\skin_normal.png"
+        },
+        "leather": {
+          "basecolor": "A\\leather_basecolor.png",
+          "orm": "A\\leather_orm.png",
+          "normal": "A\\leather_normal.png"
+        },
+        "songkok": {
+          "basecolor": "A\\songkok_basecolor.png",
+          "orm": "A\\songkok_orm.png",
+          "normal": "A\\songkok_normal.png"
+        },
+        "iris": {
+          "basecolor": "A\\iris_basecolor.png"
+        }
+      },
+      "authored_palette_srgb": {
+        "label": "Warm animated film",
+        "orange": [
+          198,
+          74,
+          22
+        ],
+        "leaf": [
+          105,
+          42,
+          27
+        ],
+        "gold": [
+          244,
+          178,
+          80
+        ],
+        "vein": [
+          238,
+          153,
+          71
+        ],
+        "green": [
+          39,
+          65,
+          44
+        ],
+        "stripe": [
+          104,
+          120,
+          70
+        ],
+        "pin": [
+          151,
+          153,
+          98
+        ],
+        "skin": [
+          189,
+          126,
+          86
+        ],
+        "hair": [
+          31,
+          27,
+          24
+        ],
+        "hat": [
+          30,
+          29,
+          26
+        ],
+        "leather": [
+          101,
+          56,
+          30
+        ],
+        "cloth_grain": 0.007,
+        "cloth_normal": 0.2,
+        "cloth_rough": 0.78,
+        "skin_normal": 0.045,
+        "skin_rough": 0.58,
+        "leather_normal": 0.18,
+        "scale": 1.0
+      },
+      "size": 1024,
+      "note": "Original seamless textile designs. No baked lights/shadows/AO; ORM.R=1, ORM.B=0."
+    },
+    "B": {
+      "label": "Graphic comic",
+      "maps": {
+        "batik": {
+          "basecolor": "B\\batik_basecolor.png",
+          "orm": "B\\batik_orm.png",
+          "normal": "B\\batik_normal.png"
+        },
+        "sarong": {
+          "basecolor": "B\\sarong_basecolor.png",
+          "orm": "B\\sarong_orm.png",
+          "normal": "B\\sarong_normal.png"
+        },
+        "skin": {
+          "basecolor": "B\\skin_basecolor.png",
+          "orm": "B\\skin_orm.png",
+          "normal": "B\\skin_normal.png"
+        },
+        "leather": {
+          "basecolor": "B\\leather_basecolor.png",
+          "orm": "B\\leather_orm.png",
+          "normal": "B\\leather_normal.png"
+        },
+        "songkok": {
+          "basecolor": "B\\songkok_basecolor.png",
+          "orm": "B\\songkok_orm.png",
+          "normal": "B\\songkok_normal.png"
+        },
+        "iris": {
+          "basecolor": "B\\iris_basecolor.png"
+        }
+      },
+      "authored_palette_srgb": {
+        "label": "Graphic comic",
+        "orange": [
+          201,
+          73,
+          22
+        ],
+        "leaf": [
+          92,
+          33,
+          28
+        ],
+        "gold": [
+          240,
+          164,
+          65
+        ],
+        "vein": [
+          227,
+          127,
+          40
+        ],
+        "green": [
+          29,
+          58,
+          45
+        ],
+        "stripe": [
+          96,
+          112,
+          65
+        ],
+        "pin": [
+          149,
+          150,
+          89
+        ],
+        "skin": [
+          190,
+          124,
+          82
+        ],
+        "hair": [
+          32,
+          25,
+          24
+        ],
+        "hat": [
+          31,
+          29,
+          27
+        ],
+        "leather": [
+          112,
+          58,
+          30
+        ],
+        "cloth_grain": 0.001,
+        "cloth_normal": 0.06,
+        "cloth_rough": 0.84,
+        "skin_normal": 0.0,
+        "skin_rough": 0.68,
+        "leather_normal": 0.04,
+        "scale": 1.09
+      },
+      "size": 1024,
+      "note": "Original seamless textile designs. No baked lights/shadows/AO; ORM.R=1, ORM.B=0."
+    },
+    "C": {
+      "label": "Handmade miniature",
+      "maps": {
+        "batik": {
+          "basecolor": "C\\batik_basecolor.png",
+          "orm": "C\\batik_orm.png",
+          "normal": "C\\batik_normal.png"
+        },
+        "sarong": {
+          "basecolor": "C\\sarong_basecolor.png",
+          "orm": "C\\sarong_orm.png",
+          "normal": "C\\sarong_normal.png"
+        },
+        "skin": {
+          "basecolor": "C\\skin_basecolor.png",
+          "orm": "C\\skin_orm.png",
+          "normal": "C\\skin_normal.png"
+        },
+        "leather": {
+          "basecolor": "C\\leather_basecolor.png",
+          "orm": "C\\leather_orm.png",
+          "normal": "C\\leather_normal.png"
+        },
+        "songkok": {
+          "basecolor": "C\\songkok_basecolor.png",
+          "orm": "C\\songkok_orm.png",
+          "normal": "C\\songkok_normal.png"
+        },
+        "iris": {
+          "basecolor": "C\\iris_basecolor.png"
+        }
+      },
+      "authored_palette_srgb": {
+        "label": "Handmade miniature",
+        "orange": [
+          178,
+          66,
+          24
+        ],
+        "leaf": [
+          103,
+          37,
+          28
+        ],
+        "gold": [
+          226,
+          158,
+          66
+        ],
+        "vein": [
+          216,
+          135,
+          58
+        ],
+        "green": [
+          36,
+          60,
+          41
+        ],
+        "stripe": [
+          97,
+          113,
+          64
+        ],
+        "pin": [
+          145,
+          145,
+          94
+        ],
+        "skin": [
+          183,
+          129,
+          93
+        ],
+        "hair": [
+          37,
+          30,
+          25
+        ],
+        "hat": [
+          35,
+          33,
+          28
+        ],
+        "leather": [
+          107,
+          62,
+          34
+        ],
+        "cloth_grain": 0.025,
+        "cloth_normal": 0.38,
+        "cloth_rough": 0.88,
+        "skin_normal": 0.12,
+        "skin_rough": 0.78,
+        "leather_normal": 0.18,
+        "scale": 1.0
+      },
+      "size": 1024,
+      "note": "Original seamless textile designs. No baked lights/shadows/AO; ORM.R=1, ORM.B=0."
+    },
+    "D": {
+      "label": "Grounded stylized",
+      "maps": {
+        "batik": {
+          "basecolor": "D\\batik_basecolor.png",
+          "orm": "D\\batik_orm.png",
+          "normal": "D\\batik_normal.png"
+        },
+        "sarong": {
+          "basecolor": "D\\sarong_basecolor.png",
+          "orm": "D\\sarong_orm.png",
+          "normal": "D\\sarong_normal.png"
+        },
+        "skin": {
+          "basecolor": "D\\skin_basecolor.png",
+          "orm": "D\\skin_orm.png",
+          "normal": "D\\skin_normal.png"
+        },
+        "leather": {
+          "basecolor": "D\\leather_basecolor.png",
+          "orm": "D\\leather_orm.png",
+          "normal": "D\\leather_normal.png"
+        },
+        "songkok": {
+          "basecolor": "D\\songkok_basecolor.png",
+          "orm": "D\\songkok_orm.png",
+          "normal": "D\\songkok_normal.png"
+        },
+        "iris": {
+          "basecolor": "D\\iris_basecolor.png"
+        }
+      },
+      "authored_palette_srgb": {
+        "label": "Grounded stylized",
+        "orange": [
+          177,
+          66,
+          24
+        ],
+        "leaf": [
+          112,
+          48,
+          31
+        ],
+        "gold": [
+          224,
+          159,
+          87
+        ],
+        "vein": [
+          226,
+          166,
+          99
+        ],
+        "green": [
+          38,
+          65,
+          48
+        ],
+        "stripe": [
+          93,
+          111,
+          72
+        ],
+        "pin": [
+          139,
+          146,
+          99
+        ],
+        "skin": [
+          178,
+          122,
+          85
+        ],
+        "hair": [
+          29,
+          26,
+          24
+        ],
+        "hat": [
+          29,
+          30,
+          28
+        ],
+        "leather": [
+          88,
+          51,
+          29
+        ],
+        "cloth_grain": 0.017,
+        "cloth_normal": 0.28,
+        "cloth_rough": 0.83,
+        "skin_normal": 0.075,
+        "skin_rough": 0.62,
+        "leather_normal": 0.2,
+        "scale": 0.85
+      },
+      "size": 1024,
+      "note": "Original seamless textile designs. No baked lights/shadows/AO; ORM.R=1, ORM.B=0."
+    }
+  }
+}

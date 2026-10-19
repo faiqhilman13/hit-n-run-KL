@@ -2,8 +2,8 @@
   "asset": "chr_kid",
   "height_m": 1.15,
   "mesh_height_m": 1.15,
-  "triangles": 60512,
-  "lod1_triangles": 16943,
+  "triangles": 70788,
+  "lod1_triangles": 19819,
   "bones": 23,
   "clips": [
     "chr_kid|_tpose",
@@ -30,8 +30,8 @@
     "Blink"
   ],
   "bounds_m": [
-    1.0703151226043701,
-    0.4193039834499359,
+    1.086639642715454,
+    0.4305514395236969,
     1.149999976158142
   ],
   "palette": "kl_character_palette.png",

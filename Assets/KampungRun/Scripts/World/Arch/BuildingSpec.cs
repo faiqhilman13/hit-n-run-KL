@@ -51,6 +51,12 @@ namespace KampungRun.Arch
         public bool tiledRoof;
         /// <summary>A flat roof you can stand on (Chow Kit's rows, where the awnings bounce you up).</summary>
         public bool flatRoof;
+        /// <summary>What its ground-floor shop is inside (Auto: by its sign or shopfront; Closed: never open).</summary>
+        public InteriorKind interior;
+        /// <summary>The signboard to hang (Signs0..3 index; -1 = by the seed).</summary>
+        public int sign = -1;
+        /// <summary>Its walk-in rooms (Interior.RoomsOf works them out once).</summary>
+        [System.NonSerialized] public System.Collections.Generic.List<RoomSpec> rooms;
 
         public float Area()
         {

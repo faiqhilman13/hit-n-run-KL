@@ -12,6 +12,11 @@ namespace KampungRun.Arch
         public int seed;
         /// <summary>Wall colour (KampungHouse.Walls index; -1 = by the seed). Pak Mat's is teal.</summary>
         public int wall = -1;
+        /// <summary>Give it the kitchen wing whatever the seed says (Pak Mat's).</summary>
+        public bool kitchen;
+        /// <summary>Its living room: House, or Home for Pak Mat's.</summary>
+        public InteriorKind interior = InteriorKind.House;
+        [System.NonSerialized] public List<RoomSpec> rooms;
 
         public Vector2 Where() => new Vector2(pos.x, pos.z);
         public void Build(ArchMesh m, bool detail) => KampungHouse.Build(this, m, detail);
@@ -48,7 +53,7 @@ namespace KampungRun.Arch
             var trim = Trims[rng.Next(Trims.Length)];
             var shutter = Shutters[rng.Next(Shutters.Length)];
             var roof = Roofs[rng.Next(Roofs.Length)];
-            bool kitchen = rng.NextDouble() < 0.6;
+            bool kitchen = rng.NextDouble() < 0.6 || h.kitchen;
             float w = h.width, y1 = Stilt + FloorT, y2 = y1 + WallH;
             var rot = Quaternion.Euler(0f, h.yaw, 0f);
             // the house's own frame: x across, z toward the front, origin on the ground in the middle
@@ -75,7 +80,7 @@ namespace KampungRun.Arch
             float bx0 = -w / 2 + 0.2f, bx1 = w / 2 - 0.2f;
             Wall(m, Face(bx1, BodyZ1, bx0, BodyZ1, y1), bx1 - bx0, WallH, wall, trim, shutter, detail, true, rng);           // front
             Wall(m, Face(bx1, BodyZ0, bx1, BodyZ1, y1), BodyZ1 - BodyZ0, WallH, wall, trim, shutter, detail, false, rng);    // right
-            Wall(m, Face(bx0, BodyZ0, bx1, BodyZ0, y1), bx1 - bx0, WallH, wall, trim, shutter, detail, false, rng);          // back
+            Wall(m, Face(bx0, BodyZ0, bx1, BodyZ0, y1), bx1 - bx0, WallH, wall, trim, shutter, detail, false, rng, kitchen); // back
             Wall(m, Face(bx0, BodyZ1, bx0, BodyZ0, y1), BodyZ1 - BodyZ0, WallH, wall, trim, shutter, detail, false, rng);    // left
             if (detail)
                 foreach (var (x, z) in new[] { (bx0, BodyZ0), (bx1, BodyZ0), (bx0, BodyZ1), (bx1, BodyZ1) })
@@ -147,7 +152,7 @@ namespace KampungRun.Arch
             // ---- the kitchen wing behind, lower, with its own small gable
             if (kitchen)
             {
-                float kw = w * 0.6f, kz0 = BodyZ0 - 3.0f, kz1 = BodyZ0, ky0 = 0.6f, ky1 = ky0 + 2.6f;
+                float kw = w * 0.6f, kz0 = KitchenZ0, kz1 = BodyZ0, ky0 = KitchenFloor, ky1 = ky0 + KitchenH;
                 if (detail) foreach (float x in new[] { -kw / 2 + 0.2f, kw / 2 - 0.2f }) foreach (float z in new[] { kz0 + 0.2f }) Post(m, F, x, z, 0f, ky0, 0.18f, Footing);
                 m.Box(F, -kw / 2, kw / 2, ky0, ky1, kz0, kz1, wall, ArchTex.PlanksH, Faces.Back | Faces.Left | Faces.Right, 0.9f);
                 m.Box(F, -kw / 2, kw / 2, 0f, ky0, kz0, kz1, ArchMesh.Shade(Footing, 0.85f), Faces.Back | Faces.Left | Faces.Right);
@@ -160,11 +165,118 @@ namespace KampungRun.Arch
                 m.Extrude(Face(-kw / 2, kz0, kw / 2, kz0, ky1), new[] { new Vector2(0f, 0f), new Vector2(kw, 0f), new Vector2(kw * 0.5f, krh) }, 0f, 0f, wall, ArchTex.PlanksH, 0.9f);
             }
             if (detail) Flora.Tufts(m, F.P(0f, 0.01f, 0f), w * 0.7f, 8, h.seed + 5);
+            // the rooms inside (walk-in: Interior.cs), and the doormat and shoe rack by the door
+            if (detail)
+            {
+                var rooms = Interior.RoomsOf(h);
+                foreach (var r in rooms) Interior.Shell(m, r);
+                if (rooms.Count > 0) Porch(m, F, h);
+                StreetDress.Yard(m, F, w, y1, y2, h.seed);
+                StreetDress.Fence(m, F, w, h.interior == InteriorKind.Home ? 8.4f : 6.9f, h.seed);
+            }
+        }
+
+        public const float KitchenFloor = 1.2f, KitchenH = 2.6f, KitchenZ0 = BodyZ0 - 3.0f, DoorW = 1.2f, DoorH = 2.1f;
+
+        /// <summary>The front (or back) door's centre in the house frame's x (Wall(): the middle of one window per 2.6 m;
+        /// the front wall runs from bx1 across, the back wall from bx0).</summary>
+        static float DoorX(float w, bool front)
+        {
+            float bx0 = -w / 2 + 0.2f, bx1 = w / 2 - 0.2f, len = bx1 - bx0;
+            int nw = Mathf.Max(1, Mathf.RoundToInt(len / 2.6f));
+            float cx = len * (nw / 2 + 0.5f) / nw;
+            return front ? bx1 - cx : bx0 + cx;
+        }
+
+        /// <summary>The house's walk-in rooms (Interior.RoomsOf): the living room in the body, the kitchen wing's dapur.</summary>
+        public static void Rooms(HouseSpec h, List<RoomSpec> into)
+        {
+            var rng = new System.Random(h.seed);
+            rng.Next(Walls.Length); rng.Next(Trims.Length); rng.Next(Shutters.Length); rng.Next(Roofs.Length);   // (Build's first dice)
+            bool kitchen = rng.NextDouble() < 0.6 || h.kitchen;
+            float w = h.width, y1 = Stilt + FloorT;
+            var rot = Quaternion.Euler(0f, h.yaw, 0f);
+            Vector3 fwd = rot * Vector3.forward, right = rot * Vector3.right;
+            Vector3 P(float x, float y, float z) => h.pos + right * x + Vector3.up * y + fwd * z;
+            float bx0 = -w / 2 + 0.2f, bx1 = w / 2 - 0.2f, t = 0.15f;
+            int seed = h.seed * 31 + 7;
+            // the body: room x runs from the house's +x side across, the room's front toward the verandah
+            var body = new RoomSpec
+            {
+                kind = h.interior == InteriorKind.Auto ? InteriorKind.House : h.interior, seed = seed,
+                f = new Frame(P(bx1 - t, y1 + 0.01f, BodyZ1 - t), -right, Vector3.up, fwd),
+                W = bx1 - bx0 - 2f * t, D = BodyZ1 - BodyZ0 - 2f * t, H = WallH - 0.04f,
+            };
+            if (h.interior == InteriorKind.Home) body.wall = ArchMesh.Col(0.84f, 0.94f, 0.90f);
+            // the windows of the four walls as Wall() cuts them (one per 2.6 m; the front's middle one is the door)
+            void Windows(int wall, float len, System.Func<float, float> at, bool door)
+            {
+                int nw = Mathf.Max(1, Mathf.RoundToInt(len / 2.6f));
+                for (int i = 0; i < nw; i++)
+                {
+                    float c = at(len * (i + 0.5f) / nw);
+                    if (door && i == nw / 2)
+                    {
+                        body.openings.Add(new RoomOpening { wall = wall, c0 = c - DoorW / 2, c1 = c + DoorW / 2, y0 = 0f, y1 = (wall == 0 ? DoorH : 2.0f) - 0.01f, door = true });
+                        continue;
+                    }
+                    var tex = (seed + i + wall) % 3 == 0 ? ArchTex.Curtained : ArchTex.Louvre;
+                    body.openings.Add(new RoomOpening { wall = wall, c0 = c - 0.5f, c1 = c + 0.5f, y0 = 0.7f, y1 = 2.2f, tex = tex, col = tex == ArchTex.Louvre ? ArchMesh.Col(0.86f, 0.80f, 0.66f) : White });
+                }
+            }
+            Windows(0, bx1 - bx0, cx => cx - t, true);                                   // front: from bx1 across
+            Windows(1, bx1 - bx0, cx => (bx1 - t) - (bx0 + cx), kitchen);               // back: from bx0
+            Windows(2, BodyZ1 - BodyZ0, cx => (BodyZ1 - t) - (BodyZ0 + cx), false);    // the +x side: from the back
+            Windows(3, BodyZ1 - BodyZ0, cx => cx - t, false);                            // the -x side: from the front
+            into.Add(body);
+            if (!kitchen) return;
+            float kw = w * 0.6f;
+            var kit = new RoomSpec
+            {
+                kind = InteriorKind.Kitchen, seed = seed + 1,
+                f = new Frame(P(kw / 2 - t, KitchenFloor + 0.01f, BodyZ0 - t), -right, Vector3.up, fwd),
+                W = kw - 2f * t, D = BodyZ0 - KitchenZ0 - 2f * t, H = KitchenH - 0.04f,
+            };
+            // the way through from the living room (its sill a step up from the kitchen floor), the back window over the counter
+            float kd = (kw / 2 - t) - DoorX(w, false);
+            float sill = y1 - KitchenFloor;
+            kit.openings.Add(new RoomOpening { wall = 0, c0 = kd - DoorW / 2, c1 = kd + DoorW / 2, y0 = sill, y1 = sill + 2.0f, door = true, reveal = t });
+            float s0 = kw * 0.3f, s1 = kw * 0.55f;
+            kit.openings.Add(new RoomOpening { wall = 1, c0 = (kw - t) - s1, c1 = (kw - t) - s0, y0 = 0.9f, y1 = 2.0f, tex = ArchTex.Louvre, col = ArchMesh.Col(0.86f, 0.80f, 0.66f) });
+            into.Add(kit);
+        }
+
+        /// <summary>By the front door on the verandah: the shoe rack with the family's selipar on it, a pair left out, a doormat.</summary>
+        static void Porch(ArchMesh m, in Frame F, HouseSpec h)
+        {
+            float y1 = Stilt + FloorT, dx = DoorX(h.width, true);
+            float rx = dx + (dx > 0f ? -1.3f : 1.3f);                          // beside the door, toward the middle
+            var right = Vector3.Cross(F.n, Vector3.up).normalized;             // so n = up x r holds (Frame's handedness)
+            var rf = new Frame(F.P(rx, y1, BodyZ1), right, Vector3.up, F.n);
+            var rackCol = ArchMesh.Col(0.50f, 0.34f, 0.22f);
+            m.Box(rf, -0.45f, 0.45f, 0f, 0.62f, 0.02f, 0.34f, rackCol, ArchTex.White, Faces.All & ~Faces.Bottom);
+            var pairs = new[] { ArchMesh.Col(0.20f, 0.40f, 0.80f), ArchMesh.Col(0.86f, 0.24f, 0.30f), ArchMesh.Col(0.24f, 0.24f, 0.26f), ArchMesh.Col(0.96f, 0.80f, 0.24f) };
+            for (int k = 0; k < 3; k++)
+            {
+                float y = 0.06f + k * 0.2f;
+                m.Box(rf, -0.42f, 0.42f, y - 0.02f, y, 0.34f, 0.36f, ArchMesh.Shade(rackCol, 0.8f), Faces.Front | Faces.Top);
+                for (int p = 0; p < 2; p++)
+                {
+                    float x = -0.36f + (k + p * 2) % 4 * 0.2f;
+                    var c = pairs[(k * 2 + p) % pairs.Length];
+                    m.Box(rf, x, x + 0.07f, y, y + 0.03f, 0.06f, 0.3f, c);
+                    m.Box(rf, x + 0.09f, x + 0.16f, y, y + 0.03f, 0.06f, 0.3f, c);
+                }
+            }
+            var df = new Frame(F.P(dx, y1, BodyZ1), right, Vector3.up, F.n);
+            m.Box(df, -0.45f, 0.45f, 0f, 0.012f, 0.05f, 0.62f, ArchMesh.Col(0.72f, 0.20f, 0.16f), ArchTex.Rugs, Faces.Top);
+            m.Box(df, 0.62f, 0.7f, 0f, 0.03f, 0.7f, 0.95f, pairs[1]); m.Box(df, 0.74f, 0.82f, 0f, 0.03f, 0.68f, 0.93f, pairs[1]);
         }
 
         /// <summary>One planked wall of the body with its windows (and the door on the front), each window shuttered,
         /// framed and topped with a carved kerawang vent.</summary>
-        static void Wall(ArchMesh m, in Frame f, float len, float hgt, Color32 wall, Color32 trim, Color32 shutter, bool detail, bool front, System.Random rng)
+        static void Wall(ArchMesh m, in Frame f, float len, float hgt, Color32 wall, Color32 trim, Color32 shutter, bool detail, bool front, System.Random rng,
+                         bool backDoor = false)
         {
             _holes.Clear();
             int nw = Mathf.Max(1, Mathf.RoundToInt(len / 2.6f));
@@ -173,7 +285,15 @@ namespace KampungRun.Arch
                 float cx = len * (i + 0.5f) / nw;
                 if (front && i == nw / 2)
                 {
-                    _holes.Add(new Opening(cx - 0.5f, cx + 0.5f, 0f, 2.1f, detail ? 0.1f : 0f, ArchTex.Door, shutter, Reveal));
+                    // the front door stands open: near the player you can walk in (Interior.cs)
+                    if (detail && Interior.Enabled) _holes.Add(new Opening(cx - DoorW / 2, cx + DoorW / 2, 0f, DoorH, 0.15f, ArchTex.Door, shutter, Reveal) { open = true });
+                    else _holes.Add(new Opening(cx - 0.5f, cx + 0.5f, 0f, 2.1f, 0f, ArchTex.Door, shutter, Reveal));
+                    continue;
+                }
+                if (backDoor && i == nw / 2 && Interior.Enabled)
+                {
+                    // the way through to the kitchen wing
+                    _holes.Add(new Opening(cx - DoorW / 2, cx + DoorW / 2, 0f, 2.0f, detail ? 0.15f : 0f, ArchTex.Door, shutter, Reveal) { open = detail });
                     continue;
                 }
                 var back = rng.NextDouble() < 0.75 ? ArchTex.Louvre : ArchTex.Curtained;
@@ -181,6 +301,15 @@ namespace KampungRun.Arch
             }
             m.Panel(f, 0f, len, 0f, hgt, 0f, wall, ArchTex.PlanksH, 0.9f, _holes);
             if (!detail) return;
+            // the front door's leaf, swung in against the inside of the wall
+            if (front)
+                foreach (var h in _holes)
+                    if (h.open)
+                    {
+                        bool roomLeft = h.x0 > len - h.x1;
+                        float x0 = roomLeft ? h.x0 - DoorW + 0.05f : h.x1 - 0.05f;
+                        m.Box(f, x0, x0 + DoorW - 0.05f, 0.02f, DoorH - 0.04f, -0.24f, -0.19f, shutter, ArchTex.Door, Faces.All & ~Faces.Bottom);
+                    }
             foreach (var h in _holes)
             {
                 // the frame, and the carved vent over it
@@ -220,25 +349,48 @@ namespace KampungRun.Arch
         }
 
         /// <summary>The house's solid for physics: its body and verandah up to the eaves, the stair as a ramp.</summary>
+        /// <summary>
+        /// The house's solids for physics, walkable: the stilts' floor slab, the stair as a ramp, the verandah balustrade
+        /// (open at the stair), the body's walls with the doorways open (from its rooms: Interior.cs), the kitchen wing on
+        /// its own slab a step down, and the roofs.
+        /// </summary>
         public static void Collider(HouseSpec h, List<Vector3> v, List<int> t)
         {
             var rot = Quaternion.Euler(0f, h.yaw, 0f);
-            float w = h.width;
-            Vector3 P(float x, float y, float z) => h.pos + rot * new Vector3(x, y, z);
-            float top = Stilt + FloorT + WallH;
-            int b = v.Count;
-            var corners = new[] { P(-w / 2, 0, BodyZ0), P(w / 2, 0, BodyZ0), P(w / 2, 0, VerZ1), P(-w / 2, 0, VerZ1) };
-            foreach (var c in corners) { v.Add(c); v.Add(c + Vector3.up * top); }
-            for (int i = 0; i < 4; i++)
+            var F = new Frame(h.pos, rot * Vector3.right, Vector3.up, rot * Vector3.forward);        // (mirrored: Solid turns faces itself)
+            float w = h.width, y1 = Stilt + FloorT, y2 = y1 + WallH;
+            var rooms = Interior.RoomsOf(h);
+            if (rooms.Count == 0)
             {
-                int j = (i + 1) % 4, a0 = b + i * 2, a1 = a0 + 1, c0 = b + j * 2, c1 = c0 + 1;
-                t.Add(a0); t.Add(c1); t.Add(a1);
-                t.Add(a0); t.Add(c0); t.Add(c1);
-                t.Add(a0); t.Add(a1); t.Add(c1);
-                t.Add(a0); t.Add(c1); t.Add(c0);
+                // (interiors switched off: the house a solid block, as it was)
+                Solid.Box(v, t, F, -w / 2, w / 2, 0f, y2, BodyZ0, VerZ1);
+                return;
             }
-            t.Add(b + 1); t.Add(b + 3); t.Add(b + 5); t.Add(b + 1); t.Add(b + 5); t.Add(b + 7);
-            t.Add(b + 1); t.Add(b + 5); t.Add(b + 3); t.Add(b + 1); t.Add(b + 7); t.Add(b + 5);
+            // the floor: solid from the ground to the deck under the body and the verandah
+            Solid.Box(v, t, F, -w / 2, w / 2, 0f, y1, BodyZ0, VerZ1);
+            // the stair: a ramp from just past its foot up to the deck, between the cheek walls
+            const float gap = 0.75f, run = 0.34f;
+            float zFoot = VerZ1 + 5 * run + 0.25f;
+            var G = new Frame(h.pos, F.n, Vector3.up, F.r);
+            Solid.Tri(v, t, G, new Vector2(VerZ1 - 0.02f, 0f), new Vector2(zFoot, 0f), new Vector2(VerZ1 - 0.02f, y1), -gap + 0.04f, gap - 0.04f);
+            // the balustrade round the verandah, open where the stair comes up
+            Solid.Box(v, t, F, -w / 2 + 0.04f, -gap, y1, y1 + 0.95f, VerZ1 - 0.18f, VerZ1 - 0.02f);
+            Solid.Box(v, t, F, gap, w / 2 - 0.04f, y1, y1 + 0.95f, VerZ1 - 0.18f, VerZ1 - 0.02f);
+            Solid.Box(v, t, F, -w / 2 + 0.02f, -w / 2 + 0.18f, y1, y1 + 0.95f, BodyZ1, VerZ1);
+            Solid.Box(v, t, F, w / 2 - 0.18f, w / 2 - 0.02f, y1, y1 + 0.95f, BodyZ1, VerZ1);
+            // the walls of the rooms, doorways open
+            foreach (var r in rooms) Interior.RoomWalls(r, v, t, true, 0.15f);
+            if (rooms.Count > 1)
+            {
+                float kw = w * 0.6f, ky1 = KitchenFloor + KitchenH;
+                Solid.Box(v, t, F, -kw / 2, kw / 2, 0f, KitchenFloor, KitchenZ0, BodyZ0);
+                float dx = DoorX(w, false);
+                Solid.Box(v, t, F, dx - DoorW / 2, dx + DoorW / 2, KitchenFloor, KitchenFloor + 0.15f, BodyZ0 - 0.5f, BodyZ0 - 0.15f);   // the step down
+                Solid.Tri(v, t, F, new Vector2(-kw / 2 - 0.4f, ky1), new Vector2(kw / 2 + 0.4f, ky1), new Vector2(0f, ky1 + kw * 0.4f), KitchenZ0 - 0.4f, BodyZ0);
+            }
+            // the roof, out over the verandah
+            float over = 0.6f, rh = w * 0.42f, ye = y2 - 0.05f;
+            Solid.Tri(v, t, F, new Vector2(-w / 2 - over, ye), new Vector2(w / 2 + over, ye), new Vector2(0f, ye + rh), BodyZ0 - over, VerZ1 + 0.45f);
         }
     }
 }

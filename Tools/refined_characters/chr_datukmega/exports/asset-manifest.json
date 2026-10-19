@@ -2,8 +2,8 @@
   "asset": "chr_datukmega",
   "height_m": 1.74,
   "mesh_height_m": 1.74,
-  "triangles": 78199,
-  "lod1_triangles": 21894,
+  "triangles": 89635,
+  "lod1_triangles": 25096,
   "bones": 23,
   "clips": [
     "chr_datukmega|_tpose",
@@ -30,8 +30,8 @@
     "Blink"
   ],
   "bounds_m": [
-    1.926408290863037,
-    0.5611894130706787,
+    1.9488543272018433,
+    0.6020517945289612,
     1.7400000095367432
   ],
   "palette": "kl_character_palette.png",

@@ -2,8 +2,8 @@
   "asset": "chr_ravi",
   "height_m": 1.76,
   "mesh_height_m": 1.76,
-  "triangles": 66688,
-  "lod1_triangles": 18672,
+  "triangles": 79431,
+  "lod1_triangles": 22240,
   "bones": 23,
   "clips": [
     "chr_ravi|_tpose",
@@ -30,8 +30,8 @@
     "Blink"
   ],
   "bounds_m": [
-    1.844408392906189,
-    0.4492622911930084,
+    1.8668544292449951,
+    0.4714260697364807,
     1.7599999904632568
   ],
   "palette": "kl_character_palette.png",

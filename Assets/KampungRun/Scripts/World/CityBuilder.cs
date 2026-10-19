@@ -44,6 +44,12 @@ namespace KampungRun
             public readonly List<Vector3> coinSpots = new List<Vector3>();
             public readonly List<Vector3> itemSpots = new List<Vector3>(); // mission collectible candidates
             public readonly List<Transform> satayCarts = new List<Transform>();   // a hawker stands at each (StreetLife)
+            /// <summary>Bus stops: where the shelter stands, and the way it faces (out to the road).</summary>
+            public readonly List<(Vector3 pos, Vector3 facing)> busStops = new List<(Vector3, Vector3)>();
+            /// <summary>Marked parking bays along the kerbs (CityBuilder.Roads): where a parked car sits, facing the traffic's way.</summary>
+            public readonly List<(Vector3 pos, Quaternion rot)> parkingBays = new List<(Vector3, Quaternion)>();
+            /// <summary>Motorcycle bays: a row of kapcai from a to b, nosed out at yaw.</summary>
+            public readonly List<(Vector3 a, Vector3 b, float yaw, int bikes)> motoBays = new List<(Vector3, Vector3, float, int)>();
             public Bounds bounds;
 
             /// <summary>The nearest point on a pavement loop to p (where people stand), optionally
@@ -68,6 +74,7 @@ namespace KampungRun
         City _city;
         StaticBatcher _ground;
         Arch.ArchCity _arch;
+        Interiors _interiors;
         Transform _props, _kitRoot;
 
         float R(float a, float b) => a + (float)_rng.NextDouble() * (b - a);
@@ -199,6 +206,7 @@ namespace KampungRun
             _ground = new StaticBatcher();
             _districts.Clear();
             _floraAt.Clear();
+            _patchRoads.Clear();
             var clock = System.Diagnostics.Stopwatch.StartNew();
             var times = new System.Text.StringBuilder();
             void Lap(string what) { times.Append($" {what} {clock.ElapsedMilliseconds}ms"); clock.Restart(); }
@@ -211,6 +219,8 @@ namespace KampungRun
             }
             // the modelled buildings (Scripts/World/Arch), by city cell
             _arch = Arch.ArchCity.Create(root, new Vector2(X0, Z0));
+            // the walk-in rooms' furniture and shopkeepers, streamed round the player (their shells are the buildings')
+            _interiors = Interiors.Create(root);
             Lap("load");
             CollectWater(patches);
             BuildRoads();
@@ -232,8 +242,11 @@ namespace KampungRun
             DressPatches();
             BuildBorder();
             BuildParapets();
+            PaintRoads();                                       // the grid roads' surface, signals and crossings
+            Lap("paint");
             _ground.Build(root, "Ground");
             ArchColliders();
+            DoorWards();
             Lap("ground");
             BuildGreenery();
             Lap("green");
@@ -387,6 +400,7 @@ namespace KampungRun
                 foreach (var s in p.buildings)
                 {
                     _arch.Add(s);
+                    _interiors.Add(Arch.Interior.RoomsOf(s));
                     Arch.ArchGen.Collider(s, cv, ct);
                 }
                 var bm = new Mesh { name = p.name + "_buildings", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
@@ -406,6 +420,7 @@ namespace KampungRun
             // the street graph, joined to the grid roads round the patch
             var nodes = new RoadNetwork.Node[p.nodes.Length];
             for (int i = 0; i < p.nodes.Length; i++) nodes[i] = _city.roads.Add(p.nodes[i], p.junction[i]);
+            _patchRoads.Add((p, nodes));                        // painted with the grid roads (CityBuilder.PatchRoads)
             foreach (var e in p.edges)
             {
                 if (e.dir == 0) RoadNetwork.Link(nodes[e.a], nodes[e.b]);
@@ -663,6 +678,10 @@ namespace KampungRun
             float seg = Block / tiles, stretch = seg / 10f;
             float half = Road * 0.5f;
             _segChains.Clear();
+            _citySegs.Clear();
+            _cityBoxes.Clear();
+            _signalled.Clear();
+            _lampSpots.Clear();
 
             // One stretch of road. City streets are two 2-lane tiles side by side (four lanes, the
             // tiles' edge lines meeting as a centre divide); kampung roads are a single narrow lane
@@ -704,8 +723,13 @@ namespace KampungRun
                         // the kit's corner tile has its arms to +Z and +X at yaw 0
                         yaw = n && e ? 0 : e && s ? 90 : s && w ? 180 : -90;
                     }
-                    Kit(id, p, yaw, sc, sc);
-                    if (kampung) _ground.Box(p + Vector3.up * 0.01f, new Vector3(Road, 0.02f, Road), LatMaterials.Pal.Grass, false, 0f);
+                    // city junctions are painted with the streets (CityBuilder.Roads); kampung ones keep the kit's lane tiles
+                    if (kampung)
+                    {
+                        Kit(id, p, yaw, sc, sc);
+                        _ground.Box(p + Vector3.up * 0.01f, new Vector3(Road, 0.02f, Road), LatMaterials.Pal.Grass, false, 0f);
+                    }
+                    else _cityBoxes[(i, k)] = (n, e, s, w);
                     RoadColliders(p - new Vector3(half, 0, 0), p + new Vector3(half, 0, 0), true);
                     _gridNodes[i, k] = _city.roads.Add(p);
                 }
@@ -717,13 +741,10 @@ namespace KampungRun
                     if (!NSRoad(i, k) || OnFlyover(true, i, k)) continue;
                     float x = RoadX(i);
                     bool kampung = NSKampung(i, k);
-                    bool city = !kampung;
-                    for (int t = 0; t < tiles; t++)
-                    {
-                        float z = RoadZ(k) + half + seg * (t + 0.5f);
-                        string id = city && (t == 0 || t == tiles - 1) ? "env_crosswalk" : kampung ? "env_kb_lane" : "env_road_straight";
-                        Straight(id, new Vector3(x, 0, z), 0, kampung);
-                    }
+                    if (kampung)
+                        for (int t = 0; t < tiles; t++)
+                            Straight("env_kb_lane", new Vector3(x, 0, RoadZ(k) + half + seg * (t + 0.5f)), 0, true);
+                    else _citySegs.Add((true, i, k));             // painted later (CityBuilder.Roads)
                     RoadColliders(new Vector3(x, 0, RoadZ(k) + half), new Vector3(x, 0, RoadZ(k + 1) - half), false);
                     Chain(true, i, k, _gridNodes[i, k], _gridNodes[i, k + 1]);
                 }
@@ -734,12 +755,10 @@ namespace KampungRun
                     if (!EWRoad(k, i) || OnFlyover(false, i, k)) continue;
                     float z = RoadZ(k);
                     bool kampung = EWKampung(k, i);
-                    for (int t = 0; t < tiles; t++)
-                    {
-                        float x = RoadX(i) + half + seg * (t + 0.5f);
-                        Straight(kampung ? "env_kb_lane" : t == 0 || t == tiles - 1 ? "env_crosswalk" : "env_road_straight",
-                            new Vector3(x, 0, z), 90, kampung);
-                    }
+                    if (kampung)
+                        for (int t = 0; t < tiles; t++)
+                            Straight("env_kb_lane", new Vector3(RoadX(i) + half + seg * (t + 0.5f), 0, z), 90, true);
+                    else _citySegs.Add((false, i, k));
                     RoadColliders(new Vector3(RoadX(i) + half, 0, z), new Vector3(RoadX(i + 1) - half, 0, z), true);
                     Chain(false, i, k, _gridNodes[i, k], _gridNodes[i + 1, k]);
                 }
@@ -1231,14 +1250,15 @@ namespace KampungRun
         /// A kampung house modelled by the architecture library (Arch/KampungHouse.cs), standing where the kit's house
         /// of that name stood (same width, front the same way, stair in the same place). Returns a marker object.
         /// </summary>
-        GameObject House(string kitModel, Vector3 pos, float yaw, int wall = -1)
+        GameObject House(string kitModel, Vector3 pos, float yaw, int wall = -1, Arch.InteriorKind interior = Arch.InteriorKind.House, bool kitchen = false)
         {
             var h = new Arch.HouseSpec
             {
-                pos = pos, yaw = yaw, width = kitModel == "env_kb_house_small" ? 6f : 8f, wall = wall,
+                pos = pos, yaw = yaw, width = kitModel == "env_kb_house_small" ? 6f : 8f, wall = wall, interior = interior, kitchen = kitchen,
                 seed = Mathf.RoundToInt(pos.x * 5.7f) * 73856093 ^ Mathf.RoundToInt(pos.z * 3.3f) * 19349663,
             };
             _arch.Add(h);
+            _interiors.Add(Arch.Interior.RoomsOf(h));
             Arch.KampungHouse.Collider(h, _archCv, _archCt);
             var go = new GameObject("KampungHouse");
             go.transform.SetParent(_props, false);
@@ -1307,7 +1327,8 @@ namespace KampungRun
         void HomeBlock(Vector3 c)
         {
             // Rumah Pak Mat: facing east toward the river road
-            House("env_kb_house_teal", c + new Vector3(-4, G, 0), 90, 0).name = "RumahPakMat";
+            // (walk in: the living room, and the kitchen wing behind it)
+            House("env_kb_house_teal", c + new Vector3(-4, G, 0), 90, 0, Arch.InteriorKind.Home, true).name = "RumahPakMat";
             KitProp("env_kb_rain_tree", c + new Vector3(-8, G, 13), R(0, 360), 1.2f);
             KitProp("env_palm", c + new Vector3(10, G, -14), 0);
             KitProp("env_palm", c + new Vector3(12, G, 12), 70);
@@ -1361,6 +1382,7 @@ namespace KampungRun
         void AddArch(Arch.BuildingSpec s)
         {
             _arch.Add(s);
+            _interiors.Add(Arch.Interior.RoomsOf(s));
             Arch.ArchGen.Collider(s, _archCv, _archCt);
         }
 
@@ -1377,11 +1399,33 @@ namespace KampungRun
         }
 
         /// <summary>
+        /// Every walk-in room's street doorways, as one collider on the Ward layer: pedestrians (who walk by raycasts) see
+        /// it and keep to the pavement; the player, cars and the camera ignore it.
+        /// </summary>
+        void DoorWards()
+        {
+            var v = new List<Vector3>();
+            var t = new List<int>();
+            foreach (var r in _interiors.Rooms) Arch.Interior.DoorWards(r, v, t);
+            if (t.Count == 0) return;
+            var m = new Mesh { name = "DoorWards_collider", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+            m.SetVertices(v);
+            m.SetTriangles(t, 0);
+            var go = new GameObject("DoorWards") { layer = Layers.Ward };
+            go.transform.SetParent(_city.root, false);
+            go.AddComponent<MeshCollider>().sharedMesh = m;
+            Physics.IgnoreLayerCollision(Layers.Ward, Layers.Character);
+            Physics.IgnoreLayerCollision(Layers.Ward, Layers.Vehicle);
+            Physics.IgnoreLayerCollision(Layers.Ward, Layers.Pickup);
+            Physics.IgnoreLayerCollision(Layers.Ward, Layers.World);
+        }
+
+        /// <summary>
         /// A row of shophouse lots modelled by the architecture library: the frontage centred on pos, facing yaw,
         /// lots `lotW` wide running from `back` to `front` metres along the facing (the five-foot way is the front 1.9 m).
         /// </summary>
         void ArchShopRow(Vector3 pos, float yaw, int lots, float lotW, float back, float front, int levels, Arch.BuildingKind kind = Arch.BuildingKind.Shop,
-                         bool vary = true, bool flatRoof = false)
+                         bool vary = true, bool flatRoof = false, Arch.InteriorKind[] interiors = null)
         {
             var rot = Quaternion.Euler(0, yaw, 0);
             Vector3 fw = rot * Vector3.forward, rt = rot * Vector3.right;
@@ -1397,6 +1441,9 @@ namespace KampungRun
                     edges = new[] { Arch.EdgeFlags.Street, i > 0 ? Arch.EdgeFlags.Party : Arch.EdgeFlags.None, Arch.EdgeFlags.None,
                                     i < lots - 1 ? Arch.EdgeFlags.Party : Arch.EdgeFlags.None },
                     y0 = G, height = lv * 3.4f, levels = lv, kind = kind, seed = _rng.Next(), flatRoof = flatRoof,
+                    // a lot told what its shop is gets the sign to match
+                    interior = interiors != null && i < interiors.Length ? interiors[i] : Arch.InteriorKind.Auto,
+                    sign = interiors != null && i < interiors.Length ? Arch.Interior.SignFor(interiors[i]) : -1,
                 });
             }
         }
@@ -1498,7 +1545,10 @@ namespace KampungRun
         void ChowKitBlock(Vector3 c)
         {
             // shophouse rows: 7 lots along north and south, 3 on east and west (corners stay open)
-            ArchShopRow(c + new Vector3(0, G, 13.9f), 0, 7, 5f, -5f, 5f, 2, Arch.BuildingKind.Shop, false, true);
+            // the north row's shops you can walk into for certain: a kedai runcit, a kedai kopi, a barber (the rest by their signs)
+            var auto = Arch.InteriorKind.Auto;
+            ArchShopRow(c + new Vector3(0, G, 13.9f), 0, 7, 5f, -5f, 5f, 2, Arch.BuildingKind.Shop, false, true,
+                        new[] { auto, Arch.InteriorKind.Runcit, auto, Arch.InteriorKind.Kopi, auto, Arch.InteriorKind.Barber, auto });
             ArchShopRow(c + new Vector3(0, G, -13.9f), 180, 7, 5f, -5f, 5f, 2, Arch.BuildingKind.Shop, false, true);
             ArchShopRow(c + new Vector3(13.9f, G, 0), 90, 3, 5f, -5f, 5f, 2, Arch.BuildingKind.Shop, false, true);
             ArchShopRow(c + new Vector3(-13.9f, G, 0), -90, 3, 5f, -5f, 5f, 2, Arch.BuildingKind.Shop, false, true);
@@ -1902,6 +1952,14 @@ namespace KampungRun
                 }
             var counter = m.AddComponent<BoxCollider>();
             counter.center = new Vector3(0, 1.1f, -3.6f); counter.size = new Vector3(7, 2.2f, 1.3f);
+            // its extras (the TV, the menu board, the drinks fridge, the roti canai griddle, fans): a room with no shell of its
+            // own, from the road side (z + 4.5) back to the counter wall's face (z - 2.95)
+            var mp = m.transform.position;
+            if (Arch.Interior.Enabled) _interiors.Add(new Arch.RoomSpec
+            {
+                kind = Arch.InteriorKind.Mamak, shell = false, seed = 4242, W = 11.8f, D = 7.45f, H = 3.2f,
+                f = new Arch.Frame(mp + new Vector3(5.9f, 0f, 4.5f), Vector3.left, Vector3.up, Vector3.forward),
+            });
             Place("Mamak", c + new Vector3(-8, G, 16));
             Place("MamakCounter", c + new Vector3(-8, G, 4.3f));
             Face("MamakCounter", Quaternion.identity);
@@ -2143,9 +2201,8 @@ namespace KampungRun
                     if (_gridNodes[i, k] == null || _gridNodes[i, k].links.Count < 3) continue;
                     if (KampungOrRiver(i - 1, k - 1) && KampungOrRiver(i, k - 1) && KampungOrRiver(i - 1, k) && KampungOrRiver(i, k)) continue;
                     if (_rng.NextDouble() < 0.35) continue;
-                    var n = new Vector3(RoadX(i), G, RoadZ(k));
-                    TrafficLight(n + new Vector3(Road * 0.5f + 1.2f, 0, Road * 0.5f + 1.2f), -90);
-                    TrafficLight(n + new Vector3(-Road * 0.5f - 1.2f, 0, -Road * 0.5f - 1.2f), 90);
+                    // working signals, a pole at every approach (built with the road paint: CityBuilder.Roads)
+                    Signalise(i, k);
                 }
             // bus stops + a bench and bin on some filler block edges
             for (int col = 0; col < NX; col++)
@@ -2158,6 +2215,7 @@ namespace KampungRun
                     bool east = _rng.NextDouble() < 0.5;
                     var pos = c + new Vector3(east ? Block * 0.5f - 1.4f : -Block * 0.5f + 1.4f, G, (_rng.NextDouble() < 0.5 ? 1 : -1) * R(12, 34));
                     Prop("Prop_BusStop", pos, east ? 90 : -90, true);
+                    _city.busStops.Add((pos, east ? Vector3.right : Vector3.left));
                     Prop("Prop_Bin", pos + new Vector3(0, 0, 3.2f), 0, true);
                 }
             // bunting across the streets round Chow Kit and Jalan TAR
@@ -2207,13 +2265,6 @@ namespace KampungRun
             }
         }
 
-        void TrafficLight(Vector3 pos, float yaw)
-        {
-            var t = Prop("Prop_TrafficLight", pos, yaw, false);
-            var cap = t.AddComponent<CapsuleCollider>();
-            cap.center = new Vector3(0, 2.2f, 0); cap.radius = 0.12f; cap.height = 4.4f;
-        }
-
         void Critter(string model, Vector3 pos, bool chicken)
         {
             var go = ModelFactory.Spawn(model, pos, Quaternion.Euler(0, R(0, 360), 0), _props, chicken ? "Ayam" : "Kucing");
@@ -2233,6 +2284,7 @@ namespace KampungRun
                 foreach (float a in new[] { i % 2 == 0 ? -14f : 14f })       // one a side, staggered
                 {
                     var lamp = Prop("env_lamp_post", c + dir * 21.1f + side * a + Vector3.up * G, yaw, false);
+                    _lampSpots.Add(lamp.transform.position);           // (the road paint fills the gaps between: CityBuilder.Roads)
                     SetStatic(lamp, false);
                     foreach (var t in lamp.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = Layers.Detail;
                     var cap = lamp.AddComponent<CapsuleCollider>();

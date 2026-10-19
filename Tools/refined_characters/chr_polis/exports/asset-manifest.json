@@ -2,8 +2,8 @@
   "asset": "chr_polis",
   "height_m": 1.76,
   "mesh_height_m": 1.76,
-  "triangles": 69020,
-  "lod1_triangles": 19324,
+  "triangles": 81439,
+  "lod1_triangles": 22801,
   "bones": 23,
   "clips": [
     "chr_polis|_tpose",
@@ -30,8 +30,8 @@
     "Blink"
   ],
   "bounds_m": [
-    1.844408392906189,
-    0.44919639825820923,
+    1.8668543100357056,
+    0.4714260697364807,
     1.7599999904632568
   ],
   "palette": "kl_character_palette.png",

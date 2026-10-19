@@ -570,3 +570,341 @@ The architecture library on its own also left frame rates where the shade work h
 - **GitHub:** `50ca1ff`, the shade, the architecture library, Chow Kit and the trees in one commit.
 - **itch:** html5 1.13.0 (build #2081752).
 - **Re-run bench:** a Chrome bench re-run just before the push measured low: home 25 fps, Chow Kit 11 fps. The user was running Crusader Kings 3 and Defender was scanning the new build, so even CPU-only load steps took twice as long. The clean numbers are the table above.
+
+## Update — AI navigation and 3D physics pass, Unity MCP (19 Oct 2026)
+
+The user asked to improve the AI navigation and the 3D physics, and to set up the Unity MCP server. Not committed yet.
+
+**Unity MCP / Pipeline.**
+- `com.unity.pipeline` 0.8.0-exp.1 is in `Packages/manifest.json`. It lets the `unity` CLI (now 1.0.0-beta.13) drive the open Editor: `unity status`, `unity command <name>`, `unity command eval '<C#>'`, `run_tests` / `test_status`.
+- Claude Code has a user-scope MCP server, `unity-editor-mcp`, which runs `unity mcp --project-path <this project>`. It exposes the same Editor commands as tools.
+
+**No NavMesh, on purpose.**
+- `com.unity.ai.navigation` is still installed and unused.
+- The city is generated at runtime, so a NavMesh would need a runtime bake of about 4.8 km² of huge merged MeshColliders. WebGL has no threads, so even an async bake runs on the main thread.
+- The game already has the right graphs: `RoadNetwork` (with A*) for cars and `WalkZone` loops for pedestrians. This pass makes the agents use them properly.
+
+**Drivers (`Vehicles/Drivers.cs`):**
+- `AIDriver.SteerTo`:
+  - A car that's moving ahead is a queue, so it waits.
+  - A car standing still (or kinematic) is in the way. After 3.5–6 s of patience, the AI backs off 0.9 s, then edges round it for 3.5 s on the freer side, capped at 4 m/s past it. People are never edged past.
+  - This fixes permanent jams: the old unstick needed a desired speed above 3, which the brake clamp zeroed.
+- `TrafficDriver`: shunted more than 16 m off its street, it re-snaps to `Nearest` (2 s cooldown, so no recursion when far from any road).
+- `PoliceDriver`:
+  - Rams in a straight line only within 28 m, or with line of sight to the player within 90 m (a `Linecast` on the World layer every 0.3 s).
+  - Otherwise it follows `RoadNetwork.Route` (A*, lane 1.2), replanned every 1.5 s, dropping points it has reached or passed.
+  - `SamanMeter.SpawnPolice` picks a clear node (`CheckSphere`) and faces down the street that heads most towards the player.
+- `FleeDriver.PickAway` looks one street ahead and penalises dead ends and turns towards a close player.
+- `RouteDriver` skips points that are already behind it, after a crash or a jostle, instead of circling back.
+
+**People and animals:**
+- `Pedestrian`:
+  - Blocked on the loop, they turn back the other way after a short beat. Blocked again within 4 s, they wait 2.5–5 s, then pick a new goal. This replaces re-rolling a random goal every frame.
+  - `Dodge` steps round people ahead, and the player standing there: an `OverlapSphereNonAlloc` on the Character layer every 0.15–0.25 s, visible pedestrians within 45 m only. They pass on the left when someone is dead ahead.
+  - Fleeing runs along the pavement loop, away from the threat, not through shop fronts. `roam` keeps the old free flee for `SpawnFleeing`.
+  - Walk masks no longer include layer 2 (trampoline boxes, critter hitboxes).
+- `Critter`: frozen beyond 120 m from the camera; a forward wall ray (panicking ones dart sideways).
+
+**Physics:**
+- `Vehicle.FixedUpdate` uses `Body.position` / `Body.rotation` (not the interpolated transform) for suspension rays and forces.
+- For about 0.2–0.6 s after a hard car-car hit (rel > 8) or wall hit (rel > 14), yaw control mostly lets go (`_impactT`), so shunts can spin you.
+- `Flip()` is queued to the next physics step. `DoFlip` tries up 1.2, up 2.2, ±2.5 sideways, then up 3.4, using `CheckBox` for a free spot.
+- Smashing through: `Breakable.SmashedBy(vehicle, rel)` is called from both `Vehicle.OnCollisionEnter` and `Breakable.OnCollisionEnter`, and is idempotent per frame.
+  - The prop breaks or topples, and the car gets its `PreStepVelocity` back (×0.9 shatter, ×0.8 topple) with no crash damage.
+  - Toppling props ignore that car's colliders for 1.2 s, undone in `Restore`.
+  - Toppled props are interpolated and use ContinuousSpeculative.
+- A car over 7 m/s that hits the on-foot player knocks them down and keeps 80% of its speed. It used to stall on the CharacterController.
+- `PlayerController.UpdateInteractFocus` now uses `OverlapSphereNonAlloc` (it allocated every frame).
+- `TimeManager` Maximum Allowed Timestep is now 0.1 (was 0.333), to avoid physics spirals on WebGL. Unity 6.6 re-serialized the fixed step as a rational (still 0.02).
+
+**Verified (live Editor, `run_tests` PlayMode):** SmokeTests 15/16.
+- `AIBehaves`: traffic 32/33 moving, 0 flipped; pedestrians 251/260 walking; route 2/3; police reached the player (11.7 m).
+- `TouchControlsWork` failed on `Cursor.lockState == Locked`. The live Editor kept the pointer locked from the previous test's mouse-look. Earlier verified runs were batchmode, where the cursor never locks. Re-run it in batchmode to confirm.
+- No console errors.
+- Not done: no in-game feel review, no web benchmark.
+
+## Update — Pak Mat rebuilt on MPFB, stylized adult (19 Oct 2026, later)
+
+The user said the characters "look pretty derpy" and "a bit too cartoonish". They chose a stylized-adult look (Fortnite, Overwatch, Sims 4), local Blender only, and MPFB (CC0 MakeHuman assets) as the base. They approved the Pak Mat pilot, then asked for him in game with before/after shots. **Only Pak Mat is done;** the other 12 characters are still the round-02 models. Not committed.
+
+- **Pipeline:** `Tools/mpfb_characters/` (see its README).
+  - `build_character.py` builds the body with stylize targets, painted skin, a moustache shell, and cloth-simulated clothes: batik shirt with collar and buttons, sarong, songkok, sandals and cropped hair.
+  - `export_unity.py` produces the game asset:
+    - expression keys from MPFB FACS units;
+    - hidden-skin removal;
+    - skirt weights;
+    - T-pose rest;
+    - bones renamed to the humanoid names;
+    - one 4096 atlas (colour × AO, gloss in alpha) plus a recolour mask;
+    - alpha-tested brow/lash cards;
+    - LOD1.
+  - Pak Mat: LOD0 62.8k, LOD1 17.6k, cards 0.6k triangles.
+- **Installed:** `Assets/Models/KL/chr_pakmat.fbx` (GUID and .meta kept) and `Assets/Models/KL/chr_pakmat_tex/`. The previous FBX is kept at `Tools/mpfb_characters/out/chr_pakmat/original_chr_pakmat.fbx` (gitignored out/) and in git.
+- **Unity changes:**
+  - `ModelImportPipeline` (version 15): a `chr_<id>_tex` folder means own textures. It assigns the textures and mask, sets cards to alpha clip with no shadows, rebuilds the skeleton from the file and maps the fingers.
+  - `CharacterSoft`: `_ALPHATEST_ON`, `_Cull`, hidden `_MaskMap`; CBUFFER unchanged.
+  - New `AtlasRecolor`, called from `ModelFactory.Recolor`, does costume recolours on own-atlas characters.
+  - `CharacterArtValidation.Run(ids, output)` overload for live-Editor runs, with an own-atlas branch.
+  - `SmokeTests.CastRestyled` now picks the body mesh, not the cards.
+- **Verified:**
+  - `CharacterArtValidation` for chr_pakmat: 59 checks pass. Proofs are in `Tools/mpfb_characters/out/chr_pakmat/unity_validation`.
+  - SmokeTests 15/16, including CastRestyled and DriversFitUnderRoof. TouchControlsWork fails on cursor lock in the live Editor, as before this change.
+  - Before/after in-game sheet: `Tools/promo_frames/x_pakmat/before_after.png`, from `Tests/PakMatCapture` (Before/After, Explicit).
+- **Known gaps:**
+  - The costume recolour is only unit-checked; nobody has looked at it in game.
+  - The moustache doesn't follow the Grin key.
+  - Teeth don't follow the Alarm mouth-open.
+  - The sideburn edge is ragged.
+  - The face still reads a little plain.
+  - He now stands apart in style from the rest of the cast until they're rebuilt.
+  - Web performance not measured: one 4096 atlas plus 63k triangles, the same budget as before.
+
+## Update — MPFB Pak Mat rolled back; style is Simpsons/Futurama (19 Oct 2026, evening)
+
+- **What happened:** the user reviewed three versions of the MPFB Pak Mat and rejected them. v1 (realistic face) was "too uncanny valley". v2 and v3 (pushed toward Upin & Ipin: bigger head and eyes, solid brows, blush) were "too fked up".
+- **Direction:** "go back to the futurama/simpsons look". Improve within the cartoon style only.
+- **Rolled back:** `Assets/Models/KL/chr_pakmat.fbx` and its .meta are restored from git, and `chr_pakmat_tex/` is deleted. CharacterArtValidation passes on the original.
+- **Kept, harmless while no `chr_*_tex` folder exists:**
+  - the own-texture importer path (`ModelImportPipeline` v15);
+  - the CharacterSoft alpha-clip, `_Cull` and `_MaskMap` additions;
+  - `AtlasRecolor`;
+  - the validation overload;
+  - `Tests/PakMatCapture`;
+  - the `Tools/mpfb_characters` pipeline, kept for reference. Its batik generator, `make_batik.py`, is reusable.
+- **World agents:** three are working in worktrees `C:\kr\{interiors,roads,cars}` (detached at snapshot 537e938), with the GTA IV/V "compact, lived-in" direction and the Simpsons/Futurama style. Their changes aren't merged yet.
+
+## Update — show-style (Simpsons/Futurama) detail pass in the refined builder (19 Oct 2026, night)
+
+- **Why:** the user wants "the detail that the simpsons/futurama cartoons have". The originals looked "simplistic/blocky", with faces "like a kid just drew on it". They approved the face pilot, then asked for "more of the same in the torso/limbs".
+- **What changed:** `Tools/blender/kl/kl_refined.py`, which builds all 13 characters.
+- **Face (`make_head`):**
+  - Protruding eyeballs (tag `eye_*`) with small pupils.
+  - Skin upper lids (`lid_cap`, tag `lid_*`) with an inked rim, plus a lower-lid line on adults.
+  - A forward bulb nose with a crease, an overbite upper-lip ridge, C-shaped ears with a curl, and bolder tapered brows.
+  - `R.FACE_KEYS` adds lid motion through a new `rotx` op in `kl_humanoid.shape_keys` (rotate about the eye tag's centre): Blink 72°, Determined 22°, Alarm −14°. `C.FACE_KEYS` (the legacy keys) is untouched.
+- **Body:**
+  - A `SHADE` map gives each garment colour an ink colour.
+  - The batik is a dense print of hibiscus, leaf sprigs and dots (`hibiscus`, `dots`).
+  - `shirt_details`: rolled hem with a stitch line, stitched breast pocket, armpit fold lines, and a belly fold on broad bodies.
+  - A rolled collar band, raised collar points with an inked edge, cream buttons with a dimple, and cuffed sleeves.
+  - Plumper, curled four-digit hands with knuckles.
+  - Broad torsos are pear-shaped (belly forward, sloped shoulders).
+  - The sarong has a flare, deeper folds, a waist roll (only when no shirt covers it), a tuck flap below the shirt hem, and a hem band.
+  - `stroke` clamps its sin taper; it used to produce a complex radius at the ends.
+- **Published:** chr_pakmat only (`build_characters.py -- chr_pakmat --publish`). The palette is unchanged. LOD0 is 100.9k triangles (was 81k) and LOD1 28k. Validation PASS. In-game shots: `Tools/promo_frames/x_pakmat/{before,after}`, `show_style_quick.png`.
+- **Next:**
+  - Polish: hide the teeth strip behind the lip, lower the pupils a touch (they read as looking up), trim the lid domes.
+  - Re-publish the other 12 characters with the same builder. Check the tudung, kid and suit variants.
+  - Bring the decal count down if web frame rate suffers.
+
+
+## Update — walk-in shops and houses, lived-in streets (19 Oct 2026, night)
+
+The user asked to "go in and out of shops and houses", then (via the lead) for streets that feel "compact / lived in like GTA IV/V", drawn Simpsons/Hit & Run style. Done in a worktree (`C:\kr\interiors`), not committed.
+
+**How it works**
+- `Arch/Interior.cs`: `RoomSpec` (a box in a frame, its doorways/windows as `RoomOpening`s), `InteriorKind` (Home, House, Kitchen, Runcit, Kopi, Barber, Hardware, Textile, Gold, Mamak), `Interior.RoomsOf(spec)` (worked out once, cached on the spec), `Shell` (inward walls, floor, ceiling, skirting, dado, folding doors stacked open), `Furnish` (per-kind furniture + `SolidBox`es + a shopkeeper `Spot`), `RoomWalls`/`DoorWards` (physics), `Solid` (closed convex solids for collider meshes).
+  - Shophouse lots: a bay is open unless its shopfront rolled `Roller`; its kind follows its signboard (`SignShop` maps the 16 signs), else its painted shop. `BuildingSpec.interior`/`sign` override (Chow Kit north row: lot 1 runcit, 3 kopi, 5 barber). Room = behind the shopfront, up to 12 m deep (three rays into the footprint, so irregular patch lots work), ground-floor height minus 0.17.
+  - Kampung houses (all of them): body living room + the kitchen wing (dapur) when the seed gives one (`HouseSpec.kitchen` forces it: Pak Mat's). Front door now 1.2 m wide and open (leaf swung inside); kitchen floor raised to 1.2 m (one 0.3 m step down, with a step block).
+  - Mamak: a shell-less room over `Bld_Mamak` (TV on the roof, menu board on the counter wall, fridge, roti canai griddle, fans).
+- **Streaming.** Shells are part of each building's near-detail mesh (`ArchCity` cells, 190 m), so you always see into an open shop. `Interiors` (Scripts/World) furnishes rooms within 45 m (release 60; WebLite 32/42), one or two a frame, nearest first; furniture is one mesh per room, its solids are BoxColliders on "Ignore Raycast" (the camera passes through tables). Shopkeepers (`NPC.Spawn`, townman/townaunty/pakcik, talk lines and calls per kind) within 26 m, max 5 (WebLite 2). `PlayerController.Teleport` primes it. 4,743 rooms registered map-wide.
+- **Physics.** `ArchGen.ShopWithRooms`: upper floors solid down to the shop ceiling; at street level thin walls round the (five-foot-way-cut) footprint, the shopfront wall with the room doorways open, each room's own walls. `KampungHouse.Collider`: stilt slab, stair ramp (~38°), verandah balustrade, room walls with doorways, kitchen slab + step, roof prisms. `Interior.Enabled = false` restores the old solid blocks/painted shopfronts. Furniture solids are ≥0.6 m tall so the 0.45 m step offset can't climb tables.
+- **Pedestrians stay out:** `CityBuilder.DoorWards` puts every street doorway on layer 12 (`Layers.Ward`), ignored by the player/cars/pickups/World collision and the chase camera, but seen by pedestrians' walk raycasts.
+- **Lighting.** LatInk has no additional-light support, so interiors are flagged per vertex: `ArchMesh.Inside` adds 100 to the texture slice; LatInk's Hit & Run branch then lights the face with steady warm lamplight (`_InteriorLight`, default (1, 0.88, 0.70)) plus 18% sky, ignoring the sun, shadows and CityShade; walls get a baked darker-toward-the-floor gradient. No real lights (zero forward-light cost, works on WebGL). The same flag makes lightboxes, porch/gate lamps and ~38% of upstairs windows glow at night.
+- **Camera** (`ChaseCamera`): inside a shelled room (`Interiors.RoomAt`) it eases to 2.3 m back, 17° pitch, 0.92 height, a 0.2 m probe with no minimum distance (never pops outside the wall), clamps 0.4 m under the ceiling, and rises over the shoulder when backed against a wall.
+- **Lived-in streets** (`Arch/StreetDress.cs`, near detail only, seeded from the building, no physics; `StreetDress.Enabled`): per shop bay on the five-foot way — produce crates and snack racks, kopitiam table + stools + A-frame menu, barber pole, buckets/brooms/ladder, cloth rolls and a batik rail, plants; striped canvas awnings (not on flat-roofed Chow Kit rows, which have kit awnings), goods hung from the five-foot-way ceiling, lit hanging lightbox signs, kapcai parked by the columns (chunky modelled, not a vehicle). Back lanes (lot's back edge): wheelie bin, gas tank, crates, water heater, laundry pole with the wash. Kampung yards: front fence with an open gate and lit gate lamps, a pangkin, clothesline of sarongs, a kapcai, the tempayan, a porch lamp, shoe rack + selipar + doormat at the door.
+- **Atlas.** 7 new slices (`ArchTex.Goods, Fridge, Photos, Screens, Floor, Rugs, Menus`, gen_arch_atlas.py `c_goods`...`c_menus`). The TV shows a news bulletin/football, not cartoon kids.
+
+**Verification**
+- Compile clean in batch. SmokeTests (batch, graphics on): 15/16. `CastRestyled` fails on "costume did not swap the material" for `chr_pakmat_mat` (the MPFB own-atlas costume recolour: character side, untouched here). `AIBehaves`: traffic 29/29 moving, pedestrians 249/263 walking; `TouchControlsWork` passed. The capture log counts pedestrians standing in rooms: 0 of 320. `Tests/InteriorCapture` (Explicit): `Before`/`After` (walk-in tours: home, Chow Kit runcit/kopi/barber, the mamak, a filler row, one room of each other kind) and `StreetBefore`/`StreetAfter`/`StreetNight` (same street views with `Interior.Enabled`/`StreetDress.Enabled` off vs on). Output in `Tools/promo_frames/x_interiors/{before,after,street_before,street_after,street_night}` (+ `log.txt` with player positions and frame times).
+- Frame time at the Chow Kit doorway in batch: ~17.0–17.2 ms with rooms furnished vs ~17.0–17.1 ms hidden (no measurable cost). Not measured in the browser.
+
+**Worktree gotcha (important for every agent):** with `com.unity.pipeline` in `Packages/manifest.json`, batch-mode runs in a worktree load the scene with "missing script" (MonoScripts resolve to no class: `Editor/InteriorProbe.Scripts` prints it) and every PlayMode test fails at `HUD.I`. Removing the package for the batch runs fixes it; the manifest/lock were restored afterwards. `unity test <path>` also refused this worktree ("already open in a running Editor"), so tests ran via `Unity.exe -batchmode -runTests -projectPath C:\kr\interiors`.
+
+**Known gaps / next steps**
+- Upper floors stay closed; terrace houses (`BuildingKind.House` lots) and office/flat lobbies aren't enterable.
+- Street dressing has no colliders (you and the pedestrians walk through crates and parked kapcai); no infill on empty lots yet (stalls, a workshop).
+- Furniture layouts are per kind with a little seed variation; wide lots (two bays) get one room per bay.
+- Doorway approach from the Chow Kit pavement is partly screened by the produce canopies at the kerb.
+- Pedestrian behaviour wasn't otherwise changed; a pedestrian that *starts* inside a room (none seen) would stay there.
+
+
+## Update — detailed roads, working signals, crossings and lived-in streets (19 Oct 2026, roads pass)
+
+The user said the roads, pathing and cars were "a bit too simplistic" and asked for a more detailed world. Then they asked for the map to feel "compact / lived in" like GTA IV/V, drawn Simpsons-style: bold, clean cartoon shapes in the existing palette. This pass was done in the `C:\kr\roads` worktree. Not committed.
+
+**Road surface** (`World/CityBuilder.Roads.cs`, new):
+- City grid roads and junction boxes are no longer street-kit tiles. Kampung lanes keep the kit. `BuildRoads` records the city segments and boxes, and `PaintRoads` (run just before `_ground.Build`) draws them.
+- Everything is flat palette quads (`ColorPalette` UVs, the kit's asphalt colour). They are merged into one mesh per 232 m square, plus a Detail-layer mesh for small pieces: about 250k quads in all.
+- Markings:
+  - broken white centre line, going double solid 24 m before a crossroads;
+  - dashed lane lines, solid up to the stop line;
+  - double yellow along the kerbs (single on about 25% of streets), with yellow zig-zags each side of the zebras;
+  - zebra crossings 11.5–15.5 m from the junction centre, with the stop line at 17 m;
+  - lane arrows (kerb lane left/straight, inner lane right/straight);
+  - yellow box junctions at about 70% of signalled crossroads;
+  - give-way lines and triangles at the roundabouts;
+  - yellow tactile paving at the crossing ends.
+- Detail: worn and patched asphalt, a trench, seams, a few bold cracks, IWK manholes and TNB covers, gully grates in the gutter, and the monsoon drain's slab covers along the pavement edge.
+- Parking: white kerbside parking bays on town streets (`City.parkingBays`, about 2,900), plus yellow motorcycle bays (`City.motoBays`).
+- Bus stops: each one gets a yellow BAS bay (`City.busStops`).
+- Street furniture: green and yellow guard railings by the crossings, yellow-and-black bollards at the corners, and oversized signs (blue pedestrian crossing, 50 limit, no parking).
+- Extra `env_lamp_post` props every 30 m where the lots' own lamps leave a gap (about 430, static and merged). Older streets also get concrete utility poles with slung wires and an occasional banner.
+- Phones (`WebLite`) skip the wires, banners, bollards and extra lamps, and get sparser railings.
+- `CityBuilder.PatchRoads.cs` (new) paints the real-KL streets too: 1,676 stretches and 38 zebras.
+  - Widths are measured by marching off the patch `road` mesh (`RoadMask`).
+  - Each stretch gets centre and lane lines, one-way arrows, double yellow, grates, manholes, and stop lines at junctions.
+- No dice are drawn from `_rng` anywhere. Signals still come from `BuildStreetLife`'s own draw, so the layout's dice are unchanged; every other choice is hashed from position.
+
+**Signals** (`World/TrafficSignals.cs`, new; `Resources/SignalLamp.shader`, new):
+- The 108 junctions `BuildStreetLife` picks are signalled; 98 of them have three or more arms and get a `JunctionControl` and poles. The old `Prop_TrafficLight` props are gone.
+- Every approach gets a pole just past the stop line, with a head on a mast arm over the lanes and one on the pole. Green-man heads face over the crossing, with a post on the far kerb facing back.
+- The cycle: green 11 s, amber 3 s, all-red 1.5 s each way, then a 7 s all-red pedestrian phase. Each junction has its own offset.
+- The lamps are vertex-coded and never touched from the CPU. `TrafficSignals.SignalClock` sets `_SignalClock` and `_SignalPhase`, which the shader reads; drivers read the same numbers.
+- Every grid crossroads and every real-KL junction with three or more streets has a `JunctionControl`, stored on `RoadNetwork.Node.control`.
+- Running a red in the player's car into a signalled box adds 14 heat and shows "LAMPU MERAH!".
+
+**Drivers** (`Vehicles/Drivers.cs`):
+- `TrafficDriver` picks its next turn one street ahead.
+- `HoldAt` stops with the nose on the stop line:
+  - on red, and on amber if it can stop in time;
+  - at junctions without signals, it gives way to anyone in the box or coming from the right, for up to 4 s;
+  - for people on the zebra it will cross, or the one it is turning into;
+  - when the far side of a box junction is jammed, for up to 8 s.
+- A bend node close before a junction makes it look one node ahead.
+- `AIDriver.Holding` tells cars queued behind that this is a queue, not an obstacle, so they don't pull round it. The detour and unstick logic is unchanged for real blockages.
+
+**Pedestrians** (`Characters/Pedestrian.cs`, `WalkZone.crossings`):
+- `LinkCrossings` joins each zebra to the pavement loops at both ends: 483 of 598 crossings.
+- About 35% of new walking goals are a crossing: walk to the kerb, wait for the green man (or a gap in traffic where there are no signals), cross briskly (`Crossing.busy`, so cars wait), then carry on round the other block's loop.
+- Interruptions release the crossing. `WaitAt` stands people at bus stops; `GameManager.ManageCrowd` keeps 1–3 waiting at stops near you.
+
+**Density** (`Core/GameManager.cs`, `Vehicles/Vehicle.cs`):
+- Traffic is 62 cars on desktop (32 in a browser, 18 on phones). It spawns 55–250 m from you, only out of view, and despawns beyond 330 m out of view.
+- Parked cars fill the full bays near you, the street ahead first, up to 40 (10 in a browser, 0 on phones). They are recycled from behind.
+- `Vehicle.ParkAsleep` settles a parked car and then makes it kinematic until something hits it or someone gets in.
+- Kapcai rows stream into the motorcycle bays the same way.
+
+**Verified:**
+- Batch compile is clean.
+- PlayMode SmokeTests: 15/16 pass, including `AIBehaves` (traffic 39/40 moving, peds 253/261, route 2/3, police reached the player at 11.7 m), `CarsRideOnRoadSurface` and `TouchControlsWork`.
+- `CastRestyled` fails on "costume did not swap the material" (Pak Mat's MPFB atlas recolour). It is unrelated to this pass and was already failing in the first run after the roads change.
+- `Tests/RoadCapture` (Explicit; `Before` / `After`) writes to `Tools/promo_frames/x_roads/{before,after}`, with a side-by-side at `before_after.jpg`. Log lines start `[Roads]`. One run:
+  - 132–150 stops at a red, 15–33 give-ways, 15–24 waits for people;
+  - 151–172 pedestrians started crossing and 121–157 finished;
+  - the watched junction cycles through NS, EW and walk;
+  - 41 parked cars round you.
+- Cost:
+  - City build totals about 3.5–4.6 s, against 3.4–4.1 s before. `paint` is 0.8–1.3 s (patches about 0.2–0.3 s), and the removed kit tiles make `roads` and `merge` faster.
+  - Frame rate in the batch editor (uncapped, shared machine, noisy): home 60–96 fps against 80 before; at the junction, 64 fps with the road paint and 67.5 fps without it (48.0 against 47.7 in another run), so there is no measurable render cost.
+  - No web benchmark.
+
+**Known gaps:**
+- No lane changes or overtaking.
+- Patch junctions have no signals, and patch lines break a little on curves.
+- Under the Chow Kit flyover (`j3`) is still bare sealed ground.
+- Parked cars only appear out of view, so bays right beside you after a teleport stay empty.
+- Street lamps added by this pass don't topple; the lots' own lamps still do.
+- Turning traffic doesn't yield to pedestrians mid-junction; it uses the crossing `busy` check before entering, plus the obstacle spherecast.
+- `Library/EditorInstance.json` in the worktree was a stale copy pointing at the main Editor. It was deleted, and `Assets/KampungRun/Scripts` was force-reimported, because MonoScripts weren't resolving and `GameManager` came up missing in tests.
+
+
+## Update â€” car rebuild: cartoon detail, light LODs, street variety (19 Oct 2026, night)
+
+The user said the cars were "a bit too simplistic", then asked for a compact, lived-in GTA-style street and a clean Simpsons / Futurama cartoon look. Done in the `C:\kr\cars` worktree, not committed.
+
+**What changed (all in `Tools/blender/kl/kl_cars.py`, rebuilt with `kl_build.py`):**
+- Every Hit & Run car rebuilt in the same loft pipeline, with the same part names, pivots, seats, steering wheel, wheel radii and roofs. Cars: saga, teksi, myvi, polis, kancil, alphard (van), hilux, kapcai.
+- Clean cartoon detail rather than realism:
+  - fat tyres (15% wider, same radius) and bold rims: chunky spokes, steel dishes with a big hubcap or painted cap;
+  - bumpers with rubber strips and overriders, grilles with chrome surrounds, made-up badges;
+  - chunky mirrors with repeaters, one-bar wipers, recessed door pulls, fuel caps, exhausts, rear wipers;
+  - real lettering on the plates (Blender's built-in font, generic `BKD 7621`-style numbers);
+  - lamp lenses as separate shapes.
+- Panel seams are off (`SEAMS = False`); only the door shut lines are painted.
+- Doors:
+  - the wheel arches are booleaned out of the door skins;
+  - the doorway hole sits just inside the skin, on shell sample lines, so no light trim shows through a closed door.
+- Windows now start at the cabin waist. `s_waist`: s is very non-linear up a tall greenhouse, and the old s = 0.04 put a 30 cm black or paint band across every side window and the windscreen base. Drivers are now visible from the side.
+- Interiors:
+  - a chunky dash: instrument hood, two big gauges, radio, vents;
+  - a console with a ball gear lever;
+  - bolstered seats with headrests, and a rear bench that stays out of the wheel wells;
+  - door-card armrests and a rear-view mirror;
+  - headliners in light colours, so the cabin reads through the glass.
+- Liveries:
+  - teksi: red below the waist, white (`car_paint2`) above, door lettering and a lettered roof sign (`RoofSign` part);
+  - polis: a navy band with a red pinstripe, POLIS on the doors, bonnet and tail, and a light bar (`LightBar` part).
+  - Roof furniture is no longer in the Body mesh, so the roof tests measure the real roof.
+- New traffic archetypes (generic, no logos), with CarDefs in `GameData.cs`:
+  - `veh_iriz` (sporty hatch, id `iriz`);
+  - `veh_mpv` (family / e-hailing seven-seater, id `mpv`);
+  - `veh_lorry` (3-tonne cab-over with a timber dropside deck, id `lorry`, uses `car_paint2` for the roof).
+- Kapcai: sticker stripes, a finned engine, chain guard, speedo and grip ribs. The basket, visor and delivery box are now optional parts.
+
+**Light LODs for busy streets:**
+- Each car has one distance stand-in, from the LOD-mode rebuild:
+  - `Body_LOD1`: the shut, low-poly car with painted windows and the coarse outside detail;
+  - `Tyre_XX_LOD1` under each wheel.
+- `ModelImportPipeline.SetupCarLods` builds the LODGroup (vehicles with a `Body_LOD1` only):
+  - every other renderer is LOD0;
+  - lamps, `LightBar` and `RoofSign` are always drawn, so lights still glow far away;
+  - full detail within about 40 m (0.1 screen height).
+- Near / far triangles (base car, optional parts off):
+
+| Car | Before | After, near | After, far |
+| --- | --- | --- | --- |
+| saga | 17.9k | 20.3k | 2.6k |
+| teksi | 18.2k | 21.4k | 3.0k |
+| myvi | 24.3k | 18.9k | 3.1k |
+| polis | 24.6k | 19.8k | 3.7k |
+| kancil | 18.8k | 17.2k | 2.2k |
+| alphard | 20.5k | 20.0k | 2.8k |
+| hilux | 21.7k | 20.9k | 3.1k |
+| kapcai | 7.5k | 7.8k | 1.4k |
+| iriz | new | 17.8k | 2.6k |
+| mpv | new | 18.7k | 2.5k |
+| lorry | new | 13.1k | 2.1k |
+
+  Before, the cars had no LOD: the same count near and far.
+
+**Variety (no street of clones):**
+- Optional parts are exported as `Var_<Group>_<Option>_<Where>[_LOD0]` and arrive switched off.
+- `Scripts/Vehicles/VehicleVariety.Apply(go, seed, wear)` turns on none or one option per group. Groups:
+  - Dirt, Primer;
+  - Rack (roof rack / MPV roof pod);
+  - Sticker (P plate, club sticker, side stripes);
+  - Shelf (tissue box and bear);
+  - Hubcap, Curtain, Load (hilux crates / gas, lorry sacks / tarp / crates);
+  - Box / Basket / Visor (kapcai).
+- `Vehicle.Setup` applies it to Traffic only. Parked kerbside cars should call `Apply` with their own seed. Summoned family cars stay clean.
+- Paint stays on `car_paint`.
+
+**Tools:**
+- `Tests/CarCapture` (Explicit):
+  - `Before` / `After` write seven shots per car to `Tools/promo_frames/x_cars/{before,after}`. `-carIds a,b` picks cars.
+  - `Street` lines both kerbs and adds traffic.
+  - Sheets: `compare_<car>.png` and `street_sheet.png`.
+- `Editor/VehicleArtCheck`:
+  - `Run` checks the part-name contract, the wheel and steering-wheel extents, LODs and optional parts, and writes `vehicle_report.txt`;
+  - `RegisterVehicleModels` adds new `veh_*.fbx` to `Resources/GameAssets`;
+  - `ReimportScripts` repairs a copied Library whose MonoScripts are stale (a fresh worktree loaded the scene with missing GameManager / ChaseCamera scripts until then).
+
+**Verified (batch):**
+- Full SmokeTests: 15/16. `CastRestyled` fails with "costume did not swap the material" (Pak Mat's own-atlas costume recolour). That is character code; no character or recolour code was touched here.
+- Car tests re-run on the final models, all passing:
+  - `HitAndRunCars`;
+  - `CarsRideOnRoadSurface`;
+  - `DriversFitUnderRoof` (tightest: Along in the Saga, 6 cm);
+  - `VehicleTransitions`.
+- `VehicleTransitions` failed once when run straight after the other car tests: an NRE in `PlayerController.NearMisses` / `Pigeons.Startle`, most likely stale statics carried over without a domain reload. It passed in the full suite and in the final run.
+- `VehicleArtCheck`: 0 problems.
+- Wheel bottoms sit 0–2 mm off the road in the capture log.
+
+**Known gaps / next steps:**
+- Wire `iriz`, `mpv` and `lorry` into `VehicleSpawner.TrafficIds` and the recolourable list in `Drivers.cs`, and call `VehicleVariety.Apply` for parked cars (roads/traffic area, not touched here).
+- `veh_food_truck`, `veh_delivery_bike`, `veh_taxi` and `Car_BasMini` are still the old models.
+- Bodies keep the old proportions (the radius and roof contracts are fixed). A further cartoon pass could soften the Saga's boxy flanks.
+- The Iriz still reads a little MPV-like.
+- The `Body_LOD1` stand-in has opaque windows, so distant cars hide their drivers.
+- Optional parts enabled after a `Recolor` keep the base palette. None of them use `car_paint`.

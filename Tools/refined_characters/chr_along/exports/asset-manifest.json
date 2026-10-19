@@ -2,8 +2,8 @@
   "asset": "chr_along",
   "height_m": 1.64,
   "mesh_height_m": 1.64,
-  "triangles": 74866,
-  "lod1_triangles": 20961,
+  "triangles": 85138,
+  "lod1_triangles": 23837,
   "bones": 23,
   "clips": [
     "chr_along|_tpose",
@@ -30,8 +30,8 @@
     "Blink"
   ],
   "bounds_m": [
-    1.4798083305358887,
-    0.4376209080219269,
+    1.5022547245025635,
+    0.441509485244751,
     1.6399999856948853
   ],
   "palette": "kl_character_palette.png",

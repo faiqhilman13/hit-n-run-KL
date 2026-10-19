@@ -16,11 +16,13 @@ namespace KampungRun
         [Tooltip("Skip the title screen and jump straight into this level (0 = show title).")]
         public int autoStartLevel;
         public static int ForceLevel; // set by tests before the scene loads
-        public int trafficCount = 45;
+        public int trafficCount = 45;                   // (the scene asks for 45; Awake raises it to TrafficDesktop)
+        const int TrafficDesktop = 62;
         public int pedestrianCount = 200;               // townsfolk spread over the city at the start
         public float kampungDensity = 0.008f;           // people per metre of pavement in the kampung
         public float cityDensity = 0.08f;               // ...and on the city pavements round the player
         public int crowdCap = 320;                      // most pedestrians alive at once
+        public int parkedCount = 40;                    // cars parked in the kerbside bays round the player
 
         public CityBuilder.City City { get; private set; }
         public MissionManager Missions { get; private set; }
@@ -57,11 +59,12 @@ namespace KampungRun
             bool phone = Application.isMobilePlatform;
             WebLite = phone;
             Application.targetFrameRate = -1;                       // browsers pace frames themselves
-            trafficCount = phone ? 16 : 24;
+            trafficCount = phone ? 18 : 32;
             pedestrianCount = phone ? 60 : 80;
             kampungDensity = phone ? 0.003f : 0.0045f;
             cityDensity = phone ? 0.025f : 0.05f;
             crowdCap = phone ? 90 : 170;
+            parkedCount = phone ? 0 : 10;
             if (UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urp)
             {
                 urp.shadowDistance = phone ? 45f : 70f;
@@ -88,6 +91,7 @@ namespace KampungRun
         {
             I = this;
             Application.targetFrameRate = 60;
+            trafficCount = Mathf.Max(trafficCount, TrafficDesktop);     // busy streets (WebTuning lowers it in a browser)
             WebTuning();
             ProcAudio.Init();
             GameState.Load();
@@ -143,7 +147,7 @@ namespace KampungRun
                 else if (flag == "noworldshadow") CityShade.WorldShadows(City.root, false);
                 else if (flag == "nopost") { var d = _cam.GetUniversalAdditionalCameraData(); d.renderPostProcessing = false; d.antialiasing = AntialiasingMode.None; }
                 else if (flag == "nopeds") { crowdCap = 0; cityDensity = 0f; foreach (var p in new List<Pedestrian>(Pedestrian.All)) if (p) Destroy(p.gameObject); }
-                else if (flag == "notraffic") { trafficCount = 0; foreach (var v in _traffic) if (v) Destroy(v.gameObject); _traffic.Clear(); }
+                else if (flag == "notraffic") { trafficCount = 0; parkedCount = 0; foreach (var v in _traffic) if (v) Destroy(v.gameObject); _traffic.Clear(); }
                 else if (flag == "nosigns") foreach (var t in FindObjectsByType<TextMesh>()) t.GetComponent<MeshRenderer>().enabled = false;
                 else if (flag.StartsWith("far=") && float.TryParse(flag.Substring(4), out float far)) _cam.farClipPlane = far;
                 else if (flag.StartsWith("lodbias=") && float.TryParse(flag.Substring(8), out float lb)) QualitySettings.lodBias = lb;
@@ -387,6 +391,7 @@ namespace KampungRun
                 LockCursor();
             ManageTraffic();
             ManageCrowd();
+            ManageParked();
         }
 
         // ------------------------------------------------------------ levels
@@ -442,6 +447,8 @@ namespace KampungRun
             if (Player && Player.Driving) Player.ExitVehicle(true, true);
             if (_levelRoot) Destroy(_levelRoot.gameObject);
             _traffic.Clear();
+            _parked.Clear();
+            _motoRows.Clear();
             Interactables.All.RemoveAll(i => i == null || (i is Object o && o == null) || (i is NPC));
             foreach (var p in Pedestrian.All.ToArray()) if (p) Destroy(p.gameObject);
             Player = null;
@@ -630,6 +637,30 @@ namespace KampungRun
                 }
                 counts[z] = have;
             }
+            // a queue at the bus stops near you (one to three waiting, out of sight when they turn up)
+            foreach (var (stop, facing) in City.busStops)
+            {
+                if (moves >= 16) break;
+                float d = Flat(stop - focus);
+                if (d > 110f || d < 25f || InView(stop)) continue;
+                int want = 1 + (Mathf.Abs(Mathf.RoundToInt(stop.x * 3f + stop.z * 7f)) % 3);
+                int waiting = 0;
+                foreach (var ped in Pedestrian.All) if (ped && (ped.transform.position - stop).sqrMagnitude < 3.5f * 3.5f) waiting++;
+                if (waiting >= want) continue;
+                WalkZone zone = null;
+                float zd = 6f;
+                foreach (var z in zones) { if (z.kampung) continue; float dz = DistTo(z, stop); if (dz < zd) { zd = dz; zone = z; } }
+                if (zone == null) continue;
+                var side = Vector3.Cross(Vector3.up, facing);
+                var spot = stop + side * Random.Range(-2.2f, 2.2f) + facing * Random.Range(0.3f, 0.9f);
+                Pedestrian who = null;
+                if (si < spare.Count) who = spare[si++];
+                else if (Pedestrian.All.Count < crowdCap) who = PedestrianSpawner.Spawn(spot, zone, _pedRoot);
+                if (who == null) break;
+                who.zone = zone;
+                who.WaitAt(spot, facing, Random.Range(25f, 70f));
+                moves++;
+            }
         }
 
         static float Flat(Vector3 v) { v.y = 0f; return v.magnitude; }
@@ -657,11 +688,22 @@ namespace KampungRun
         {
             var roads = City.roads;
             var p = Player ? Player.Focus : Vector3.zero;
-            // at the start anywhere around you (inside the 400 m that traffic lives in), later out of sight ahead
-            var node = anywhere ? roads.RandomNodeAwayFrom(p, 30f, 360f) : roads.RandomNodeAwayFrom(p, 120f, 340f);
-            var next = node.links[Random.Range(0, node.links.Count)];
-            var pos = roads.LanePoint(node.pos, next.pos, 0.3f) + Vector3.up * 0.6f;
-            if (Physics.CheckSphere(pos + Vector3.up, 3f, 1 << Layers.Vehicle)) return;
+            // at the start anywhere round you; later close by (so the streets you are on never look empty), but
+            // always somewhere the camera cannot see a car appear
+            RoadNetwork.Node node = null, next = null;
+            Vector3 pos = Vector3.zero;
+            for (int tries = 0; tries < 6; tries++)
+            {
+                var n = anywhere ? roads.RandomNodeAwayFrom(p, 30f, 300f) : roads.RandomNodeAwayFrom(p, 55f, 250f);
+                if (n == null || n.links.Count == 0) continue;
+                var nx = n.links[Random.Range(0, n.links.Count)];
+                var at = roads.LanePoint(n.pos, nx.pos, 0.3f, RoadNetwork.TwoWay(n, nx)) + Vector3.up * 0.6f;
+                if (!anywhere && InView(at)) continue;
+                if (Physics.CheckSphere(at + Vector3.up, 3f, 1 << Layers.Vehicle)) continue;
+                node = n; next = nx; pos = at;
+                break;
+            }
+            if (node == null) return;
             var dir = next.pos - node.pos;
             var v = VehicleSpawner.SpawnTraffic(pos, Quaternion.LookRotation(dir), _trafficRoot);
             v.driver = new TrafficDriver(roads, node) { cruise = Random.Range(9f, 13f) };
@@ -678,7 +720,7 @@ namespace KampungRun
             {
                 var v = _traffic[i];
                 if (v == null) { _traffic.RemoveAt(i); continue; }
-                bool far = Vector3.Distance(v.transform.position, p) > 400f;
+                bool far = Vector3.Distance(v.transform.position, p) > 330f && !InView(v.transform.position);
                 bool dead = v.Wrecked && Vector3.Distance(v.transform.position, p) > 60f;
                 bool fell = v.transform.position.y < -1.5f; // in the river or off the map
                 if (v.role != VehicleRole.Traffic && v.role != VehicleRole.Parked) { _traffic.RemoveAt(i); continue; }
@@ -688,7 +730,118 @@ namespace KampungRun
                     _traffic.RemoveAt(i);
                 }
             }
-            for (int n = 0; n < 3 && _traffic.Count < trafficCount; n++) SpawnTrafficCar(false);
+            for (int n = 0; n < 4 && _traffic.Count < trafficCount; n++) SpawnTrafficCar(false);
+        }
+
+        // ------------------------------------------------------------ parked cars
+        readonly Dictionary<int, Vehicle> _parked = new Dictionary<int, Vehicle>();
+        float _parkTimer;
+        readonly Dictionary<int, GameObject> _motoRows = new Dictionary<int, GameObject>();
+
+        /// <summary>Rows of kapcai in the motorcycle bays near you (props, not rideable: the cars are the steal).</summary>
+        void ManageMotoRows(Vector3 focus)
+        {
+            var drop = new List<int>();
+            foreach (var kv in _motoRows)
+                if (kv.Value == null || Flat((kv.Value.transform.position - focus)) > 210f) { if (kv.Value) Destroy(kv.Value); drop.Add(kv.Key); }
+            foreach (var k in drop) _motoRows.Remove(k);
+            if (parkedCount <= 0) return;
+            int cap = WebLite ? 0 : parkedCount / 2, made = 0;
+            var rows = City.motoBays;
+            for (int i = 0; i < rows.Count && _motoRows.Count < cap && made < 3; i++)
+            {
+                if (_motoRows.ContainsKey(i)) continue;
+                var (a, b, yaw, bikes) = rows[i];
+                var mid = (a + b) * 0.5f;
+                float d = Flat(mid - focus);
+                if (d < 12f || d > 150f || InView(mid)) continue;
+                var row = new GameObject("KapcaiRow");
+                row.transform.SetParent(_trafficRoot, false);
+                row.transform.position = mid;
+                for (int m = 0; m < bikes; m++)
+                {
+                    var at = Vector3.Lerp(a, b, bikes > 1 ? m / (float)(bikes - 1) : 0.5f);
+                    float jitter = ((i * 7 + m * 13) % 9 - 4) * 3f;
+                    var go = ModelFactory.Spawn((i + m) % 2 == 0 ? "Prop_Kapcai" : "Prop_Kapcai2", at, Quaternion.Euler(0f, yaw + jitter, 0f), row.transform);
+                    ModelFactory.AddBoundsCollider(go, 0.05f);
+                    foreach (var t in go.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = Layers.Detail;
+                }
+                _motoRows[i] = row;
+                made++;
+            }
+        }
+        readonly List<(float d, int i)> _bayCandidates = new List<(float, int)>();
+        static readonly string[] ParkedIds = { "kancil", "saga", "myvi", "myvi", "teksi", "hilux", "van", "kapcai", "iriz", "mpv" };
+
+        /// <summary>
+        /// The kerbside parking bays (CityBuilder.Roads) round the player get parked cars, about half of them
+        /// full (always the same ones), filled out of sight and cleared away once far behind. They're real cars:
+        /// knock them about, or take one.
+        /// </summary>
+        void ManageParked()
+        {
+            if (Player == null || (_parkTimer -= Time.deltaTime) > 0f) return;
+            _parkTimer = 1f;
+            var focus = Player.Focus;
+            var drop = new List<int>();
+            foreach (var kv in _parked)
+            {
+                var v = kv.Value;
+                if (v == null || v.role != VehicleRole.Parked) { drop.Add(kv.Key); continue; }      // taken, or gone
+                if (v == LastCar || v == _summoned) continue;
+                if (Flat(v.transform.position - focus) > 230f) { Destroy(v.gameObject); drop.Add(kv.Key); }
+            }
+            foreach (var k in drop) _parked.Remove(k);
+            ManageMotoRows(focus);
+            if (parkedCount <= 0) return;
+            var bays = City.parkingBays;
+            // the full bays near you that are still empty, nearest first (the same bays are always the full ones)
+            _bayCandidates.Clear();
+            // the way you're going counts as nearer: the street ahead fills first
+            var ahead = Player.Driving && Player.vehicle ? Player.vehicle.transform.forward : Player.transform.forward;
+            ahead.y = 0f;
+            ahead = ahead.sqrMagnitude > 0.01f ? ahead.normalized : Vector3.zero;
+            for (int i = 0; i < bays.Count; i++)
+            {
+                if (_parked.ContainsKey(i)) continue;
+                var off = bays[i].pos - focus; off.y = 0f;
+                float dist = off.magnitude;
+                if (dist < 12f || dist > 170f) continue;
+                float d = dist * (1f - 0.45f * Vector3.Dot(off / dist, ahead));
+                uint hb = (uint)(i * 2654435761u); hb ^= hb >> 15; hb *= 0x2c1b3c6d; hb ^= hb >> 12;
+                if ((hb & 1023) > 680) continue;
+                _bayCandidates.Add((d, i));
+            }
+            _bayCandidates.Sort((x, y) => x.d.CompareTo(y.d));
+            int spawned = 0;
+            foreach (var (d, i) in _bayCandidates)
+            {
+                if (spawned >= 4) break;
+                var (pos, rot) = bays[i];
+                if (InView(pos) || Physics.CheckSphere(pos + Vector3.up, 2f, 1 << Layers.Vehicle)) continue;
+                if (_parked.Count >= parkedCount)
+                {
+                    // full: move the furthest one here, if it is well behind (and out of sight)
+                    int far = -1; float fd = Flat(pos - focus) + 50f;
+                    foreach (var kv in _parked)
+                    {
+                        if (kv.Value == null || kv.Value == LastCar || kv.Value == _summoned) continue;
+                        float vd = Flat(kv.Value.transform.position - focus);
+                        if (vd > fd && !InView(kv.Value.transform.position)) { fd = vd; far = kv.Key; }
+                    }
+                    if (far < 0) break;
+                    Destroy(_parked[far].gameObject);
+                    _parked.Remove(far);
+                }
+                uint h = (uint)(i * 2654435761u); h ^= h >> 15; h *= 0x2c1b3c6d; h ^= h >> 12;
+                var id = ParkedIds[(int)((h >> 10) % (uint)ParkedIds.Length)];
+                var v = VehicleSpawner.Spawn(id, pos + Vector3.up * 0.6f, rot, VehicleRole.Parked, _trafficRoot);
+                if (VehicleSpawner.Paintable(id)) VehicleSpawner.Repaint(v);
+                VehicleVariety.Apply(v.gameObject, (int)h);      // dirt, roof racks, stickers...: no two kerbs alike
+                v.ParkAsleep();                                  // no physics until something hits it, or someone gets in
+                _parked[i] = v;
+                spawned++;
+            }
         }
     }
 }

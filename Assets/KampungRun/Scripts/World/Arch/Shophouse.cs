@@ -54,7 +54,7 @@ namespace KampungRun.Arch
             public ShopStyle style;
             public Color32 wall, wallDark, trim, shutter, tile;
             public float W, D, G, S, h, A, P;
-            public int lv, sign, plaque;
+            public int lv, sign, plaque, seed;
             public ArchTex shopBack, shopBack2;
             public bool detail, shop, flat;
 
@@ -99,19 +99,20 @@ namespace KampungRun.Arch
         static float Rand(Lot L, float a, float b) => a + (float)L.rng.NextDouble() * (b - a);
         static T Pick<T>(Lot L, T[] from) => from[L.rng.Next(from.Length)];
 
-        public static void Build(BuildingSpec s, ArchMesh m, bool detail)
+        /// <summary>The lot's plan: style, paint, storeys, five-foot way (the dice drawn in the same order for every caller).</summary>
+        static Lot Setup(BuildingSpec s, bool detail, out int front, out Frame f)
         {
             var ring = s.ring;
             int n = ring.Length;
-            int front = FrontEdge(s);
+            front = FrontEdge(s);
             Vector2 p0 = ring[front], p1 = ring[(front + 1) % n];
-            var f = Frame.Edge(p0, p1, s.y0);
+            f = Frame.Edge(p0, p1, s.y0);
             var dir = (p1 - p0).normalized;
             var inward = new Vector2(-dir.y, dir.x);
             float W = (p1 - p0).magnitude, D = 0f;
             foreach (var p in ring) D = Mathf.Max(D, Vector2.Dot(p - p0, inward));
 
-            var L = new Lot { rng = new System.Random(s.seed), detail = detail, W = W, D = Mathf.Max(D, 3f), h = s.height, lv = Mathf.Max(1, s.levels) };
+            var L = new Lot { rng = new System.Random(s.seed), seed = s.seed, detail = detail, W = W, D = Mathf.Max(D, 3f), h = s.height, lv = Mathf.Max(1, s.levels) };
             L.shop = s.kind == BuildingKind.Shop;
             double roll = L.rng.NextDouble();
             L.style = L.lv >= 5 ? ShopStyle.Modern : roll < 0.5 ? ShopStyle.PreWar : roll < 0.72 ? ShopStyle.Deco : ShopStyle.Modern;
@@ -122,12 +123,42 @@ namespace KampungRun.Arch
             L.tile = L.rng.NextDouble() < 0.82 ? TileRed : TileGreen;
             L.flat = L.style == ShopStyle.Modern || L.D > 30f || s.flatRoof;
             L.sign = L.rng.Next(16);
+            if (s.sign >= 0) L.sign = s.sign & 15;
             L.plaque = L.rng.Next(8);
             L.shopBack = Pick(L, ShopBacks);
             L.shopBack2 = L.rng.NextDouble() < 0.6 ? L.shopBack : Pick(L, ShopBacks);
             Storeys(L.h, L.lv, out L.G, out L.S);
             L.A = HasArcade(s.kind, L.D, L.lv, L.G) ? ArcadeDepth : 0f;
             L.P = L.style == ShopStyle.PreWar ? 1.0f : L.style == ShopStyle.Deco ? 1.3f : 0.9f;
+            return L;
+        }
+
+        /// <summary>One bay of a lot's front, as planned (Interior.RoomsOf reads these to know which shops are open).</summary>
+        public struct BayPlan
+        {
+            public float x0, w;
+            public bool shop;
+            public int lv, sign;
+            public ArchTex back, back2;
+        }
+
+        /// <summary>The lot's bays, its front edge, ground-floor height and five-foot-way depth.</summary>
+        public static void Plan(BuildingSpec s, List<BayPlan> bays, out int front, out float G, out float A)
+        {
+            var L = Setup(s, false, out front, out _);
+            var row = Bays(L);
+            float bw = L.W / row.Length;
+            bays.Clear();
+            for (int i = 0; i < row.Length; i++)
+                bays.Add(new BayPlan { x0 = i * bw, w = bw, shop = row[i].shop, lv = row[i].lv, sign = row[i].sign, back = row[i].shopBack, back2 = row[i].shopBack2 });
+            G = L.G;
+            A = L.A;
+        }
+
+        public static void Build(BuildingSpec s, ArchMesh m, bool detail)
+        {
+            var L = Setup(s, detail, out int front, out var f);
+            float W = L.W;
 
             // a column (and a pilaster above it) at each end of the front that isn't shared with the next lot
             // (the neighbour puts the one on a shared line)
@@ -138,12 +169,19 @@ namespace KampungRun.Arch
             var row = Bays(L);
             int bays = row.Length;
             float bw = W / bays;
+            var rooms = Interior.RoomsOf(s);
             for (int i = 0; i < bays; i++)
             {
                 var B = row[i];
                 var fb = f.Shift(i * bw, 0f, 0f);
                 bool re = i == bays - 1 && rightEnd;
-                Ground(m, fb, B, true, re);
+                // a walk-in shop behind this bay's front? (its room starts Interior.Wall behind the shopfront, Side in)
+                RoomSpec room = null;
+                foreach (var rm in rooms)
+                    if (Mathf.Abs(Vector3.Dot(rm.f.o - fb.o, f.r) - 0.12f) < 0.05f) { room = rm; break; }
+                Ground(m, fb, B, true, re, room != null);
+                if (room != null) Interior.Shell(m, room);
+                if (B.shop) StreetDress.ShopFront(m, fb, bw, B.A, B.G, room != null ? room.kind : InteriorKind.Closed, s.seed * 7 + i, !s.flatRoof);
                 for (int k = 1; k < B.lv; k++)
                 {
                     float y0 = B.G + (k - 1) * B.S, y1 = y0 + B.S;
@@ -254,7 +292,7 @@ namespace KampungRun.Arch
         }
 
         // ---------------------------------------------------------------------------------------- ground floor
-        static void Ground(ArchMesh m, in Frame f, Lot L, bool leftEnd, bool rightEnd)
+        static void Ground(ArchMesh m, in Frame f, Lot L, bool leftEnd, bool rightEnd, bool open = false)
         {
             float W = L.W, G = L.G, A = L.A;
             _holes.Clear();
@@ -267,7 +305,8 @@ namespace KampungRun.Arch
                 {
                     float x0 = pier + k * (ow + pier);
                     var back = k == 0 ? L.shopBack : L.shopBack2;
-                    _holes.Add(new Opening(x0, x0 + ow, 0f, doorTop, L.detail ? 0.15f : 0f, back, Tinted(back) ? L.shutter : White, Reveal));
+                    // a walk-in shop: a real doorway, its reveal running back to the room's inner wall
+                    _holes.Add(new Opening(x0, x0 + ow, 0f, doorTop, open ? Interior.Wall : L.detail ? 0.15f : 0f, back, Tinted(back) ? L.shutter : White, Reveal) { open = open });
                     if (L.style != ShopStyle.Modern || k == 0)
                         _holes.Add(new Opening(x0 + 0.12f, x0 + ow - 0.12f, doorTop + 0.22f, G - 0.5f, L.detail ? 0.08f : 0f, ArchTex.Breeze, L.trim, Reveal));
                 }
@@ -335,6 +374,7 @@ namespace KampungRun.Arch
             }
             m.Panel(f, 0f, L.W, y0, y1, 0f, L.wall, ArchTex.White, 0f, _holes);
             if (!L.detail) return;
+            for (int i = 0; i < _holes.Count; i++) StreetDress.LitWindow(m, f, _holes[i], L.seed + (int)(f.o.x * 13f), k * 17 + i);
             foreach (var h in _holes)
             {
                 if (L.style == ShopStyle.PreWar)
@@ -373,6 +413,7 @@ namespace KampungRun.Arch
             _holes.Add(new Opening(0.45f, L.W - 0.45f, sill, top, L.detail ? 0.12f : 0f, back, grille ? White : Glass, Metal));
             m.Panel(f, 0f, L.W, y0, y1, 0f, L.wall, ArchTex.White, 0f, _holes);
             if (!L.detail) return;
+            StreetDress.LitWindow(m, f, _holes[0], L.seed + (int)(f.o.x * 13f), k * 17);
             var hh = _holes[0];
             // aluminium frame and mullions, a slim sill
             Architrave(m, f, hh.x0, hh.x1, hh.y0, hh.y1, 0.06f, 0.03f, Metal);
@@ -633,6 +674,7 @@ namespace KampungRun.Arch
                     }
                 }
                 m.Panel(fe, 0f, len, 0f, top, 0f, L.wallDark, ArchTex.White, 0f, _holes);
+                if (n == 4 && i == (front + 2) % 4) StreetDress.BackLane(m, fe, len, L.G, L.S, L.lv, L.seed);
                 if (L.detail && len > 3f)
                     m.Box(fe, len - 0.4f, len - 0.28f, 0f, top, 0f, 0.12f, Metal, Faces.Front | Faces.Left | Faces.Right);   // a down pipe
             }

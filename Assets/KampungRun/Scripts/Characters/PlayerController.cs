@@ -122,6 +122,7 @@ namespace KampungRun
             _cc.enabled = false;
             transform.SetPositionAndRotation(pos, rot);
             Arch.ArchCity.I?.Prime(pos);              // the buildings round the new spot at full detail now, not a beat later
+            Interiors.I?.Prime(pos);                  // ...and the rooms round it furnished
             _yaw = rot.eulerAngles.y;
             _vel = Vector3.zero;
             _stomping = false;
@@ -707,6 +708,8 @@ namespace KampungRun
         }
 
         // ---------------------------------------------------------------- interaction
+        static readonly Collider[] NearCars = new Collider[32];
+
         void UpdateInteractFocus()
         {
             _focusInteract = null;
@@ -727,8 +730,10 @@ namespace KampungRun
             }
             if (_focusInteract == null)
             {
-                foreach (var c in Physics.OverlapSphere(transform.position, 3.8f, 1 << Layers.Vehicle))
+                int n = Physics.OverlapSphereNonAlloc(transform.position, 3.8f, NearCars, 1 << Layers.Vehicle);
+                for (int i = 0; i < n; i++)
                 {
+                    var c = NearCars[i];
                     var v = c.attachedRigidbody ? c.attachedRigidbody.GetComponent<Vehicle>() : null;
                     if (v == null || v.Wrecked || v.role == VehicleRole.Police || v.noEnter) continue;
                     float d = Vector3.Distance(v.transform.position, transform.position);

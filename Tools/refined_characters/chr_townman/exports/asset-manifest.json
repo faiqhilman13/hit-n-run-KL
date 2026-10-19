@@ -2,8 +2,8 @@
   "asset": "chr_townman",
   "height_m": 1.7,
   "mesh_height_m": 1.7,
-  "triangles": 77396,
-  "lod1_triangles": 21667,
+  "triangles": 99095,
+  "lod1_triangles": 27743,
   "bones": 23,
   "clips": [
     "chr_townman|_tpose",
@@ -30,8 +30,8 @@
     "Blink"
   ],
   "bounds_m": [
-    1.5618083477020264,
-    0.43752944469451904,
+    1.5842541456222534,
+    0.4414180517196655,
     1.7000000476837158
   ],
   "palette": "kl_character_palette.png",

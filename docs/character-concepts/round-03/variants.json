@@ -1,0 +1,26 @@
+[
+  {
+    "id": "A",
+    "label": "Warm animated film",
+    "path": "assets/A/pak_mat_A.glb",
+    "front_rotation_degrees": 0
+  },
+  {
+    "id": "B",
+    "label": "Graphic comic",
+    "path": "assets/B/pak_mat_B.glb",
+    "front_rotation_degrees": 0
+  },
+  {
+    "id": "C",
+    "label": "Handmade miniature",
+    "path": "assets/C/pak_mat_C.glb",
+    "front_rotation_degrees": 0
+  },
+  {
+    "id": "D",
+    "label": "Grounded stylized",
+    "path": "assets/D/pak_mat_D.glb",
+    "front_rotation_degrees": 0
+  }
+]

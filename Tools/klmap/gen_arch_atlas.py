@@ -815,6 +815,234 @@ def c_roadsigns(k):
     return im
 
 
+# ------------------------------------------------------------------------------------- interiors (Interior.cs)
+PRODUCTS = [(222, 60, 60), (60, 140, 220), (250, 200, 50), (80, 180, 90), (240, 130, 40), (170, 90, 200), (250, 250, 250), (240, 110, 150)]
+
+
+def c_goods():
+    """Shelf fronts for walk-in shops, two strips (top half groceries: packets, tins, bottles, rice; bottom
+    half snacks and sundries), each strip two rows of goods standing on a shelf edge. The shelf is modelled."""
+    im, d = cell((248, 240, 220))
+    r = random.Random(57)
+    for strip in range(2):
+        y0, y1 = strip * S // 2, (strip + 1) * S // 2
+        for row in range(2):
+            ry1 = y0 + (y1 - y0) * (row + 1) // 2 - 8
+            x = 6
+            while x < S - 24:
+                kind = r.randint(0, 3)
+                col = r.choice(PRODUCTS)
+                if kind == 0:                                   # a box or packet
+                    bw, bh = r.randint(26, 44), r.randint(60, 100)
+                    d.rectangle([x, ry1 - bh, x + bw, ry1], fill=col, outline=INK, width=3)
+                    d.rectangle([x + 5, ry1 - bh + 12, x + bw - 5, ry1 - bh + 28], fill=(255, 250, 235))
+                elif kind == 1:                                 # two tins
+                    bw, bh = r.randint(22, 30), r.randint(36, 50)
+                    for k in range(2):
+                        xx = x + k * (bw + 3)
+                        d.rectangle([xx, ry1 - bh, xx + bw, ry1], fill=col, outline=INK, width=3)
+                        d.line([(xx, ry1 - bh * 0.6), (xx + bw, ry1 - bh * 0.6)], fill=(255, 255, 255), width=4)
+                    bw = bw * 2 + 3
+                elif kind == 2:                                 # a bottle (kicap, sauce, oil)
+                    bw, bh = r.randint(20, 26), r.randint(80, 106)
+                    d.rectangle([x, ry1 - bh * 0.7, x + bw, ry1], fill=col, outline=INK, width=3)
+                    d.rectangle([x + bw * 0.3, ry1 - bh, x + bw * 0.7, ry1 - bh * 0.7], fill=col, outline=INK, width=3)
+                    d.rectangle([x + 3, ry1 - bh * 0.5, x + bw - 3, ry1 - bh * 0.3], fill=(255, 250, 235))
+                else:                                           # a sack of rice / a bag of keropok
+                    bw, bh = r.randint(40, 60), r.randint(54, 84)
+                    d.rounded_rectangle([x, ry1 - bh, x + bw, ry1], radius=10, fill=col if strip else (236, 226, 196), outline=INK, width=3)
+                    d.ellipse([x + bw * 0.25, ry1 - bh * 0.7, x + bw * 0.75, ry1 - bh * 0.3], fill=(255, 255, 255) if strip else col)
+                x += bw + r.randint(3, 8)
+            d.rectangle([0, ry1, S, ry1 + 8], fill=(150, 104, 64))
+    return im
+
+
+def c_fridge():
+    """A drinks fridge door: cans and bottles on wire shelves behind glass, a red header."""
+    im, d = cell((236, 236, 240))
+    d.rectangle([0, 0, S, 70], fill=(206, 36, 40))
+    f = font('impact.ttf', 50)
+    t = 'MINUMAN SEJUK'
+    d.text(((S - d.textlength(t, font=f)) / 2, 6), t, font=f, fill=(255, 255, 255))
+    clip_glass(im, (24, 84, S - 24, S - 24), (200, 228, 246), (150, 196, 230), glint=False)
+    r = random.Random(58)
+    for k in range(4):
+        y = int(84 + (k + 1) * (S - 108) / 4)
+        x = 34
+        while x < S - 60:
+            col = r.choice(PRODUCTS)
+            if r.random() < 0.5:
+                d.rectangle([x, y - 50, x + 22, y - 4], fill=col, outline=INK, width=3)
+            else:
+                d.rectangle([x, y - 66, x + 22, y - 4], fill=col, outline=INK, width=3)
+                d.rectangle([x + 7, y - 80, x + 15, y - 66], fill=col, outline=INK, width=2)
+            x += 26
+        d.line([(24, y), (S - 24, y)], fill=(180, 186, 196), width=5)
+    glints(d, 24, 84, S - 24, S - 24, a=0.2, col=(236, 246, 255), wide=0.08, thin=0.03)
+    d.rectangle([S - 46, 200, S - 34, 330], fill=(170, 170, 176), outline=INK, width=3)   # the handle
+    d.rectangle([20, 80, S - 20, S - 20], outline=INK, width=6)
+    return im
+
+
+def c_photos():
+    """Four framed pictures (2 x 2) for a Malay home's walls: the wedding portrait, a graduation, the Kaabah,
+    and a calligraphy panel."""
+    im, d = cell((236, 226, 200))
+    h = S // 2
+    frames = [(150, 104, 60), (190, 150, 60), (40, 40, 44), (120, 70, 40)]
+    for k in range(4):
+        x0, y0 = (k % 2) * h, (k // 2) * h
+        d.rectangle([x0 + 6, y0 + 6, x0 + h - 6, y0 + h - 6], fill=frames[k], outline=INK, width=4)
+        ix0, iy0, ix1, iy1 = x0 + 26, y0 + 26, x0 + h - 26, y0 + h - 26
+        if k == 0:                                              # the wedding: two figures in songket
+            d.rectangle([ix0, iy0, ix1, iy1], fill=(176, 214, 230))
+            for cx, col, hat in ((ix0 + 66, (236, 196, 70), True), (ix1 - 66, (236, 120, 160), False)):
+                d.ellipse([cx - 26, iy0 + 40, cx + 26, iy0 + 92], fill=(214, 170, 130), outline=INK, width=3)
+                if hat:
+                    d.rectangle([cx - 28, iy0 + 30, cx + 28, iy0 + 52], fill=(40, 40, 44))
+                else:
+                    d.chord([cx - 30, iy0 + 30, cx + 30, iy0 + 90], 180, 360, fill=(250, 246, 236))
+                d.polygon([(cx - 50, iy1), (cx - 30, iy0 + 96), (cx + 30, iy0 + 96), (cx + 50, iy1)], fill=col, outline=INK)
+        elif k == 1:                                            # a graduation: mortarboard, scroll
+            d.rectangle([ix0, iy0, ix1, iy1], fill=(120, 150, 196))
+            cx = (ix0 + ix1) // 2
+            d.ellipse([cx - 32, iy0 + 50, cx + 32, iy0 + 112], fill=(214, 170, 130), outline=INK, width=3)
+            d.polygon([(cx - 56, iy0 + 46), (cx, iy0 + 26), (cx + 56, iy0 + 46), (cx, iy0 + 64)], fill=(30, 30, 34))
+            d.polygon([(cx - 70, iy1), (cx - 44, iy0 + 116), (cx + 44, iy0 + 116), (cx + 70, iy1)], fill=(30, 30, 34))
+            d.rectangle([cx + 20, iy1 - 56, cx + 80, iy1 - 40], fill=(250, 246, 230), outline=INK, width=2)
+        elif k == 2:                                            # the Kaabah under a night sky
+            d.rectangle([ix0, iy0, ix1, iy1], fill=(36, 50, 96))
+            d.rectangle([ix0, iy1 - 50, ix1, iy1], fill=(220, 214, 200))
+            cx = (ix0 + ix1) // 2
+            d.rectangle([cx - 52, iy0 + 64, cx + 52, iy1 - 40], fill=(22, 22, 24))
+            d.rectangle([cx - 52, iy0 + 84, cx + 52, iy0 + 96], fill=(214, 176, 70))
+        else:                                                   # calligraphy, gold on green
+            d.rectangle([ix0, iy0, ix1, iy1], fill=(26, 96, 60))
+            cx, cy = (ix0 + ix1) // 2, (iy0 + iy1) // 2
+            d.ellipse([cx - 70, cy - 70, cx + 70, cy + 70], outline=(232, 196, 90), width=5)
+            for a in range(5):
+                x = cx - 48 + a * 24
+                d.arc([x - 14, cy - 40, x + 14, cy + 30], 200, 340, fill=(232, 196, 90), width=6)
+                d.line([(x, cy - 44), (x, cy + 10)], fill=(232, 196, 90), width=5)
+    return im
+
+
+def c_screens():
+    """Four little pictures (2 x 2): a TV showing a cartoon, a TV showing football, a calendar, a drinks menu."""
+    im, d = cell((30, 30, 34))
+    h = S // 2
+    # the news: a presenter at the desk, a map behind, the ticker along the bottom
+    x0, y0 = 0, 0
+    d.rectangle([x0 + 8, y0 + 8, x0 + h - 8, y0 + h - 8], fill=(40, 90, 170))
+    d.ellipse([x0 + 140, y0 + 30, x0 + 236, y0 + 126], fill=(70, 140, 210), outline=(150, 200, 240), width=4)
+    d.rectangle([x0 + 40, y0 + 150, x0 + 150, y0 + 200], fill=(30, 40, 70))
+    d.ellipse([x0 + 66, y0 + 70, x0 + 124, y0 + 128], fill=(222, 176, 128), outline=INK, width=3)
+    d.chord([x0 + 62, y0 + 62, x0 + 128, y0 + 110], 180, 360, fill=(40, 30, 30))
+    d.polygon([(x0 + 52, y0 + 160), (x0 + 70, y0 + 126), (x0 + 120, y0 + 126), (x0 + 138, y0 + 160)], fill=(200, 50, 60), outline=INK)
+    d.rectangle([x0 + 8, y0 + h - 52, x0 + h - 8, y0 + h - 8], fill=(220, 40, 40))
+    d.text((x0 + 16, y0 + h - 46), 'BERITA  KL', font=font('impact.ttf', 30), fill=(255, 255, 255))
+    # football: a striped pitch, the centre circle, a score bug
+    x0, y0 = h, 0
+    d.rectangle([x0 + 8, y0 + 8, x0 + h - 8, y0 + h - 8], fill=(60, 150, 70))
+    for k in range(4):
+        d.rectangle([x0 + 8 + k * 60, y0 + 8, x0 + 38 + k * 60, y0 + h - 8], fill=(70, 162, 80))
+    d.line([(x0 + h // 2, y0 + 8), (x0 + h // 2, y0 + h - 8)], fill=(240, 240, 240), width=4)
+    d.ellipse([x0 + h // 2 - 40, y0 + h // 2 - 40, x0 + h // 2 + 40, y0 + h // 2 + 40], outline=(240, 240, 240), width=4)
+    d.rectangle([x0 + 16, y0 + 16, x0 + 130, y0 + 44], fill=(20, 30, 90))
+    d.text((x0 + 22, y0 + 18), 'MAS 2-1', font=font('arialbd.ttf', 22), fill=(255, 255, 255))
+    # a calendar
+    x0, y0 = 0, h
+    d.rectangle([x0 + 8, y0 + 8, x0 + h - 8, y0 + h - 8], fill=(252, 250, 242))
+    d.rectangle([x0 + 8, y0 + 8, x0 + h - 8, y0 + 100], fill=(206, 40, 40))
+    d.text((x0 + 30, y0 + 30), 'OKTOBER', font=font('impact.ttf', 44), fill=(255, 236, 120))
+    for r_ in range(5):
+        for c_ in range(7):
+            n = 1 + r_ * 7 + c_
+            if n > 31:
+                continue
+            col = (206, 40, 40) if c_ == 0 else INK
+            d.text((x0 + 22 + c_ * 32, y0 + 112 + r_ * 26), str(n), font=font('arial.ttf', 18), fill=col)
+    # a drinks menu
+    x0, y0 = h, h
+    d.rectangle([x0 + 8, y0 + 8, x0 + h - 8, y0 + h - 8], fill=(24, 70, 44))
+    f = font('arialbd.ttf', 22)
+    for k, t in enumerate(['TEH TARIK  1.80', 'KOPI O     1.50', 'MILO AIS   2.50', 'ROTI CANAI 1.20', 'NASI LEMAK 3.00', 'MEE GORENG 5.00']):
+        d.text((x0 + 22, y0 + 24 + k * 36), t, font=f, fill=(250, 246, 220))
+    return im
+
+
+def c_floor():
+    """[T] Shop and house floors: large square tiles in two tones, a thin grout line, flecks of terrazzo."""
+    im, d = cell((238, 238, 238))
+    q = S // 4
+    r = random.Random(61)
+    for y in range(4):
+        for x in range(4):
+            d.rectangle([x * q, y * q, (x + 1) * q, (y + 1) * q], fill=(246, 246, 246) if (x + y) % 2 == 0 else (222, 222, 222))
+            for _ in range(10):
+                fx, fy = x * q + r.randint(8, q - 8), y * q + r.randint(8, q - 8)
+                d.ellipse([fx - 3, fy - 3, fx + 3, fy + 3], fill=(200, 200, 200))
+    for k in range(5):
+        d.line([(k * q, 0), (k * q, S)], fill=(176, 176, 176), width=4)
+        d.line([(0, k * q), (S, k * q)], fill=(176, 176, 176), width=4)
+    return im
+
+
+def c_rugs():
+    """Four textiles (2 x 2): a prayer mat (sejadah), a woven mengkuang mat, a red carpet, a batik cloth."""
+    im, d = cell()
+    h = S // 2
+    # sejadah: green field, the mihrab arch, a red border
+    x0, y0 = 0, 0
+    d.rectangle([x0, y0, x0 + h, y0 + h], fill=(160, 30, 40))
+    d.rectangle([x0 + 18, y0 + 18, x0 + h - 18, y0 + h - 18], fill=(30, 110, 70))
+    d.rectangle([x0 + 40, y0 + 90, x0 + h - 40, y0 + h - 40], fill=(40, 130, 84), outline=(232, 196, 90), width=5)
+    d.pieslice([x0 + 40, y0 + 40, x0 + h - 40, y0 + 140], 180, 360, fill=(40, 130, 84), outline=(232, 196, 90), width=5)
+    d.ellipse([x0 + h // 2 - 16, y0 + 150, x0 + h // 2 + 16, y0 + 182], outline=(232, 196, 90), width=4)
+    # mengkuang: a woven check
+    x0, y0 = h, 0
+    for yy in range(0, h, 16):
+        for xx in range(0, h, 16):
+            col = (222, 196, 140) if (xx // 16 + yy // 16) % 2 == 0 else (196, 160, 100)
+            if (xx // 64 + yy // 64) % 2 == 1 and (xx // 16 + yy // 16) % 2 == 0:
+                col = (180, 60, 60)
+            d.rectangle([x0 + xx, y0 + yy, x0 + xx + 16, y0 + yy + 16], fill=col)
+    # a red carpet with a border and medallion
+    x0, y0 = 0, h
+    d.rectangle([x0, y0, x0 + h, y0 + h], fill=(150, 30, 40))
+    d.rectangle([x0 + 16, y0 + 16, x0 + h - 16, y0 + h - 16], outline=(232, 196, 90), width=6)
+    d.ellipse([x0 + h // 2 - 60, y0 + h // 2 - 60, x0 + h // 2 + 60, y0 + h // 2 + 60], outline=(232, 196, 90), width=6)
+    d.ellipse([x0 + h // 2 - 24, y0 + h // 2 - 24, x0 + h // 2 + 24, y0 + h // 2 + 24], fill=(30, 60, 120))
+    # batik: blue ground, flowers
+    x0, y0 = h, h
+    d.rectangle([x0, y0, x0 + h, y0 + h], fill=(40, 80, 150))
+    rr = random.Random(62)
+    for _ in range(9):
+        cx, cy = x0 + rr.randint(30, h - 30), y0 + rr.randint(30, h - 30)
+        for a in range(6):
+            ang = a * math.pi / 3
+            px, py = cx + math.cos(ang) * 18, cy + math.sin(ang) * 18
+            d.ellipse([px - 12, py - 12, px + 12, py + 12], fill=(250, 196, 60), outline=INK, width=2)
+        d.ellipse([cx - 9, cy - 9, cx + 9, cy + 9], fill=(220, 60, 70))
+    return im
+
+
+def c_menus():
+    """Two boards, top and bottom: a mamak / kopitiam price board and a barber's price list with its pole."""
+    im, d = cell((40, 40, 44))
+    f1, f2 = font('impact.ttf', 40), font('arialbd.ttf', 24)
+    h = S // 2
+    d.rectangle([6, 6, S - 6, h - 6], fill=(250, 214, 60), outline=INK, width=4)
+    d.text((24, 14), 'MENU HARI INI', font=f1, fill=(190, 30, 30))
+    for k, t in enumerate(['NASI LEMAK   3.00', 'ROTI TELUR   2.00', 'TEH TARIK    1.80', 'MAGGI GORENG 5.50']):
+        d.text((28, 70 + k * 40), t, font=f2, fill=INK)
+    d.rectangle([6, h + 6, S - 6, S - 6], fill=(248, 246, 238), outline=INK, width=4)
+    d.text((24, h + 14), 'GUNTING RAMBUT', font=f1, fill=(30, 70, 150))
+    for k, t in enumerate(['DEWASA      RM 12', 'KANAK-KANAK RM 8', 'CUKUR       RM 5', 'SYAMPU      RM 6']):
+        d.text((28, h + 70 + k * 40), t, font=f2, fill=INK)
+    return im
+
+
 CELLS = [
     # row 0
     ('WHITE', c_white), ('GLASS', c_glass), ('GLASS_DARK', c_glass_dark), ('GLASS_SHOP', c_glass_shop),
@@ -841,6 +1069,9 @@ CELLS = [
     ('FRANGIPANI', lambda: blossoms((252, 250, 240), (250, 214, 80), 50, 32)),
     # bridges and roads
     ('HAZARD', c_hazard), ('ROADSIGNS0', lambda: c_roadsigns(0)), ('ROADSIGNS1', lambda: c_roadsigns(1)),
+    # walk-in interiors (Interior.cs)
+    ('GOODS', c_goods), ('FRIDGE', c_fridge), ('PHOTOS', c_photos), ('SCREENS', c_screens), ('FLOOR', c_floor),
+    ('RUGS', c_rugs), ('MENUS', c_menus),
 ]
 
 

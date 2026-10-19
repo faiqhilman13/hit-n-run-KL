@@ -1,0 +1,120 @@
+{
+  "scope": "Static mesh, texture, framing and file-delivery verification; not rig or game acceptance.",
+  "blender_version": "5.2.1 LTS",
+  "variants": [
+    {
+      "id": "A",
+      "triangles": 660712,
+      "meshes": 23,
+      "embedded_images": 16,
+      "materials": 12,
+      "glb_bytes": 24336148,
+      "sha256": "cfc666bb2b2a459e77cf8766c04a57b2a3d36fcb2c40e90cf9ca95c105b570f4",
+      "renders": {
+        "front": [
+          960,
+          1280
+        ],
+        "threequarter": [
+          960,
+          1280
+        ],
+        "profile": [
+          960,
+          1280
+        ],
+        "face": [
+          1280,
+          1280
+        ]
+      },
+      "passed": true
+    },
+    {
+      "id": "B",
+      "triangles": 623384,
+      "meshes": 23,
+      "embedded_images": 16,
+      "materials": 12,
+      "glb_bytes": 20297452,
+      "sha256": "9f260090b3721f079841f1ae61313e7ea61914f454492eb3f8e16eae13ceaaaa",
+      "renders": {
+        "front": [
+          960,
+          1280
+        ],
+        "threequarter": [
+          960,
+          1280
+        ],
+        "profile": [
+          960,
+          1280
+        ],
+        "face": [
+          1280,
+          1280
+        ]
+      },
+      "passed": true
+    },
+    {
+      "id": "C",
+      "triangles": 769344,
+      "meshes": 23,
+      "embedded_images": 16,
+      "materials": 12,
+      "glb_bytes": 29373432,
+      "sha256": "daa52d3227b9caf306b41f4cd94da9e11f0ba6d3e65d128772266e35ee1cca42",
+      "renders": {
+        "front": [
+          960,
+          1280
+        ],
+        "threequarter": [
+          960,
+          1280
+        ],
+        "profile": [
+          960,
+          1280
+        ],
+        "face": [
+          1280,
+          1280
+        ]
+      },
+      "passed": true
+    },
+    {
+      "id": "D",
+      "triangles": 542084,
+      "meshes": 23,
+      "embedded_images": 16,
+      "materials": 12,
+      "glb_bytes": 21095508,
+      "sha256": "dce4a11f76bb9f5ba3d33089524efbaf9674fc084f1aef2d4628df54c6e619d4",
+      "renders": {
+        "front": [
+          960,
+          1280
+        ],
+        "threequarter": [
+          960,
+          1280
+        ],
+        "profile": [
+          960,
+          1280
+        ],
+        "face": [
+          1280,
+          1280
+        ]
+      },
+      "passed": true
+    }
+  ],
+  "gallery_local_links_verified": 23,
+  "passed": true
+}

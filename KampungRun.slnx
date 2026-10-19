@@ -1,0 +1,5 @@
+﻿<Solution>
+  <Project Path="KampungRun.csproj" />
+  <Project Path="KampungRun.Editor.csproj" />
+  <Project Path="KampungRun.Tests.csproj" />
+</Solution>

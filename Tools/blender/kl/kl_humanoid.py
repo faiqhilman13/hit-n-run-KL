@@ -156,6 +156,10 @@ def shape_keys(mesh_ob, tags, keys):
                 elif op == "tilt":  # rotate about Y through centroid (brow angle)
                     r = Matrix.Rotation(val, 3, 'Y')
                     co = cen + r @ (co - cen)
+                elif op == "rotx":  # (angle, pivot_tag): rotate about X through the pivot tag's centroid (eyelids)
+                    piv = tags.get(val[1], [])
+                    pc = sum((base[j] for j in piv), Vector()) / len(piv) if piv else cen
+                    co = pc + Matrix.Rotation(val[0], 3, 'X') @ (co - pc)
                 sk.data[i].co = co
 
 

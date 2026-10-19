@@ -69,6 +69,12 @@ namespace KampungRun
         {
             foreach (var r in go.GetComponentsInChildren<Renderer>())
             {
+                // characters with their own baked atlas: shift the masked garment regions
+                if (AtlasRecolor.Has(r.sharedMaterial))
+                {
+                    r.sharedMaterial = AtlasRecolor.Swap(r.sharedMaterial, swaps);
+                    continue;
+                }
                 // KL models share one atlas material: repaint named palette cells instead
                 if (KLPalette.IsKL(r.sharedMaterial))
                 {

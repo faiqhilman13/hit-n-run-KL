@@ -1,0 +1,1150 @@
+{
+  "id": "D",
+  "label": "Grounded stylized",
+  "blender_version": "5.2.1 LTS",
+  "source_blend": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\docs\\character-concepts\\round-03\\assets\\D\\pak_mat_D_master.blend",
+  "glb": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\docs\\character-concepts\\round-03\\assets\\D\\pak_mat_D.glb",
+  "glb_sha256": "dce4a11f76bb9f5ba3d33089524efbaf9674fc084f1aef2d4628df54c6e619d4",
+  "source": "Local Blender geometry and original texture maps",
+  "scope": "Static design study; unrigged, no animations, no runtime replacement",
+  "inferred": "Back, hidden anatomy, garment construction and all metric proportions interpreted for this study.",
+  "normalization": {
+    "source_rotated_bounds_m": [
+      [
+        -0.4374397099018097,
+        -0.2384917289018631,
+        0.0
+      ],
+      [
+        0.43744727969169617,
+        0.2143731713294983,
+        1.659999966621399
+      ]
+    ],
+    "uniform_scale_factor": 1.0000000201075914,
+    "bounds_m": [
+      [
+        -0.43744349479675293,
+        -0.2264324426651001,
+        0.0
+      ],
+      [
+        0.43744349479675293,
+        0.2264324426651001,
+        1.659999966621399
+      ]
+    ],
+    "height_m": 1.659999966621399,
+    "floor_z_m": 0.0,
+    "front_rotation_degrees": 0,
+    "front_axis": "-Y",
+    "up_axis": "+Z",
+    "pose": "Imported frame 1; any armatures shown in rest/bind pose"
+  },
+  "geometry": {
+    "id": "D",
+    "label": "Grounded stylized",
+    "height_m": 1.659999966621399,
+    "bounds_min": [
+      -0.4374397099018097,
+      -0.2384917289018631,
+      0.0
+    ],
+    "bounds_max": [
+      0.43744727969169617,
+      0.2143731713294983,
+      1.659999966621399
+    ],
+    "target_height_m": 1.66,
+    "head_height_target_m": 0.288695652173913,
+    "head_count_target": 5.75,
+    "triangle_count": 542084,
+    "objects": 23,
+    "coordinates": "metres; +Z up; -Y front; ground at z=0",
+    "purpose": "Static art-direction sculpt comparison. Not a game-ready rig.",
+    "references": {
+      "A": "Warm-animation reinterpretation of identity sheet",
+      "B": "round-03/references/B.png; graphic facial planes",
+      "C": "round-03/references/C.png; compact sleepy miniature",
+      "D": "round-03/references/A.png; grounded adult reference"
+    },
+    "inferred": [
+      "Exact head/body ratios are authored direction targets, not traced reference measurements",
+      "Back anatomy, fingers and feet, cloth interior and fold placement",
+      "Side/profile facial depth and all natural anatomical transitions"
+    ],
+    "parameters": {
+      "label": "Grounded stylized",
+      "heads": 5.75,
+      "rx": 0.133,
+      "rz": 0.1443478260869565,
+      "ry": 0.125,
+      "shoulder_z": 1.209,
+      "shoulder_x": 0.222,
+      "belly_w": 0.26,
+      "belly_d": 0.213,
+      "hem": 0.792,
+      "eye_x": 0.027,
+      "eye_z": 0.0135,
+      "eye_open": 0.87,
+      "cheek": 0.01,
+      "nose": 0.049,
+      "exponent": 0.95,
+      "jaw": 0.08,
+      "arm_up": 0.266,
+      "arm_lo": 0.235,
+      "hand": 0.9,
+      "foot": 0.261,
+      "foot_x": 0.149,
+      "wrap_low": 0.206,
+      "brow": 0.0057,
+      "moustache": 0.0118,
+      "arm_r": 0.064,
+      "variant": "D",
+      "headc": 1.4026521739130433
+    }
+  },
+  "material_authoring": {
+    "version": 4,
+    "variant": "D",
+    "style": "Grounded stylized",
+    "texture_root": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles",
+    "materials": {
+      "LOCAL_D_skin_v4": {
+        "role": "skin",
+        "textures": {
+          "basecolor": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\skin_basecolor.png",
+          "orm": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\skin_orm.png",
+          "normal": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\skin_normal.png"
+        },
+        "radial_iris": null
+      },
+      "LOCAL_D_eye_white_v4": {
+        "role": "eye_white",
+        "textures": {},
+        "radial_iris": null
+      },
+      "LOCAL_D_iris_v4": {
+        "role": "iris",
+        "textures": {
+          "basecolor": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\iris_basecolor.png"
+        },
+        "radial_iris": true
+      },
+      "LOCAL_D_pupil_v4": {
+        "role": "pupil",
+        "textures": {},
+        "radial_iris": null
+      },
+      "LOCAL_D_hair_v4": {
+        "role": "hair",
+        "textures": {},
+        "radial_iris": null
+      },
+      "LOCAL_D_mouth_v4": {
+        "role": "mouth",
+        "textures": {},
+        "radial_iris": null
+      },
+      "LOCAL_D_songkok_v4": {
+        "role": "songkok",
+        "textures": {
+          "basecolor": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\songkok_basecolor.png",
+          "orm": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\songkok_orm.png",
+          "normal": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\songkok_normal.png"
+        },
+        "radial_iris": null
+      },
+      "LOCAL_D_batik_v4": {
+        "role": "batik",
+        "textures": {
+          "basecolor": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\batik_basecolor.png",
+          "orm": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\batik_orm.png",
+          "normal": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\batik_normal.png"
+        },
+        "radial_iris": null
+      },
+      "LOCAL_D_batik_trim_v4": {
+        "role": "batik_trim",
+        "textures": {},
+        "radial_iris": null
+      },
+      "LOCAL_D_sandal_v4": {
+        "role": "sandal",
+        "textures": {
+          "basecolor": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\leather_basecolor.png",
+          "orm": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\leather_orm.png",
+          "normal": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\leather_normal.png"
+        },
+        "radial_iris": null
+      },
+      "LOCAL_D_sarong_v4": {
+        "role": "sarong",
+        "textures": {
+          "basecolor": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\sarong_basecolor.png",
+          "orm": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\sarong_orm.png",
+          "normal": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\sarong_normal.png"
+        },
+        "radial_iris": null
+      },
+      "LOCAL_D_sole_v4": {
+        "role": "sole",
+        "textures": {},
+        "radial_iris": null
+      }
+    },
+    "objects": [
+      {
+        "object": "D_head_neck_ears",
+        "role": "skin",
+        "material": "LOCAL_D_skin_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            2.0,
+            2.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_sclera",
+        "role": "eye_white",
+        "material": "LOCAL_D_eye_white_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_irises",
+        "role": "iris",
+        "material": "LOCAL_D_iris_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_pupils",
+        "role": "pupil",
+        "material": "LOCAL_D_pupil_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_eyelids",
+        "role": "skin",
+        "material": "LOCAL_D_skin_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            2.0,
+            2.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_eyebrows",
+        "role": "hair",
+        "material": "LOCAL_D_hair_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_ear_concha",
+        "role": "skin",
+        "material": "LOCAL_D_skin_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            2.0,
+            2.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_moustache",
+        "role": "hair",
+        "material": "LOCAL_D_hair_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_smile",
+        "role": "mouth",
+        "material": "LOCAL_D_mouth_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_lower_lip",
+        "role": "skin",
+        "material": "LOCAL_D_skin_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            2.0,
+            2.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_hair",
+        "role": "hair",
+        "material": "LOCAL_D_hair_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_songkok",
+        "role": "songkok",
+        "material": "LOCAL_D_songkok_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            3.0,
+            1.5
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_batik_shirt",
+        "role": "batik",
+        "material": "LOCAL_D_batik_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            5.7,
+            2.85
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_upper_chest_inset",
+        "role": "skin",
+        "material": "LOCAL_D_skin_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            2.0,
+            2.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_batik_collar",
+        "role": "batik_trim",
+        "material": "LOCAL_D_batik_trim_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_buttons",
+        "role": "sandal",
+        "material": "LOCAL_D_sandal_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            2.0,
+            2.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_right_arm_hand",
+        "role": "skin",
+        "material": "LOCAL_D_skin_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            2.0,
+            2.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_left_arm_hand",
+        "role": "skin",
+        "material": "LOCAL_D_skin_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            2.0,
+            2.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_sarong_wrap",
+        "role": "sarong",
+        "material": "LOCAL_D_sarong_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            6.8,
+            3.7
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_sarong_front_overlap",
+        "role": "sarong",
+        "material": "LOCAL_D_sarong_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            6.8,
+            3.7
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_feet_ankles",
+        "role": "skin",
+        "material": "LOCAL_D_skin_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            2.0,
+            2.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_sandal_soles",
+        "role": "sole",
+        "material": "LOCAL_D_sole_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "fallback_cylindrical": false
+        }
+      },
+      {
+        "object": "D_sandal_straps",
+        "role": "sandal",
+        "material": "LOCAL_D_sandal_v4",
+        "uv": {
+          "source": "UVMap",
+          "material_uv": "MaterialUV",
+          "scale": [
+            2.0,
+            2.0
+          ],
+          "fallback_cylindrical": false
+        }
+      }
+    ],
+    "portable": true,
+    "maps": "sRGB basecolor; linear ORM (R=1, G=roughness, B=0); OpenGL tangent normals",
+    "notes": [
+      "Authored repeating leaf sprigs and uneven-band plaid, not reference projections.",
+      "No directional lights, shadows, ambient occlusion or highlights baked into textures.",
+      "All materials opaque dielectric Principled. No render-only toon or procedural nodes.",
+      "UVMap preserved; MaterialUV copied and tiled explicitly; images packed."
+    ]
+  },
+  "textures": [
+    {
+      "name": "batik_basecolor.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\batik_basecolor.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\batik_basecolor.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "sRGB",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "batik_normal.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\batik_normal.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\batik_normal.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "Non-Color",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "batik_orm.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\batik_orm.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\batik_orm.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "Non-Color",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "iris_basecolor.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\iris_basecolor.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\iris_basecolor.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "sRGB",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "leather_basecolor.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\leather_basecolor.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\leather_basecolor.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "sRGB",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "leather_normal.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\leather_normal.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\leather_normal.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "Non-Color",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "leather_orm.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\leather_orm.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\leather_orm.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "Non-Color",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "sarong_basecolor.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\sarong_basecolor.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\sarong_basecolor.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "sRGB",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "sarong_normal.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\sarong_normal.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\sarong_normal.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "Non-Color",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "sarong_orm.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\sarong_orm.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\sarong_orm.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "Non-Color",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "skin_basecolor.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\skin_basecolor.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\skin_basecolor.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "sRGB",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "skin_normal.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\skin_normal.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\skin_normal.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "Non-Color",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "skin_orm.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\skin_orm.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\skin_orm.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "Non-Color",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "songkok_basecolor.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\songkok_basecolor.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\songkok_basecolor.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "sRGB",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "songkok_normal.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\songkok_normal.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\songkok_normal.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "Non-Color",
+      "packed": true,
+      "loaded": true
+    },
+    {
+      "name": "songkok_orm.png",
+      "declared_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\songkok_orm.png",
+      "resolved_path": "C:\\Users\\User\\PROJECTS\\kampung-game\\KampungRun\\Tools\\scenario_characters\\textures\\local_styles\\D\\songkok_orm.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "color_space": "Non-Color",
+      "packed": true,
+      "loaded": true
+    }
+  ],
+  "warnings": [],
+  "meshes": [
+    {
+      "name": "D_head_neck_ears",
+      "vertices": 67968,
+      "polygons": 67966,
+      "triangles": 135932,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_skin_v4"
+      ]
+    },
+    {
+      "name": "D_sclera",
+      "vertices": 962,
+      "polygons": 960,
+      "triangles": 1824,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_eye_white_v4"
+      ]
+    },
+    {
+      "name": "D_irises",
+      "vertices": 562,
+      "polygons": 560,
+      "triangles": 1040,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_iris_v4"
+      ]
+    },
+    {
+      "name": "D_pupils",
+      "vertices": 434,
+      "polygons": 432,
+      "triangles": 792,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_pupil_v4"
+      ]
+    },
+    {
+      "name": "D_eyelids",
+      "vertices": 1976,
+      "polygons": 2016,
+      "triangles": 3936,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_skin_v4"
+      ]
+    },
+    {
+      "name": "D_eyebrows",
+      "vertices": 928,
+      "polygons": 952,
+      "triangles": 1848,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_hair_v4"
+      ]
+    },
+    {
+      "name": "D_ear_concha",
+      "vertices": 724,
+      "polygons": 768,
+      "triangles": 1440,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_skin_v4"
+      ]
+    },
+    {
+      "name": "D_moustache",
+      "vertices": 1302,
+      "polygons": 1320,
+      "triangles": 2600,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_hair_v4"
+      ]
+    },
+    {
+      "name": "D_smile",
+      "vertices": 343,
+      "polygons": 288,
+      "triangles": 576,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_mouth_v4"
+      ]
+    },
+    {
+      "name": "D_lower_lip",
+      "vertices": 494,
+      "polygons": 504,
+      "triangles": 984,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_skin_v4"
+      ]
+    },
+    {
+      "name": "D_hair",
+      "vertices": 2112,
+      "polygons": 2016,
+      "triangles": 4032,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_hair_v4"
+      ]
+    },
+    {
+      "name": "D_songkok",
+      "vertices": 4610,
+      "polygons": 4704,
+      "triangles": 9216,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_songkok_v4"
+      ]
+    },
+    {
+      "name": "D_batik_shirt",
+      "vertices": 54298,
+      "polygons": 54296,
+      "triangles": 108592,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_batik_v4"
+      ]
+    },
+    {
+      "name": "D_upper_chest_inset",
+      "vertices": 374,
+      "polygons": 336,
+      "triangles": 672,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_skin_v4"
+      ]
+    },
+    {
+      "name": "D_batik_collar",
+      "vertices": 544,
+      "polygons": 990,
+      "triangles": 1080,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_batik_trim_v4"
+      ]
+    },
+    {
+      "name": "D_buttons",
+      "vertices": 800,
+      "polygons": 864,
+      "triangles": 1584,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_sandal_v4"
+      ]
+    },
+    {
+      "name": "D_right_arm_hand",
+      "vertices": 29492,
+      "polygons": 29490,
+      "triangles": 58980,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_skin_v4"
+      ]
+    },
+    {
+      "name": "D_left_arm_hand",
+      "vertices": 29494,
+      "polygons": 29492,
+      "triangles": 58984,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_skin_v4"
+      ]
+    },
+    {
+      "name": "D_sarong_wrap",
+      "vertices": 13216,
+      "polygons": 13216,
+      "triangles": 26432,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_sarong_v4"
+      ]
+    },
+    {
+      "name": "D_sarong_front_overlap",
+      "vertices": 4130,
+      "polygons": 4128,
+      "triangles": 8256,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_sarong_v4"
+      ]
+    },
+    {
+      "name": "D_feet_ankles",
+      "vertices": 52230,
+      "polygons": 52226,
+      "triangles": 104452,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_skin_v4"
+      ]
+    },
+    {
+      "name": "D_sandal_soles",
+      "vertices": 1284,
+      "polygons": 1408,
+      "triangles": 2560,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_sole_v4"
+      ]
+    },
+    {
+      "name": "D_sandal_straps",
+      "vertices": 3144,
+      "polygons": 3200,
+      "triangles": 6272,
+      "uv_layers": 2,
+      "material_slots": [
+        "LOCAL_D_sandal_v4"
+      ]
+    }
+  ],
+  "total_vertices": 271421,
+  "total_triangles": 542084,
+  "materials": [
+    {
+      "name": "LOCAL_D_skin_v4",
+      "uses_nodes": true,
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeNormalMap",
+        "ShaderNodeOutputMaterial",
+        "ShaderNodeSeparateColor",
+        "ShaderNodeTexImage",
+        "ShaderNodeUVMap"
+      ],
+      "diffuse_color": [
+        0.44520118832588196,
+        0.1946178376674652,
+        0.09084171056747437,
+        1.0
+      ]
+    },
+    {
+      "name": "LOCAL_D_eye_white_v4",
+      "uses_nodes": true,
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeOutputMaterial"
+      ],
+      "diffuse_color": [
+        0.8549926280975342,
+        0.7605245113372803,
+        0.577580451965332,
+        1.0
+      ]
+    },
+    {
+      "name": "LOCAL_D_iris_v4",
+      "uses_nodes": true,
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeOutputMaterial",
+        "ShaderNodeTexImage",
+        "ShaderNodeUVMap"
+      ],
+      "diffuse_color": [
+        0.1119324266910553,
+        0.039546236395835876,
+        0.01032982300966978,
+        1.0
+      ]
+    },
+    {
+      "name": "LOCAL_D_pupil_v4",
+      "uses_nodes": true,
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeOutputMaterial"
+      ],
+      "diffuse_color": [
+        0.005605391692370176,
+        0.004024717025458813,
+        0.0030352699104696512,
+        1.0
+      ]
+    },
+    {
+      "name": "LOCAL_D_hair_v4",
+      "uses_nodes": true,
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeOutputMaterial"
+      ],
+      "diffuse_color": [
+        0.012286487966775894,
+        0.01032982300966978,
+        0.009134058840572834,
+        1.0
+      ]
+    },
+    {
+      "name": "LOCAL_D_mouth_v4",
+      "uses_nodes": true,
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeOutputMaterial"
+      ],
+      "diffuse_color": [
+        0.052860647439956665,
+        0.008568125776946545,
+        0.007499032188206911,
+        1.0
+      ]
+    },
+    {
+      "name": "LOCAL_D_songkok_v4",
+      "uses_nodes": true,
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeNormalMap",
+        "ShaderNodeOutputMaterial",
+        "ShaderNodeSeparateColor",
+        "ShaderNodeTexImage",
+        "ShaderNodeUVMap"
+      ],
+      "diffuse_color": [
+        0.012286487966775894,
+        0.012286487966775894,
+        0.010960093699395657,
+        1.0
+      ]
+    },
+    {
+      "name": "LOCAL_D_batik_v4",
+      "uses_nodes": true,
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeNormalMap",
+        "ShaderNodeOutputMaterial",
+        "ShaderNodeSeparateColor",
+        "ShaderNodeTexImage",
+        "ShaderNodeUVMap"
+      ],
+      "diffuse_color": [
+        0.43965718150138855,
+        0.05448027700185776,
+        0.009134058840572834,
+        1.0
+      ]
+    },
+    {
+      "name": "LOCAL_D_batik_trim_v4",
+      "uses_nodes": true,
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeOutputMaterial"
+      ],
+      "diffuse_color": [
+        0.26635560393333435,
+        0.03433980792760849,
+        0.006512090563774109,
+        1.0
+      ]
+    },
+    {
+      "name": "LOCAL_D_sandal_v4",
+      "uses_nodes": true,
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeNormalMap",
+        "ShaderNodeOutputMaterial",
+        "ShaderNodeSeparateColor",
+        "ShaderNodeTexImage",
+        "ShaderNodeUVMap"
+      ],
+      "diffuse_color": [
+        0.09758734703063965,
+        0.03310476616024971,
+        0.012286487966775894,
+        1.0
+      ]
+    },
+    {
+      "name": "LOCAL_D_sarong_v4",
+      "uses_nodes": true,
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeNormalMap",
+        "ShaderNodeOutputMaterial",
+        "ShaderNodeSeparateColor",
+        "ShaderNodeTexImage",
+        "ShaderNodeUVMap"
+      ],
+      "diffuse_color": [
+        0.019382361322641373,
+        0.052860647439956665,
+        0.02955683507025242,
+        1.0
+      ]
+    },
+    {
+      "name": "LOCAL_D_sole_v4",
+      "uses_nodes": true,
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeOutputMaterial"
+      ],
+      "diffuse_color": [
+        0.02955683507025242,
+        0.016807375475764275,
+        0.009134058840572834,
+        1.0
+      ]
+    }
+  ]
+}

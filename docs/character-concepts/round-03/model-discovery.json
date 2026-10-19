@@ -1,0 +1,260 @@
+{
+  "scope": {
+    "team_id": "team_3x1GhFd1Xhc6VYjwTNXbohCm",
+    "project_id": "proj_65fEAfifv7xVSJfnoZE3EVnE",
+    "mode": "read-only discovery",
+    "writes_performed": false,
+    "jobs_launched": false,
+    "repository_changes": false
+  },
+  "selection": {
+    "image_primary": "model_google-gemini-3-1-flash",
+    "image_upgrade_alternative": "model_openai-gpt-image-2-5-sunburst",
+    "img23d_primary": "model_tripo-v3-1-image-to-3d",
+    "reason": "Gemini 3.1 and Tripo 3.1 were recommended as available without a plan upgrade. Tripo produces character-suitable textured polygon meshes with face-count controls. Only its 3D schema was inspected: it was the clear current-plan choice over the equally priced older Tripo 3.0.",
+    "excluded": "Props-only GPT-6 Astra 3D"
+  },
+  "workflow": {
+    "image_calls": 4,
+    "outputs_per_image_call": 1,
+    "mesh_calls": 4,
+    "direction": "Use the same approved identity reference for four separate style prompts. Each image must show one full-body Pak Mat, preserving his moustache, songkok, orange batik, green sarong and sandals. Reconstruct each approved style image separately, then import and render the resulting meshes in Blender.",
+    "reference_asset_id": null,
+    "reference_status": "No approved reference asset ID supplied in this discovery request."
+  },
+  "estimated_catalog_costs": {
+    "unit": "CU",
+    "estimates_only": true,
+    "exact_payload_priced": false,
+    "per_asset": {
+      "model_google-gemini-3-1-flash": 10,
+      "model_openai-gpt-image-2-5-sunburst": 12.9,
+      "model_tripo-v3-1-image-to-3d": 45
+    },
+    "four_images_plus_four_meshes": {
+      "gemini_and_tripo": 220,
+      "gpt_and_tripo": 231.6
+    },
+    "qualification": "Catalog baselines, not quotes for the recommended settings. References, image resolution, image quality, geometry, texture and topology settings can change costs. No model_run or dry_run was called. Blender rendering costs are excluded."
+  },
+  "usage_and_plan": {
+    "project_consumed_cu_last_31_days": 0,
+    "remaining_balance": null,
+    "current_plan_name": null,
+    "gemini_requires_upgrade": false,
+    "tripo_requires_upgrade": false,
+    "gpt_alternative": {
+      "requires_plan_upgrade": true,
+      "required_plan": "Starter"
+    },
+    "other_catalog_restrictions": [
+      {
+        "model_id": "model_bytedance-seedream-5-0-pro",
+        "required_plan": "Pro",
+        "estimated_cu_per_asset": 18
+      },
+      {
+        "model_id": "model_hitem-3d-3-0",
+        "required_plan": "Pro",
+        "estimated_cu_per_asset": 410
+      },
+      {
+        "model_id": "model_hitem-sparc-3d-2-1",
+        "required_plan": "Pro",
+        "estimated_cu_per_asset": 130
+      },
+      {
+        "model_id": "model_hunyuan-3d-pro-3-1-i23d",
+        "required_plan": "Starter",
+        "estimated_cu_per_asset": 90
+      }
+    ],
+    "note": "Availability comes from scoped recommend responses. Usage reports consumption, not available credit or guaranteed execution entitlement."
+  },
+  "model_schemas": {
+    "notation": "Exact parameter names, types, defaults and declared constraints; descriptions condensed. Fields without required:true are optional. File inputs require real Scenario asset IDs, not paths or URLs.",
+    "model_google-gemini-3-1-flash": {
+      "parameters": [
+        {"name":"prompt","type":"string","required":true,"max_length":250000},
+        {"name":"referenceImages","type":"file_array","kind":"image","array":true,"max_length":14,"cost_impact":true},
+        {"name":"video","type":"file","kind":"video","max_size":15728640,"cost_impact":true},
+        {"name":"videoFps","type":"number","default":1,"min":0.1,"max":24,"step":0.1,"cost_impact":true},
+        {"name":"aspectRatio","type":"string","default":"auto","allowed_values":["21:9","16:9","3:2","4:3","5:4","1:1","4:5","3:4","2:3","9:16","auto"]},
+        {"name":"resolution","type":"string","default":"1K","allowed_values":["512","1K","2K","4K"],"cost_impact":true},
+        {"name":"useGoogleSearch","type":"boolean","default":false,"cost_impact":true},
+        {"name":"thinkingLevel","type":"string","default":"HIGH","allowed_values":["MINIMAL","LOW","MEDIUM","HIGH"]},
+        {"name":"numOutputs","type":"number","default":1,"min":1,"max":4,"step":1,"cost_impact":true}
+      ],
+      "recommended_non_file_parameters": {
+        "aspectRatio": "2:3",
+        "resolution": "2K",
+        "thinkingLevel": "HIGH",
+        "numOutputs": 1,
+        "useGoogleSearch": false
+      },
+      "required_bindings": {
+        "prompt": "One distinct style brief with explicit identity preservation, full-body framing, separated limbs and a plain background.",
+        "referenceImages": "Array containing the actual approved identity-reference asset ID."
+      },
+      "restrictions": [
+        "referenceImages and video are mutually exclusive.",
+        "Pass referenceImages as an array even for one image; a bare value is ignored.",
+        "No seed, mask or negative-prompt field is exposed.",
+        "Reference image byte and pixel caps are not declared in this schema."
+      ]
+    },
+    "model_openai-gpt-image-2-5-sunburst": {
+      "parameters": [
+        {"name":"prompt","type":"string","required":true,"max_length":32000},
+        {"name":"referenceImages","type":"file_array","kind":"image","array":true,"max_length":10,"cost_impact":true},
+        {"name":"mask","type":"file","kind":"image"},
+        {"name":"numOutputs","type":"number","default":1,"min":1,"max":10,"step":1,"cost_impact":true},
+        {"name":"width","type":"number","min":16,"max":3840,"step":16,"cost_impact":true},
+        {"name":"height","type":"number","min":16,"max":3840,"step":16,"cost_impact":true},
+        {"name":"quality","type":"string","default":"auto","allowed_values":["auto","low","medium","high","xhigh","max"],"cost_impact":true},
+        {"name":"background","type":"string","default":"auto","allowed_values":["auto","opaque","transparent"]}
+      ],
+      "recommended_non_file_parameters": {
+        "width": 1024,
+        "height": 1536,
+        "quality": "high",
+        "background": "opaque",
+        "numOutputs": 1
+      },
+      "required_bindings": {
+        "prompt": "One distinct style brief preserving Pak Mat's identity and clothing.",
+        "referenceImages": "Array containing the actual approved identity-reference asset ID."
+      },
+      "restrictions": [
+        "Requires Starter plan upgrade before execution.",
+        "If mask is provided, referenceImages is required.",
+        "Mask must be a PNG with transparency: transparent areas are edited; opaque areas are preserved.",
+        "Reference image byte and pixel caps are not declared in this schema."
+      ]
+    },
+    "model_tripo-v3-1-image-to-3d": {
+      "parameters": [
+        {"name":"image","type":"file","kind":"image","required":true},
+        {"name":"texture","type":"boolean","default":true,"cost_impact":true},
+        {"name":"textureQuality","type":"string","default":"standard","allowed_values":["fast","standard","detailed","extreme"],"cost_impact":true},
+        {"name":"textureVersion","type":"string","default":"","allowed_values":["","v2.5-20250123","v3.0-20250812","v3.5-20260815"]},
+        {"name":"delight","type":"boolean","default":true},
+        {"name":"textureAlignment","type":"string","default":"original_image","allowed_values":["original_image","geometry"]},
+        {"name":"geometryQuality","type":"string","default":"standard","allowed_values":["standard","detailed"],"cost_impact":true},
+        {"name":"textureSeed","type":"number"},
+        {"name":"orientation","type":"string","default":"default","allowed_values":["default","align_image"]},
+        {"name":"pbr","type":"boolean","default":true},
+        {"name":"faceLimit","type":"number"},
+        {"name":"autoSize","type":"boolean","default":false},
+        {"name":"quad","type":"boolean","default":false,"cost_impact":true},
+        {"name":"smartLowPoly","type":"boolean","default":false,"cost_impact":true},
+        {"name":"generateParts","type":"boolean","default":false,"cost_impact":true},
+        {"name":"seed","type":"number"}
+      ],
+      "recommended_non_file_parameters": {
+        "texture": true,
+        "pbr": false,
+        "textureQuality": "detailed",
+        "textureAlignment": "original_image",
+        "delight": true,
+        "geometryQuality": "standard",
+        "faceLimit": 50000,
+        "orientation": "align_image",
+        "autoSize": true,
+        "quad": false,
+        "smartLowPoly": false,
+        "generateParts": false
+      },
+      "recommendation_reason": "Textured stylized meshes at a manageable face count. pbr:false allows explicit texture controls; delight:true removes baked lighting for Blender illumination.",
+      "required_bindings": {
+        "image": "The real asset ID of one approved single-subject style image."
+      },
+      "reference_caps": {
+        "images_per_call": 1,
+        "byte_limit": null,
+        "pixel_limit": null
+      },
+      "restrictions": [
+        "pbr:true causes texture parameters to be ignored.",
+        "faceLimit is adaptive when omitted.",
+        "Without smartLowPoly: maximum 1500000 faces for standard geometry or 2000000 for detailed geometry.",
+        "quad:true without smartLowPoly caps faceLimit at 150000 and outputs FBX.",
+        "smartLowPoly:true permits faceLimit 1000–20000; with quad:true, 500–10000.",
+        "With both smartLowPoly and quad enabled, omitted faceLimit defaults to 10000.",
+        "generateParts is incompatible with texture, pbr and quad.",
+        "Fast texture quality and delight use texture version v3.5 automatically.",
+        "No prompt, numOutputs, rigging or general output-format parameter is exposed.",
+        "A humanoid mesh is not a verified animation-ready rig; inspect geometry and materials in Blender."
+      ]
+    }
+  },
+  "tool_input_schemas": {
+    "notation": "Input declarations only; these tools were not executed. Both scope IDs must be supplied despite being optional in the generic declarations.",
+    "upload_asset": {
+      "required": {
+        "content_type": "string",
+        "file_name": "string",
+        "kind": ["image","audio","video","3d"]
+      },
+      "optional": {
+        "data": "string",
+        "file_size": "number",
+        "project_id": "string",
+        "team_id": "string",
+        "response_format": ["json","markdown"]
+      },
+      "constraints": [
+        "Supply exactly one of file_size or data.",
+        "file_size is the exact byte count and selects presigned multipart upload.",
+        "Inline data is base64, limited to approximately 100KB.",
+        "For multipart uploads, PUT raw bytes to every returned part URL and verify success before completion."
+      ]
+    },
+    "upload_asset_complete": {
+      "required": {"upload_id":"string"},
+      "optional": {
+        "project_id":"string",
+        "team_id":"string",
+        "response_format":["json","markdown"]
+      },
+      "constraints": [
+        "Use the upload_id returned by upload_asset.",
+        "No parts list or ETags argument exists."
+      ]
+    },
+    "asset_download": {
+      "required": {"asset_id":"string"},
+      "optional": {
+        "format":"string",
+        "project_id":"string",
+        "team_id":"string",
+        "response_format":["json","markdown"]
+      },
+      "constraints": [
+        "Write-class tool; not called during this read-only discovery.",
+        "Omit format to download the original 3D file.",
+        "format converts images; it does not convert meshes to GLB or FBX.",
+        "Follow redirects when downloading the returned URL."
+      ]
+    },
+    "model_run": {
+      "required": {"model_id":"string"},
+      "optional": {
+        "parameters":"object",
+        "dry_run":"boolean",
+        "wait":"boolean",
+        "project_id":"string",
+        "team_id":"string",
+        "response_format":["json","markdown"]
+      },
+      "status": "Schema inspected only; execution remains pending authorization and real input assets."
+    }
+  },
+  "recommend_next_step": {
+    "image_quality": {"type":"proceed"},
+    "img23d_quality": {"type":"proceed"},
+    "img23d_cost_current_plan": {"type":"proceed"},
+    "ask_user_requirement_returned": false,
+    "general_rule": "If a subsequent recommend response returns ask_user, present its exact question and options and wait before model_run. proceed does not override pending project-write confirmation."
+  }
+}

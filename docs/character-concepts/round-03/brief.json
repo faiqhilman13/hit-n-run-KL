@@ -1,0 +1,34 @@
+{
+  "character": "Pak Mat",
+  "asset_id_in_game": "chr_pakmat",
+  "purpose": "Compare actual textured 3D character designs using renders from their meshes; select an art direction before game integration.",
+  "reference_path": "../../../Tools/refined_characters/chr_pakmat/ref/threequarter.png",
+  "front_reference_path": "../../../Tools/refined_characters/chr_pakmat/ref/front.png",
+  "baseline_prompt": "Create one fully realized stylized 3D character reference for a Kuala Lumpur open-world game. The supplied image is an identity and wardrobe reference for Pak Mat: a middle-aged Malaysian father with warm medium-brown skin, a black moustache, short black hair under a black songkok, a burnt-orange floral short-sleeved collared batik shirt, a dark green checked calf-length wrap sarong, and brown open-toe sandals. He has a generous belly and a friendly, slightly weary face. Preserve these identifiers but redesign the facial sculpt, proportions and surface treatment according to the art direction below. Show exactly one complete character, full body from hat to soles, standing in a relaxed low A-pose with arms slightly separated from the torso, open visible hands, two feet separated, mild three-quarter view. The sarong is a continuous cloth wrap with a visible overlap, never trousers. Continuous organic anatomy and connected shoulders, elbows and hands; avoid separate ball joints or primitive-shaped body parts. The character is an adult, not a child. Neutral light warm-grey seamless background, soft broad key light from upper camera left, gentle fill, subtle contact shadow. Clear even exposure, no strong rim glow, no pedestal or scene props, no text, labels, layout panels, weapons or added accessories. Keep the pose and camera comparable across the variants. Produce a polished three-dimensional sculpt/material reference with readable forms, not a line drawing or turnaround sheet. ART DIRECTION: ",
+  "variants": [
+    {
+      "id": "A",
+      "label": "Warm animated film",
+      "direction": "Around 4.5 heads tall. Broad pear-shaped torso with a weighty low belly; continuous rounded shoulders and tapered arms; sculpted cheeks and mature eyelids; expressive medium-sized almond eyes, warm asymmetry in the smile and a carefully shaped moustache. Soft matte skin, convincing but simplified woven batik, supple cloth folds that follow the belly and sarong wrap, tidy sculpted hair. Refined contemporary family-animation modelling, appealing and expressive without toy-like plastic gloss."
+    },
+    {
+      "id": "B",
+      "label": "Graphic comic",
+      "direction": "Around 4.75 heads tall. Squarer shoulders flowing into the belly, a wedge-shaped nose, deliberate angular cheek planes, graphic eyebrows and moustache, slightly elongated hands. A dimensional character sculpt with crisp two- or three-tone shading, restrained dark accents and broad organized colour shapes. Enlarge and simplify the batik leaves and sarong checks for readability. Clean designed planes rather than low-poly facets; make the sculpture and fabric thickness clearly three-dimensional even with comic shading."
+    },
+    {
+      "id": "C",
+      "label": "Handmade miniature",
+      "direction": "Around 4 heads tall. Compact bean-shaped torso, broad soft hands and feet, a squashy expressive nose, sculpted cheeks with subtle intentional asymmetry and mature eyelids. A tactile stop-motion miniature character: very fine clay-like skin surface, visibly woven cotton batik and sarong, soft rolled seams, small natural fabric puckers and textured sandal leather. Keep materials subtle, carefully crafted and scale-appropriate; no coarse cracks, exaggerated fingerprints, visible armature or separated joints."
+    },
+    {
+      "id": "D",
+      "label": "Grounded stylized",
+      "direction": "Around 5.75 heads tall. More natural shoulder-to-hand anatomy, longer legs, a weighty rounded belly and believable neck transition; restrained eye and nose size, subtle signs of middle age in cheeks and lids, a natural moustache silhouette. Stylized premium game-character rendering rather than a photograph: shaped planes, soft skin response, fine cotton weave, sewn seams, a naturally hanging sarong and believable sandals. Preserve warmth and cartoon readability while removing oversized mascot proportions."
+    }
+  ],
+  "review_views": ["three-quarter", "front", "profile", "face detail"],
+  "height_metres": 1.66,
+  "max_repair_rounds": 3,
+  "game_integration_requested": false
+}

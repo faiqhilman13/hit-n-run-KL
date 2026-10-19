@@ -104,6 +104,13 @@ namespace KampungRun
                 swaps = new Dictionary<string, Color> { ["car_paint"] = C(0.96f, 0.96f, 0.97f) } },
             new CarDef { id = "limo", name = "Alphard Datuk", model = "veh_alphard", price = 500, level = 4, mass = 2100, maxSpeed = 34, health = 160,
                 swaps = Paint(0.94f, 0.94f, 0.95f) },
+            // more everyday KL traffic (generic designs, kl_cars.py): a sporty hatch, the family / e-hailing MPV, a 3-tonne lorry
+            new CarDef { id = "iriz", name = "Hatch Sport", model = "veh_iriz", price = 200, level = 2, mass = 1050, maxSpeed = 34, accel = 16, turn = 125, health = 95,
+                swaps = Paint(0.82f, 0.12f, 0.14f) },
+            new CarDef { id = "mpv", name = "MPV Keluarga", model = "veh_mpv", price = 240, level = 2, mass = 1350, maxSpeed = 31, accel = 13, turn = 110, health = 130,
+                swaps = Paint(0.75f, 0.76f, 0.78f) },
+            new CarDef { id = "lorry", name = "Lori 3 Tan", model = "veh_lorry", price = 320, level = 3, mass = 4500, maxSpeed = 24, accel = 9, turn = 80, grip = 7, health = 260,
+                swaps = new Dictionary<string, Color> { ["car_paint"] = C(0.18f, 0.42f, 0.78f), ["car_paint2"] = C(0.96f, 0.96f, 0.94f) } },
         };
 
         public static CarDef Car(string id) => Cars.Find(c => c.id == id) ?? Cars[0];

@@ -7,6 +7,11 @@ Shader "KampungRun/CharacterSoft"
         _BaseColor ("Base Colour", Color) = (1, 1, 1, 1)
         _BaseMap ("Palette / Base Map", 2D) = "white" {}
         _Gloss ("Palette Highlight Strength", Range(0, 1)) = 1
+        // Alpha-tested cards (brows, lashes): the base map's alpha is coverage, not gloss.
+        // Costume recolour regions for characters with their own baked atlas (read on the CPU, not sampled here)
+        [HideInInspector][NoScaleOffset] _MaskMap ("Recolour Mask", 2D) = "black" {}
+        [Toggle(_ALPHATEST_ON)] _AlphaClip ("Alpha Clip (cards)", Float) = 0
+        [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull", Float) = 2
         // Keep the shared pass material layout compatible with LatInk.
         [HideInInspector] _ShadowTint ("Shadow Tint", Color) = (0.78, 0.72, 0.80, 1)
         [HideInInspector] _PaperColor ("Paper Colour", Color) = (0.98, 0.95, 0.87, 1)
@@ -28,7 +33,7 @@ Shader "KampungRun/CharacterSoft"
         {
             Name "CharacterForward"
             Tags { "LightMode" = "UniversalForwardOnly" }
-            Cull Back
+            Cull [_Cull]
 
             HLSLPROGRAM
             #pragma vertex Vert
@@ -37,6 +42,7 @@ Shader "KampungRun/CharacterSoft"
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
@@ -101,6 +107,11 @@ Shader "KampungRun/CharacterSoft"
                 half4 palette = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv);
                 half3 baseCol = palette.rgb * _BaseColor.rgb;
                 half gloss = palette.a > 0.5 ? saturate((palette.a * 255.0 - 128.0) / 127.0) * _Gloss : 0;
+            #if defined(_ALPHATEST_ON)
+                clip(palette.a - 0.5);
+                gloss = 0;
+                n = dot(n, view) < 0 ? -n : n;      // two-sided card: light the side we see
+            #endif
 
                 // The game's time-of-day ambient is shared with the city. The fallback
                 // gives the model a useful appearance in the standalone asset preview.

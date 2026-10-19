@@ -2,8 +2,8 @@
   "asset": "chr_pakcik",
   "height_m": 1.63,
   "mesh_height_m": 1.63,
-  "triangles": 66044,
-  "lod1_triangles": 18491,
+  "triangles": 78264,
+  "lod1_triangles": 21913,
   "bones": 23,
   "clips": [
     "chr_pakcik|_tpose",
@@ -30,8 +30,8 @@
     "Blink"
   ],
   "bounds_m": [
-    1.844408392906189,
-    0.4248698949813843,
+    1.8668544292449951,
+    0.4563518166542053,
     1.6299999952316284
   ],
   "palette": "kl_character_palette.png",

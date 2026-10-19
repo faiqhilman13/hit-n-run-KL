@@ -2,8 +2,8 @@
   "asset": "chr_aiman",
   "height_m": 1.72,
   "mesh_height_m": 1.72,
-  "triangles": 55608,
-  "lod1_triangles": 15569,
+  "triangles": 66083,
+  "lod1_triangles": 18503,
   "bones": 23,
   "clips": [
     "chr_aiman|_tpose",
@@ -30,8 +30,8 @@
     "Blink"
   ],
   "bounds_m": [
-    1.4798083305358887,
-    0.39054277539253235,
+    1.5022544860839844,
+    0.39443135261535645,
     1.7200000286102295
   ],
   "palette": "kl_character_palette.png",

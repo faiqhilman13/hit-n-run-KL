@@ -8,7 +8,7 @@ import math
 import random
 import bmesh
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 from mathutils.kdtree import KDTree
 import kl_core as K
 import kl_humanoid as H
@@ -31,6 +31,13 @@ COLORS = dict(skin=(.79,.49,.28), skin_shadow=(.68,.36,.20), hair=(.055,.047,.04
     umb_yellow=(.91,.64,.15), pastel_lilac=(.59,.43,.67), pastel_mint=(.40,.64,.56),
     sarong_red=(.48,.16,.19), sarong_red_check=(.70,.34,.31), batik_blue=(.16,.36,.53),
     batik_blue_dark=(.08,.20,.31), police_blue=(.10,.16,.28), suit_black=(.085,.09,.12))
+
+# the darker ink each garment colour gets for seams, folds and outlines (show-style line work)
+SHADE={'batik_orange':'batik_dark','batik_blue':'batik_blue_dark','tshirt_red':'cord_red','kurung_pink':'kurung_flower',
+       'teal':'teal_dark','coral':'coral_dark','ochre':'ochre_check','police_blue':'navy','charcoal':'charcoal_dark',
+       'dress_red':'cord_red','pastel_lilac':'kurung_flower','baju_white':'sole','kid_shirt':'sole','suit_black':'charcoal',
+       'sarong_green':'sarong_check','sarong_red':'sarong_red_check','kurung_skirt':'kurung_flower','shorts_blue':'navy',
+       'pants_khaki':'ochre_check'}
 
 def mix(a, b, t): return a + (b-a)*t
 def smooth(t):
@@ -96,7 +103,7 @@ def bezier(points, n=16):
 
 def stroke(m, points, radius, color, weights, tag=None, n=16):
     pts=bezier(points,n)
-    rs=[radius*(.35+.65*math.sin(math.pi*i/(n-1))**.35) for i in range(n)]
+    rs=[radius*(.35+.65*max(0.,math.sin(math.pi*i/(n-1)))**.35) for i in range(n)]
     tube(m,pts,rs,color,weights,tag,sides=8)
 
 def torso_weights(p,z):
@@ -184,16 +191,86 @@ def leaf(m,rows,x,z,r,angle,color,p,side):
         outline.append((x+u*math.cos(angle)-v*math.sin(angle),z+u*math.sin(angle)+v*math.cos(angle)))
     decal(m,rows,outline,color,p,side)
 
+def dots(m,rows,x,z,r,color,p,side,n=5,seed=0):
+    rnd=random.Random(seed)
+    for k in range(n):
+        a=TAU*k/n+rnd.uniform(-.3,.3);d=r*rnd.uniform(.55,1.0)
+        cx,cz=x+d*math.cos(a),z+d*math.sin(a);rr=r*.16
+        decal(m,rows,[(cx+rr*math.cos(TAU*j/8),cz+rr*math.sin(TAU*j/8)) for j in range(8)],color,p,side)
+
+def hibiscus(m,rows,x,z,r,color,inner,p,side,spin=0.):
+    """A five-petal bunga raya print: scalloped petals, a darker throat and a gold stamen dot."""
+    outline=[]
+    for k in range(32):
+        a=TAU*k/32+spin;rr=r*(.62+.38*abs(math.cos(2.5*a))**.6)
+        outline.append((x+rr*math.cos(a),z+rr*math.sin(a)))
+    decal(m,rows,outline,color,p,side)
+    decal(m,rows,[(x+r*.36*math.cos(TAU*k/10+spin),z+r*.36*math.sin(TAU*k/10+spin)) for k in range(10)],inner,p,side)
+    decal(m,rows,[(x+r*.12*math.cos(TAU*k/8),z+r*.12*math.sin(TAU*k/8)) for k in range(8)],'gold',p,side)
+
 def patterns(m,rows,p,kind,color):
-    low,high=rows[0][0]+.08,rows[-1][0]-.10
+    low,high=rows[0][0]+.07,rows[-1][0]-.09
+    big=p['height']>1.3
+    if kind=='batik':
+        # A busy show-style batik: staggered hibiscus heads, leaf sprigs between them, dot clusters.
+        nz,nx=5,4
+        for side in (-1,1):
+            for j in range(nz):
+                z=mix(low,high,j/(nz-1)); rx=sample(rows,z)[0]
+                for k in range(nx):
+                    x=((k+.5)/nx-.5)*2*rx*.82+((j%2)-.5)*rx*.22
+                    if abs(x)>rx*.9:continue
+                    seed=j*13+k*7+(side>0)*101
+                    if (j+k)%2==0:
+                        hibiscus(m,rows,x,z,.036 if big else .025,'gold','batik_dark',p,side,spin=seed*.37)
+                    else:
+                        for l in range(3):
+                            leaf(m,rows,x+(l-1)*.016,z+(l-1)*.019,.03 if big else .021,(l-1)*.8+.8+seed*.1,'batik_dark' if l<2 else 'gold',p,side)
+                        dots(m,rows,x+.035,z-.03,.02,'cream',p,side,n=4,seed=seed)
+        return
     for side in (-1,1):
         for j in range(4):
             z=mix(low,high,j/3); rx=sample(rows,z)[0]
             for k in range(3):
                 x=(k-1)*rx*.65+(j%2-.5)*.025
-                if kind=='flower': flower(m,rows,x,z,.039 if p['height']>1.3 else .027,color,p,side)
+                if kind=='flower': flower(m,rows,x,z,.039 if big else .027,color,p,side)
                 else:
                     for l in range(3): leaf(m,rows,x+(l-1)*.018,z+(l-1)*.022,.034,(l-1)*.8+.8,color if l<2 else 'gold',p,side)
+
+def ring(rows,z,grow=1.0,seg=48,lift=.0):
+    """Points round a loft section at height z (an ellipse a little proud of the surface)."""
+    rx,ry,cy=sample(rows,z)
+    return [Vector(((rx*grow+lift)*math.sin(TAU*k/seg),cy-(ry*grow+lift)*math.cos(TAU*k/seg),z)) for k in range(seg+1)]
+
+def shirt_details(m,rows,p,s,top):
+    """Show-quality tailoring on a shirt: rolled hem, breast pocket with a stitched edge, and the few
+    inked fold lines a cartoon shirt gets (armpit pulls, a belly fold on the heavy ones)."""
+    shade=SHADE.get(s['shirt'])
+    if not shade or s.get('dress') or s['hair']=='tudung' or s.get('suit'):return
+    sz,hem,w=s['sz'],s['hem'],s['bodyw']
+    wgt=lambda t,co:garment_weights(p,co)
+    # rolled hem
+    tube(m,ring(rows,hem+.012,lift=.004),[.0075]*49,s['shirt'],wgt,sides=10,caps=False)
+    tube(m,ring(rows,hem+.024,lift=.006),[.0022]*49,shade,wgt,sides=6,caps=False)
+    # breast pocket on the wearer's left (+x), stitched round
+    if s.get('pattern') or s.get('police') or s['shirt'] in ('teal','ochre','coral'):
+        px,pz,pw,ph=w*.42,sz-.125,.042,.05
+        outline=[(px-pw,pz+ph),(px+pw,pz+ph),(px+pw,pz-ph*.75),(px,pz-ph),(px-pw,pz-ph*.75)]
+        decal(m,rows,outline,s['shirt'],p)
+        pts=[shell_point(rows,x,z,lift=.0065) for x,z in outline+[outline[0]]]
+        tube(m,pts,[.0024]*len(pts),shade,B(Chest=1),sides=6)
+        pts=[shell_point(rows,mix(px-pw,px+pw,t),pz+ph-.008,lift=.0068) for t in [i/8 for i in range(9)]]
+        tube(m,pts,[.0018]*9,shade,B(Chest=1),sides=6,caps=False)
+    # inked folds: armpit pulls on both sides, front and back
+    for side in (-1,1):
+        for sign in (-1,1):
+            pts=[shell_point(rows,sign*w*.74,sz-.085,side,.006),shell_point(rows,sign*w*.62,sz-.13,side,.006),shell_point(rows,sign*w*.46,sz-.155,side,.006)]
+            stroke(m,pts,.0032,shade,lambda t,co:garment_weights(p,co),n=12)
+    if w>.28:
+        # the belly fold: a soft smile of shadow under a generous tummy
+        z=max(hem+.05,s['hip']+.07)
+        pts=[shell_point(rows,(i/12-.5)*w*1.0,z+.022*(1-((i/12-.5)*2)**2),-1,.006) for i in range(13)]
+        stroke(m,pts,.0032,shade,lambda t,co:garment_weights(p,co),n=20)
 
 # Family proportions measured from front view; physical sizes are approved sheet
 # target heights. Head and limb depths use side view; NPC form adaptations inferred.
@@ -203,6 +280,28 @@ SPECS={
  'chr_along':dict(height=1.64,headc=1.355,headrx=.145,headry=.137,headrz=.175,chin=1.20,shoulder=.147,sz=1.087,hip=.625,hx=.134,knee=.345,ankle=.145,arm=.485,bodyw=.178,bodyd=.118,hem=.66,foot=.305,shirt='tshirt_red',pants='shorts_blue',hair='curly',shorts=True,nose=.95,sneakers=True,band=True),
  'chr_adik':dict(height=1.12,headc=.85,headrx=.215,headry=.173,headrz=.213,chin=.685,shoulder=.170,sz=.627,hip=.325,hx=.103,knee=.175,ankle=.06,arm=.305,bodyw=.200,bodyd=.175,hem=.215,foot=.215,shirt='dress_red',pants='dress_red',hair='pigtails',dress=True,nose=.50,child=True),
 }
+
+def lid_cap(m,c,r,tag,droop=0.,seg=36,rings=10,span=96.,back=56.):
+    """A skin-coloured upper eyelid: a spherical cap over the eyeball, tilted back so its front edge
+    crosses the eye a little above centre (droop lowers it: older, sleepier), with a dark rim line."""
+    tilt=math.radians(-(back-droop*100))
+    R=Matrix.Rotation(tilt,3,'X')
+    rows=[]
+    for i in range(rings+1):
+        th=math.radians(span)*i/rings
+        row=[]
+        for j in range(seg):
+            ph=TAU*j/seg
+            p=Vector((r*math.sin(th)*math.cos(ph),r*math.sin(th)*math.sin(ph),r*math.cos(th)))
+            row.append(vertex(m,c+R@p,B(Head=1),tag))
+        rows.append(row)
+    for i in range(rings):
+        for j in range(seg):face(m,[rows[i][j],rows[i+1][j],rows[i+1][(j+1)%seg],rows[i][(j+1)%seg]],'skin')
+    rim=[rows[-1][j].co.copy() for j in range(seg)]
+    # only the front half of the rim reads as the lid line
+    front_rim=[p for p in rim if p.y<c.y]
+    front_rim.sort(key=lambda p:p.x)
+    if len(front_rim)>3:stroke(m,front_rim,.0026,'skin_shadow',B(Head=1),tag,n=24)
 
 def npc(base,**kw):
     s=SPECS[base].copy();s.update(kw);return s
@@ -271,25 +370,36 @@ def make_head(m,p,s):
     erx=rx*(.225 if s.get('moustache') else (.25 if not s.get('child') else .29))
     erz=rz*(.255 if s.get('moustache') else .29)
     for sign,side in ((1,'L'),(-1,'R')):
-        ec=front(sign*ex,ez,.006)
-        # Eye whites follow the cheek plane with slight corneal volume. This
-        # removes the bolted-on eyeball silhouette in profile and 3/4 views.
-        eye_patch(sign*ex,ez,erx,erz,'eye_white','eye_'+side,.004)
-        eye_patch(sign*ex-sign*erx*.04,ez-erz*.01,erx*.35,erz*.43,'pupil','eye_'+side,.011)
-        eye_patch(sign*ex-erx*.10,ez+erz*.17,erx*.085,erz*.085,'eye_white','eye_'+side,.018)
-        pts=[]
-        for k in range(21):
-            a=math.pi*k/20
-            pts.append(front(ec.x+erx*1.015*math.cos(a),ec.z+erz*1.015*math.sin(a),.003))
-        tube(m,pts,[.0025]*len(pts),'skin_shadow',B(Head=1),'eye_'+side,sides=6)
-        bx=sign*ex; bz=ez+erz+.022
-        stroke(m,[front(bx-sign*erx*.94,bz-.009,.015),front(bx,bz+.032,.015),front(bx+sign*erx,bz-.001,.012)],.0095,'brow',B(Head=1),'brow_'+side,n=18)
+        # Show-style eyes (Simpsons / Futurama): a proud round eyeball, a small pupil, and a
+        # skin-coloured upper lid that sits over it with an inked rim. The lid (tag lid_*) swings
+        # down over the eyeball for Blink/Determined; the eyeball (tag eye_*) squashes under it.
+        er=max(erx,erz)*1.02
+        base=front(sign*ex,ez,0)
+        c=base+Vector((0,-er*.42,0))
+        m.ball(c,(er,er*.92,er),'eye_white',seg=36,rings=26,bones=B(Head=1),tag='eye_'+side,smooth=True)
+        look=Vector((-sign*.07,-1,-.05)).normalized()
+        pr=er*(.2 if not s.get('child') else .24)
+        m.ball(c+look*er*.955,(pr,pr*.32,pr*1.08),'pupil',seg=24,rings=14,bones=B(Head=1),tag='eye_'+side,smooth=True)
+        lid_cap(m,c,er*1.04,tag='lid_'+side,droop=.08 if s.get('moustache') or s.get('grey') else 0.)
+        if s.get('moustache') or s.get('grey'):
+            # a soft lower-lid line: grown-ups in the show get one
+            pts=[c+Vector((er*1.0*math.cos(a),-er*.62,-er*.78-er*.08*math.sin(a))) for a in [math.pi*(1.15+.7*k/12) for k in range(13)]]
+            pts=[Vector((p.x,front(p.x,p.z,0).y-.002,p.z)) for p in pts]
+            stroke(m,pts,.0022,'skin_shadow',B(Head=1),'lowerlid_'+side,n=16)
+        # brow: a bold tapered arc floating just above the lid
+        bx=sign*ex; bz=ez+erz+.03
+        stroke(m,[front(bx-sign*erx*.98,bz-.012,.02),front(bx-sign*erx*.3,bz+.012,.022),front(bx+sign*erx*.55,bz+.012,.021),front(bx+sign*erx*1.05,bz-.006,.017)],.0115,'brow',B(Head=1),'brow_'+side,n=22)
         if s.get('hair')!='tudung':
-            ear=(sign*rx*.98,-.002,cx-rz*.03)
-            m.ball(ear,(rx*.22,ry*.19,rz*.33),'skin',seg=24,rings=18,bones=B(Head=1))
-            m.ball((ear[0]+sign*rx*.035,-ry*.165,ear[2]),(rx*.115,.010,rz*.19),'skin_shadow',seg=18,rings=12,bones=B(Head=1))
-    nose=s.get('nose',1); np=front(0,cx-rz*.035,.015)
-    m.ball(np+Vector((0,-.014,0)),(rx*.215*nose,.042*nose,rz*.15*nose),'skin',seg=32,rings=22,bones=B(Head=1))
+            # C-shaped ear with an inner curl, as drawn in the show
+            ear=Vector((sign*rx*.98,-.002,cx-rz*.03))
+            m.ball(ear,(rx*.2,ry*.2,rz*.32),'skin',seg=28,rings=20,bones=B(Head=1),smooth=True)
+            curl=[ear+Vector((sign*rx*.19,-ry*.16*math.sin(a)-.004,rz*.2*math.cos(a))) for a in [math.radians(40+260*k/14) for k in range(15)]]
+            stroke(m,curl,.0045,'skin_shadow',B(Head=1),n=20)
+    nose=s.get('nose',1); np=front(0,cx-rz*.06,.015)
+    # a cartoon nose that comes forward off the face (a sausage-bulb, Simpsons style), with a soft
+    # shadow crease where it meets the cheeks
+    m.ball(np+Vector((0,-.03*nose,.004)),(rx*.17*nose,.058*nose,rz*.125*nose),'skin',seg=36,rings=26,bones=B(Head=1),smooth=True)
+    stroke(m,[front(-rx*.15*nose,cx-rz*.13,.004),front(0,cx-rz*.16,.006),front(rx*.15*nose,cx-rz*.13,.004)],.0025,'skin_shadow',B(Head=1),n=14)
     # A thin smile seated into the continuous cheek plane.
     mz=cx-rz*.48; mw=rx*.50
     # Mouth is a conforming dark crescent with a small upper tooth plane, all
@@ -308,20 +418,23 @@ def make_head(m,p,s):
         for k in range(30):face(m,[mouth_grid[j][k],mouth_grid[j+1][k],mouth_grid[j+1][k+1],mouth_grid[j][k+1]],'mouth')
     for k in range(20):
         u0=-.87+1.74*k/20;u1=-.87+1.74*(k+1)/20
-        coords=[(u0*mw,mz+.010-.008*(1-u0*u0)),(u1*mw,mz+.010-.008*(1-u1*u1)),(u1*mw,mz-.003-.008*(1-u1*u1)),(u0*mw,mz-.003-.008*(1-u0*u0))]
-        face(m,[vertex(m,front(x,z,.010),B(Head=1),'teeth') for x,z in coords],'teeth')
+        coords=[(u0*mw,mz+.013-.008*(1-u0*u0)),(u1*mw,mz+.013-.008*(1-u1*u1)),(u1*mw,mz+.004-.008*(1-u1*u1)),(u0*mw,mz+.004-.008*(1-u0*u0))]
+        face(m,[vertex(m,front(x,z,.007),B(Head=1),'teeth') for x,z in coords],'teeth')
+    # the overbite: a rounded upper-lip ridge over the mouth line
+    stroke(m,[front(u*mw*1.04,mz+.016-.010*(1-u*u),.011) for u in (-1,-.6,-.2,.2,.6,1)],.0065,'skin',B(Head=1),'mouth',n=24)
     if s.get('moustache'):
         for sign in (-1,1):
             stroke(m,[front(0,cx-rz*.22,.023),front(sign*rx*.27,cx-rz*.18,.024),front(sign*rx*.5,cx-rz*.36,.018)],.028 if not s.get('grey') else .022,'grey_hair' if s.get('grey') else 'hair',B(Head=1),'moustache',n=20)
     if s.get('glasses') or s.get('shades'):
+        er=max(erx,erz)*1.02; gl=er*1.42+.008          # in front of the proud show-style eyeballs
         for sign in (-1,1):
-            center=front(sign*ex,ez,.038)
+            center=front(sign*ex,ez,gl)
             if s.get('shades'):
-                m.ball(center,(erx*1.17,.013,erz*.83),'pupil',seg=24,rings=14,bones=B(Head=1))
+                m.ball(center,(er*1.32,.012,er*1.08),'pupil',seg=24,rings=14,bones=B(Head=1))
             else:
                 pts=[center+Vector((erx*1.21*math.cos(TAU*k/36),0,erz*1.12*math.sin(TAU*k/36))) for k in range(37)]
                 tube(m,pts,[.004]*37,'metal_dark',B(Head=1),sides=8,caps=False)
-        stroke(m,[front(-ex*.3,ez,.041),front(0,ez+.01,.055),front(ex*.3,ez,.041)],.004,'metal_dark',B(Head=1))
+        stroke(m,[front(-ex*.3,ez,gl+.003),front(0,ez+.01,gl+.017),front(ex*.3,ez,gl+.003)],.004,'metal_dark',B(Head=1))
     return front
 
 def make_hair(m,p,s):
@@ -421,10 +534,10 @@ def make_body(m,p,s):
     low=hem if not s.get('dress') else s['hem']
     broad=s['bodyw']>.30
     rows=[(low,w*(1.08 if s.get('dress') else 1),d,.0),
-          (low+.025,w*(1.065 if s.get('dress') else 1),d*1.01,-.005),
-          (low+.10,w,d*1.035,-.015),
-          (max(low+.13,sz-.22),w*.965,d*(.81 if broad else .98),-.01),
-          (sz-.065,w*.88,d*(.68 if broad else .80),.0),(sz+.005,s['shoulder']*.93,d*.60,0),
+          (low+.025,w*(1.065 if s.get('dress') else 1),d*(1.05 if broad else 1.01),-.014 if broad else -.005),
+          (low+.10,w*(1.03 if broad else 1),d*(1.13 if broad else 1.035),-.032 if broad else -.015),
+          (max(low+.13,sz-.22),w*(.95 if broad else .965),d*(.86 if broad else .98),-.016 if broad else -.01),
+          (sz-.065,w*(.83 if broad else .88),d*(.68 if broad else .80),.0),(sz+.005,s['shoulder']*.93,d*.60,0),
           (top,.072 if not s.get('child') else .06,.065,0)]
     rows=sorted(rows,key=lambda r:r[0])
     # Avoid inverted neck sections on especially broad/short child torsos.
@@ -454,17 +567,23 @@ def make_body(m,p,s):
                 outline=[(sign*.022,top-.008),(sign*.092,top-.035),(sign*.111,top-.092),(sign*.036,top-.063)]
                 collar_color='batik_dark' if s['shirt']=='batik_orange' else ('navy' if s.get('police') else s['shirt'])
                 decal(m,rows,outline,collar_color,p)
-                pts=[shell_point(rows,x,z,lift=.005) for x,z in outline+[outline[0]]]
-                tube(m,pts,[.0035]*len(pts),s['shirt'],B(Chest=1),sides=6)
+                pts=[shell_point(rows,x,z,lift=.007) for x,z in outline+[outline[0]]]
+                tube(m,pts,[.0048]*len(pts),SHADE.get(s['shirt'],s['shirt']),B(Chest=1),sides=8)
             if not s.get('suit'):
                 pts=[shell_point(rows,0,mix(hem+.016,sz-.046,i/28),lift=.006) for i in range(29)]
                 tube(m,pts,[.0025]*29,'batik_dark' if s['shirt']=='batik_orange' else s['shirt'],lambda t,co:torso_weights(p,co.z),sides=6)
             for j in range(4):
                 z=mix(hem+.065,sz-.06,j/3);co=shell_point(rows,0,z,lift=.005)
-                m.ball(co,(.009,.006,.009),'batik_dark' if s['shirt']=='batik_orange' else 'metal_dark',seg=12,rings=8,bones=torso_weights(p,z))
+                m.ball(co,(.011,.006,.011),'cream' if s['shirt']=='batik_orange' else 'metal_dark',seg=14,rings=8,bones=torso_weights(p,z))
+                m.ball(co+Vector((0,-.004,0)),(.004,.002,.004),'batik_dark',seg=8,rings=6,bones=torso_weights(p,z))
         else:
             pts=[(.066*math.sin(TAU*k/48),-.06*math.cos(TAU*k/48),top+.002) for k in range(49)]
             tube(m,pts,[.008]*49,'dress_trim',B(Chest=1),sides=8,caps=False)
+    shirt_details(m,rows,p,s,top)
+    if s['hair']!='tudung' and not s.get('dress') and (s.get('pattern') or s.get('police') or s['hair']=='songkok'):
+        # a rolled collar band standing round the neck, under the collar points
+        pts=ring(rows,top-.004,grow=1.0,lift=.006)
+        tube(m,pts,[.011]*len(pts),'batik_dark' if s['shirt']=='batik_orange' else s['shirt'],B(Chest=1),sides=10,caps=False)
     if s.get('suit'):
         decal(m,rows,[(-.048,top),(.048,top),(.034,sz-.16),(-.035,sz-.16)],'white',p)
         decal(m,rows,[(-.014,top-.018),(.017,top-.018),(.029,sz-.25),(0,sz-.30),(-.029,sz-.25)],'tie_red',p)
@@ -507,15 +626,24 @@ def make_limbs(m,p,s):
         r0=ar*1.57;r1=ar*1.23 if s.get('long') else ar*1.51
         rs=[(mix(r0,r1,i/18)+.002*math.sin(math.pi*i/18),mix(r0,r1,i/18)*.96) for i in range(19)]
         tube(m,pts,rs,s['shirt'],wg,tag='garment',sides=24)
+        # a turned-back cuff at the sleeve's end, with an inked edge
+        if SHADE.get(s['shirt']):
+            cr=r1*1.04+.002
+            cuff=[(sign*(end-.004),cr*math.cos(TAU*k/32),sz+cr*.96*math.sin(TAU*k/32)) for k in range(33)]
+            tube(m,cuff,[.0075]*33,s['shirt'],wg,sides=10,caps=False)
+            cuff=[(sign*(end-.014),cr*1.02*math.cos(TAU*k/32),sz+cr*.98*math.sin(TAU*k/32)) for k in range(33)]
+            tube(m,cuff,[.0022]*33,SHADE[s['shirt']],wg,sides=6,caps=False)
         # Rounded palm and connected overlapping tapered fingers, anatomical thumb
         # in the forward half-plane for BOTH mirrored hands.
         f=.80 if child else 1.10;hc=Vector((sign*(wrist+.051*f),0,sz))
         m.ball(hc,(.061*f,.032*f,.044*f),'skin',seg=24,rings=18,bones={hand:1})
         for k in range(3):
-            z=(k-1)*.025*f
-            pts=bezier([hc+Vector((sign*.033*f,0,z)),hc+Vector((sign*.10*f,-.004*f,z)),hc+Vector((sign*.103*f,-.018*f,z*.85))],10)
-            rs=[.015*f*(1-.55*(i/9)**3) for i in range(10)];rs[-1]=.004*f
-            tube(m,pts,rs,'skin',{hand:1},sides=12)
+            z=(k-1)*.026*f
+            # three plump fingers (plus the thumb: four, as the show draws them), gently curled
+            pts=bezier([hc+Vector((sign*.03*f,0,z)),hc+Vector((sign*.085*f,-.006*f,z)),hc+Vector((sign*.112*f,-.03*f,z*.85)),hc+Vector((sign*.106*f,-.045*f,z*.8))],14)
+            rs=[.0175*f*(1-.35*(i/13)**2) for i in range(14)];rs[-1]=.007*f
+            tube(m,pts,rs,'skin',{hand:1},sides=14)
+            m.ball(hc+Vector((sign*.052*f,-.012*f,z)),(.012*f,.009*f,.012*f),'skin',seg=12,rings=8,bones={hand:1})
         pts=bezier([hc+Vector((-sign*.018*f,-.018*f,.024*f)),hc+Vector((sign*.011*f,-.067*f,.027*f)),hc+Vector((sign*.041*f,-.053*f,.025*f))],12)
         tube(m,pts,[.020*f*(1-.72*(i/11)**3) for i in range(12)],'skin',{hand:1},sides=12)
         if s.get('band') and sign==-1:
@@ -581,7 +709,7 @@ def make_skirt(m,p,s):
     if not s.get('skirt'):return
     top=s['hip']+.035;low=.12 if s['hair']=='songkok' else .079
     w=s['bodyw']*.99;d=s['bodyd']*.94
-    rows=[(low,w*1.02,d*1.04,0),(low+.02,w*1.02,d*1.04,0),(top-.035,w,d,0),(top,w*.98,d,0)]
+    rows=[(low,w*1.07,d*1.08,0),(low+.02,w*1.065,d*1.075,0),(low+(top-low)*.5,w*1.01,d*1.01,0),(top-.035,w,d,0),(top,w*.98,d,0)]
     def wg(co):
         # The near half follows its own thigh/knee; a narrow centre strip bridges
         # the two. Hem follows shins during seated and high-knee poses.
@@ -595,7 +723,27 @@ def make_skirt(m,p,s):
         if s['pants'] in ('sarong_green','sarong_red'):
             return ('sarong_check' if s['pants']=='sarong_green' else 'sarong_red_check') if (z*14)%1<.12 or (a*9/math.pi)%1<.10 else s['pants']
         return s['pants']
-    loft(m,rows,col,wg,seg=96,step=.009,folds=.016)
+    loft(m,rows,col,wg,seg=96,step=.009,folds=.022)
+    if s['pants'] in ('sarong_green','sarong_red'):
+        shade=SHADE[s['pants']]
+        tw=lambda t,co:wg(co)
+        # the rolled waistband (the sarong's knot roll) and its tucked flap at the front; under a shirt
+        # the roll is hidden, so only the flap shows, hanging from just below the shirt's hem
+        covered=not s.get('dress') and s['hem']<top-.01
+        if not covered:
+            tube(m,ring(rows,top-.012,lift=.007),[.014]*49,s['pants'],tw,sides=12,caps=False)
+            tube(m,ring(rows,top-.026,lift=.006),[.0025]*49,shade,tw,sides=6,caps=False)
+        ft=(s['hem']-.004) if covered else top-.02
+        fx=w*.18
+        flap=[(fx-.03,ft),(fx+.035,ft),(fx+.025,ft-.11),(fx-.01,ft-.14)]
+        pts=[shell_point(rows,x,z,lift=.008) for x,z in flap+[flap[0]]]
+        tube(m,pts,[.0035]*len(pts),shade,tw,sides=6)
+        cxz=(sum(x for x,_ in flap)/4,sum(z for _,z in flap)/4)
+        cv=vertex(m,shell_point(rows,*cxz,lift=.006),wg(shell_point(rows,*cxz)),None)
+        vs=[vertex(m,shell_point(rows,x,z,lift=.006),wg(shell_point(rows,x,z)),None) for x,z in flap]
+        for i in range(4):face(m,[cv,vs[i],vs[(i+1)%4]],s['pants'])
+        # hem band
+        tube(m,ring(rows,low+.018,lift=.004),[.0045]*49,shade,tw,sides=8,caps=False)
 
 def fuse_garment(m,p,s):
     """Union torso and sleeve roots into a single soft garment surface.
@@ -695,4 +843,8 @@ def build(asset_id):
     return m,p
 
 BUILDERS={cid:(lambda cid=cid:build(cid)) for cid in SPECS}
-FACE_KEYS=C.FACE_KEYS
+FACE_KEYS={k:list(v) for k,v in C.FACE_KEYS.items()}
+# show-style eyelids: the lid swings about the eyeball's centre (rotx about the eye_* tag)
+FACE_KEYS['Blink']=[('eye_L','scale',(1,1,.55)),('eye_R','scale',(1,1,.55)),('lid_L','rotx',(math.radians(72),'eye_L')),('lid_R','rotx',(math.radians(72),'eye_R'))]
+FACE_KEYS['Determined']=FACE_KEYS['Determined']+[('lid_L','rotx',(math.radians(22),'eye_L')),('lid_R','rotx',(math.radians(22),'eye_R'))]
+FACE_KEYS['Alarm']=FACE_KEYS['Alarm']+[('lid_L','rotx',(math.radians(-14),'eye_L')),('lid_R','rotx',(math.radians(-14),'eye_R'))]

@@ -35,7 +35,11 @@ namespace KampungRun.EditorTools
             HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot };
 
         [MenuItem("Kampung Run/Validate Refined Character Art")]
-        public static void Run()
+        public static void Run() => Run(null, null);
+
+        /// <summary>The same checks for chosen characters and output folder (from a live Editor, where there is
+        /// no command line to read). Nulls fall back to -characterIds / -characterOutput, then the defaults.</summary>
+        public static void Run(string characterIds, string characterOutput)
         {
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Exit Play mode before validating imported character art.");
             if (AnimationMode.InAnimationMode()) throw new InvalidOperationException("End the current animation preview before validating character art.");
@@ -45,8 +49,8 @@ namespace KampungRun.EditorTools
                 int i = Array.IndexOf(args, name);
                 return i >= 0 && i + 1 < args.Length ? args[i + 1] : fallback;
             }
-            var ids = Arg("-characterIds", string.Join(",", Cast)).Split(',');
-            string output = Arg("-characterOutput", Path.GetFullPath(Path.Combine(Application.dataPath,
+            var ids = (characterIds ?? Arg("-characterIds", string.Join(",", Cast))).Split(',');
+            string output = characterOutput ?? Arg("-characterOutput", Path.GetFullPath(Path.Combine(Application.dataPath,
                 "..", "docs", "character-concepts", "round-02", "unity")));
             Directory.CreateDirectory(output);
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
@@ -129,15 +133,20 @@ namespace KampungRun.EditorTools
                     foreach (var bone in Bones) Require(animator.GetBoneTransform(bone), "Humanoid bone " + bone);
                     var toe = go.GetComponentsInChildren<Transform>().FirstOrDefault(t => t.name == "LeftToes");
                     Require(toe && toe.position.z > animator.GetBoneTransform(HumanBodyBones.LeftFoot).position.z, "Faces Unity +Z");
+                    // MPFB characters (Tools/mpfb_characters) bring their own baked atlas and play only the shared
+                    // controller's clips: no takes of their own, no palette
+                    bool ownAtlas = AssetDatabase.IsValidFolder("Assets/Models/KL/" + id + "_tex");
                     var clips = AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().Where(c => !c.name.StartsWith("__preview__")).ToArray();
-                    foreach (string clip in Clips) Require(clips.Any(c => c.name == clip && c.length > 0), "Clip " + clip);
+                    if (!ownAtlas)
+                        foreach (string clip in Clips) Require(clips.Any(c => c.name == clip && c.length > 0), "Clip " + clip);
                     var meshes = go.GetComponentsInChildren<SkinnedMeshRenderer>();
                     Require(meshes.Length > 0, "Has skinned character mesh");
                     foreach (var mesh in meshes)
                     {
                         Require(mesh.sharedMesh && mesh.bones.Length >= 14, mesh.name + " has weighted humanoid geometry");
                         foreach (var material in mesh.sharedMaterials)
-                            Require(material && material.shader.name == "KampungRun/CharacterSoft" && KLPalette.IsKL(material),
+                            Require(material && material.shader.name == "KampungRun/CharacterSoft" &&
+                                (KLPalette.IsKL(material) || ownAtlas && material.GetTexture("_BaseMap") != null),
                                 mesh.name + " has soft character shader and swappable atlas");
                         results.AppendLine($"INFO {mesh.name}: {mesh.sharedMesh.vertexCount} vertices; {mesh.sharedMesh.triangles.Length / 3} triangles");
                     }
@@ -172,7 +181,18 @@ namespace KampungRun.EditorTools
                     camera.transform.LookAt(aim);
                     Capture(camera, go, Path.Combine(output, id + "-idle.png"), 900, 1000);
 
-                    if (meshes.Length > 0 && meshes[0].sharedMaterial)
+                    if (ownAtlas && face && face.sharedMaterial)
+                    {
+                        var material = face.sharedMaterial;
+                        Require(AtlasRecolor.Has(material), "Own atlas and recolour mask are readable");
+                        if (AtlasRecolor.Has(material))
+                        {
+                            var swapped = AtlasRecolor.Swap(material, new Dictionary<string, Color> { ["Batik"] = new Color(0.2f, 0.4f, 0.7f) });
+                            Require(swapped != material && swapped.GetTexture("_BaseMap") != material.GetTexture("_BaseMap"), "Costume recolour makes a new atlas");
+                            Require(swapped.shader == material.shader, "Costume recolour preserves character shader");
+                        }
+                    }
+                    else if (meshes.Length > 0 && meshes[0].sharedMaterial)
                     {
                         var material = meshes[0].sharedMaterial;
                         var source = material.GetTexture("_BaseMap") as Texture2D;

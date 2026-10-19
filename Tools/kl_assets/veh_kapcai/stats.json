@@ -1,21 +1,32 @@
 {
  "asset": "veh_kapcai",
- "triangles": 7452,
+ "triangles": 8697,
  "lod1_body_triangles": null,
- "lod0_body_triangles": 2708,
+ "lod1_triangles": 1434,
+ "lod0_body_triangles": 2228,
  "materials": 1,
  "parts": [
   "Body",
+  "Detail",
   "Seat_Rider",
   "FX_Exhaust",
+  "Var_Basket_a_Front",
+  "Var_Visor_a_Glass",
+  "Var_Box_yellow_Rack",
+  "Var_Box_red_Rack",
+  "Var_Box_blue_Rack",
   "Steering",
+  "SteerDetail",
   "HeadLights",
   "FrontWheel",
+  "Rim_F",
   "RearWheel",
-  "COL_veh_kapcai"
+  "Rim_R",
+  "COL_veh_kapcai",
+  "Body_LOD1"
  ],
  "dimensions_m": {
-  "length": 1.958,
+  "length": 1.97,
   "width": 0.72,
   "height": 1.307
  },

@@ -16,5 +16,6 @@ namespace KampungRun.Arch
         WinFar /*T*/, RibbonFar /*T*/, ShopFar,       // distance versions: a storey of windows, a shop front
         Leaves /*T*/, Frond /*T*/, Bark /*T*/, PalmTrunk /*T*/, Banana /*T*/, Bougainvillea, Frangipani,   // plants (Flora.cs)
         Hazard, RoadSigns0, RoadSigns1,                                                                    // bridges (Bridgework.cs)
+        Goods, Fridge, Photos, Screens, Floor /*T*/, Rugs, Menus,                                          // walk-in interiors (Interior.cs)
     }
 }

@@ -65,6 +65,7 @@ Shader "KampungRun/LatInk"
         half _ShadeOutline;
         half4 _ShadeSky;       // hemisphere ambient, upper
         half4 _ShadeGround;    // hemisphere ambient, lower
+        half4 _InteriorLight;  // walk-in interiors' lamplight (Interiors.cs; a = 0: the default warm white)
 
         // the city's painted shade (CityShade.cs): how much sky each spot at street level sees, a texel a metre
         TEXTURE2D(_CityShade);
@@ -221,12 +222,15 @@ Shader "KampungRun/LatInk"
             #if defined(_ARCH)
                 // architecture: the face's paint (vertex colour) over its painted detail; alpha carries 1 - gloss.
                 // Clean paint: no world-space surface mottling, the detail is in the textures and the geometry.
-                half4 tex = SAMPLE_TEXTURE2D_ARRAY(_ArchArray, sampler_ArchArray, i.uv.xy, i.uv.z);
+                // interiors (ArchMesh.Inside) carry their slice + 100: a lamp-lit room, see below
+                bool inside = i.uv.z > 99.5;
+                half4 tex = SAMPLE_TEXTURE2D_ARRAY(_ArchArray, sampler_ArchArray, i.uv.xy, inside ? i.uv.z - 100.0 : i.uv.z);
                 half3 baseCol = i.color.rgb * tex.rgb;
                 half gloss = 1.0 - i.color.a;
                 half surf = 0;
                 half mottAmt = 0;
             #else
+                bool inside = false;
                 half4 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv.xy);
                 half3 baseCol = _BaseColor.rgb * tex.rgb;
                 // KL atlas alpha: 128..255 = gloss, 1..15 = painted surface id, 0 = plain
@@ -264,8 +268,21 @@ Shader "KampungRun/LatInk"
                         half3 warm = baseCol * half3(1.08, 1.04, 0.86);
                         baseCol = lerp(baseCol * 0.86, warm * 1.06, big * k);
                     }
-                    // --- Hit & Run: soft wrapped diffuse, hemisphere ambient, painted-texture mottling
                     float3 vdir = GetWorldSpaceNormalizeViewDir(i.positionWS);
+                    if (inside)
+                    {
+                        // a walk-in interior (Interior.cs): warm lamplight from overhead, steady whatever the time of
+                        // day, the sun or the city's painted shade say (the builder bakes a little shade into the
+                        // vertex colour: darker low on the walls). A touch of the sky's colour keeps it in the level.
+                        half3 lamp = _InteriorLight.a > 0 ? _InteriorLight.rgb : half3(1.0, 0.88, 0.70);
+                        half3 litIn = lamp * lerp(0.74, 1.0, saturate(n.y * 0.5 + 0.5)) + _ShadeSky.rgb * 0.18;
+                        half3 ci = baseCol * litIn;
+                        half fresIn = pow(1.0 - saturate(dot(n, vdir)), 3.0);
+                        ci += lamp * fresIn * gloss * 0.25;                            // glossy tiles and glass catch the lamps
+                        ci += baseCol * _Emit;
+                        return half4(MixFog(ci, i.fogFactor), 1);
+                    }
+                    // --- Hit & Run: soft wrapped diffuse, hemisphere ambient, painted-texture mottling
                     half wrap = saturate((ndl + 0.45) / 1.45);
                     wrap = wrap * wrap * (3.0 - 2.0 * wrap);                         // soft terminator
                     half sh = lerp(0.35, 1.0, light.shadowAttenuation);            // cast shadows stay light

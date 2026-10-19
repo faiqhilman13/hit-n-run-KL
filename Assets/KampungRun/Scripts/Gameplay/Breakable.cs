@@ -59,6 +59,8 @@ namespace KampungRun
             {
                 var rb = gameObject.AddComponent<Rigidbody>();
                 rb.mass = 60f;
+                rb.interpolation = RigidbodyInterpolation.Interpolate;     // it's falling right in front of the camera
+                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
                 Vector3 dir = (transform.position - from);
                 dir.y = 0;
                 dir = dir.sqrMagnitude > 0.01f ? dir.normalized : Random.insideUnitSphere;
@@ -83,6 +85,8 @@ namespace KampungRun
 
         void Restore()
         {
+            CancelInvoke(nameof(Unignore));
+            Unignore();
             transform.SetPositionAndRotation(_pos, _rot);
             _broken = false;
             gameObject.SetActive(true);
@@ -115,12 +119,52 @@ namespace KampungRun
             }
         }
 
+        Vehicle _smashedBy;
+        int _smashStep = -1;
+
+        /// <summary>
+        /// A car ran into it. Fast enough and it's smashed or knocked flying, and the car keeps most of its
+        /// speed rather than stopping dead as if it hit a wall (true: the car shouldn't take crash damage
+        /// either). Called from both sides of the contact, so it's safe to call twice in the same step.
+        /// </summary>
+        public bool SmashedBy(Vehicle v, float rel)
+        {
+            if (_smashedBy == v && _smashStep == Time.frameCount) return true;
+            if (_broken || rel <= 4f) return false;
+            _smashedBy = v;
+            _smashStep = Time.frameCount;
+            Hit(v.Body.position, rel, v.PlayerInside);
+            // give the car back what the contact took from it (a little less: you feel the thump)
+            v.Body.linearVelocity = v.PreStepVelocity * (kind == Kind.Shatter ? 0.9f : 0.8f);
+            v.Body.angularVelocity = v.PreStepAngular;
+            if (kind == Kind.Topple && gameObject.activeInHierarchy)
+            {
+                // and don't let the falling post catch on the same car again
+                _ignored.Clear();
+                foreach (var mine in GetComponentsInChildren<Collider>())
+                    foreach (var theirs in v.GetComponentsInChildren<Collider>())
+                    {
+                        Physics.IgnoreCollision(mine, theirs, true);
+                        _ignored.Add((mine, theirs));
+                    }
+                Invoke(nameof(Unignore), 1.2f);
+            }
+            return true;
+        }
+
+        readonly List<(Collider a, Collider b)> _ignored = new List<(Collider, Collider)>();
+
+        void Unignore()
+        {
+            foreach (var (a, b) in _ignored)
+                if (a && b) Physics.IgnoreCollision(a, b, false);
+            _ignored.Clear();
+        }
+
         void OnCollisionEnter(Collision c)
         {
-            if (_broken) return;
             var v = c.rigidbody ? c.rigidbody.GetComponent<Vehicle>() : null;
-            if (v != null && c.relativeVelocity.magnitude > 4f)
-                Hit(c.rigidbody.position, c.relativeVelocity.magnitude, v.PlayerInside);
+            if (v != null) SmashedBy(v, c.relativeVelocity.magnitude);
         }
     }
 }

@@ -252,10 +252,15 @@ def build_assembly(asset_id, parts_fn, hit_and_run=False):
     img = K.write_atlas(deliv(asset_id, "textures", K.ATLAS_NAME))
     mat = K.atlas_material(img)
     if hit_and_run:
-        # smooth Hit & Run cars: Body stays one rolling part (no LOD split, its doors/lamps are children)
-        root, objs, tris = CARS.assemble(asset_id, parts_fn(), mat, cols)
+        # smooth Hit & Run cars: Body stays one rolling part (the roof tests and the suspension read it);
+        # its small stuff (Detail) and the wheel rims get distance versions: <name>_LOD0 / _LOD1 pairs
+        lod_parts = [(n, m, o, p) for n, (m, o, p) in lod_meshers(parts_fn).items()]
+        for o in list(bpy.data.objects):          # (text helpers leave nothing behind, but be sure)
+            if o.name.startswith("__kl"):
+                bpy.data.objects.remove(o, do_unlink=True)
+        root, objs, tris = CARS.assemble(asset_id, parts_fn(), mat, cols, lod_parts)
         body = bpy.data.objects["Body"]
-        lod_tris = None
+        lod_tris = root.get("lod1_tris")
     else:
         root, objs, tris = V.assemble(asset_id, parts_fn(), mat, cols)
         # distance version of the body shell (wheels/doors/hatches stay single-LOD moving parts)
@@ -281,7 +286,8 @@ def build_assembly(asset_id, parts_fn, hit_and_run=False):
     bpy.ops.wm.save_as_mainfile(filepath=deliv(asset_id, f"{asset_id}.blend"), copy=True)
     lo, hi = bbox(visible)
     size = hi - lo
-    stats = dict(asset=asset_id, triangles=tris, lod1_body_triangles=lod_tris,
+    stats = dict(asset=asset_id, triangles=tris, lod1_body_triangles=lod_tris if not hit_and_run else None,
+                 lod1_triangles=lod_tris if hit_and_run else None,
                  lod0_body_triangles=sum(len(p.vertices) - 2 for p in body.data.polygons), materials=1,
                  parts=[o.name for o in objs],
                  dimensions_m=dict(length=round(size.y, 3), width=round(size.x, 3), height=round(size.z, 3)),

@@ -82,6 +82,9 @@ namespace KampungRun
                 _flyVel = Vector3.zero;
                 return;
             }
+            // far off (beyond a street or two) nobody can see them potter about: sit still until you come back
+            var cam = Camera.main;
+            if (cam && (cam.transform.position - transform.position).sqrMagnitude > 120f * 120f) return;
             Voice(p, dt);
             if (p != null)
             {
@@ -111,8 +114,15 @@ namespace KampungRun
             var to = _target - transform.position; to.y = 0;
             if (to.magnitude < 0.3f) { Pick(); return; }
             var step = to.normalized * spd * dt;
+            // a fence, a wall, a stall in the way: wander off somewhere else (when panicking, dart sideways)
+            if (Physics.Raycast(transform.position + Vector3.up * 0.25f, to.normalized, step.magnitude + 0.3f, Ground & ~(1 << 2), QueryTriggerInteraction.Ignore))
+            {
+                if (_panic > 0f) { var side = new Vector3(to.z, 0f, -to.x).normalized * (Random.value < 0.5f ? 3f : -3f); _target = transform.position + side; }
+                else Pick();
+                return;
+            }
             var pos = transform.position + step;
-            if (Physics.Raycast(pos + Vector3.up * 1.5f, Vector3.down, out var hit, 3f, Ground, QueryTriggerInteraction.Ignore))
+            if (Physics.Raycast(pos + Vector3.up * 1.5f, Vector3.down, out var hit, 3f, Ground & ~(1 << 2), QueryTriggerInteraction.Ignore))
             {
                 if (hit.point.y > transform.position.y + 0.5f) { Pick(); return; }
                 pos.y = hit.point.y;

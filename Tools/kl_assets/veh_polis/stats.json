@@ -1,11 +1,13 @@
 {
  "asset": "veh_polis",
- "triangles": 24630,
+ "triangles": 20450,
  "lod1_body_triangles": null,
- "lod0_body_triangles": 10390,
+ "lod1_triangles": 3700,
+ "lod0_body_triangles": 3526,
  "materials": 1,
  "parts": [
   "Body",
+  "Detail",
   "Door_FL",
   "Door_FL_Glass",
   "Door_RL",
@@ -19,21 +21,35 @@
   "BrakeLights",
   "ReverseLights",
   "Ornament",
-  "Antenna",
+  "Var_Dirt_a_Body_LOD0",
+  "Var_Dirt_a_DoorFL_LOD0",
+  "Var_Dirt_a_DoorRL_LOD0",
+  "Var_Dirt_a_DoorFR_LOD0",
+  "Var_Dirt_a_DoorRR_LOD0",
+  "LightBar",
   "Glass",
   "SteeringWheel",
   "SteeringAxis",
   "Seat_Driver",
   "Wheel_FL",
+  "Rim_FL",
   "Wheel_FR",
+  "Rim_FR",
   "Wheel_RL",
+  "Rim_RL",
   "Wheel_RR",
-  "COL_veh_polis"
+  "Rim_RR",
+  "COL_veh_polis",
+  "Body_LOD1",
+  "Tyre_FL_LOD1",
+  "Tyre_FR_LOD1",
+  "Tyre_RL_LOD1",
+  "Tyre_RR_LOD1"
  ],
  "dimensions_m": {
-  "length": 3.775,
-  "width": 1.92,
-  "height": 1.884
+  "length": 3.781,
+  "width": 1.94,
+  "height": 1.693
  },
  "blender": "5.2.1 LTS"
 }

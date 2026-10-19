@@ -108,10 +108,27 @@ namespace KampungRun
         void SpawnPolice(Vector3 near)
         {
             var roads = GameManager.I.City.roads;
-            var node = roads.RandomNodeAwayFrom(near, 50f, 120f);
+            // a clear spot on a road, pointing down whichever street heads most towards the player
+            RoadNetwork.Node node = null;
+            for (int i = 0; i < 6; i++)
+            {
+                node = roads.RandomNodeAwayFrom(near, 50f, 120f);
+                if (!Physics.CheckSphere(node.pos + Vector3.up * 1f, 3f, 1 << Layers.Vehicle, QueryTriggerInteraction.Ignore)) break;
+            }
+            Vector3 toward = near - node.pos, heading = toward;
+            float best = -2f;
+            foreach (var l in node.links)
+            {
+                var d = l.pos - node.pos; d.y = 0f;
+                if (d.sqrMagnitude < 0.01f) continue;
+                float dot = Vector3.Dot(d.normalized, new Vector3(toward.x, 0f, toward.z).normalized);
+                if (dot > best) { best = dot; heading = d; }
+            }
+            heading.y = 0f;
+            if (heading.sqrMagnitude < 0.01f) heading = Vector3.forward;
             var v = VehicleSpawner.Spawn("polis", node.pos + Vector3.up * 0.6f,
-                Quaternion.LookRotation(near - node.pos, Vector3.up), VehicleRole.Police);
-            v.driver = new PoliceDriver();
+                Quaternion.LookRotation(heading, Vector3.up), VehicleRole.Police);
+            v.driver = new PoliceDriver(roads);
             v.displayName = "Polis";
             _police.Add(v);
         }

@@ -16,6 +16,8 @@ namespace KampungRun
         public readonly Vector2 center;
         public bool kampung;
         public float busy = 1f;        // crowd multiplier: pedestrian streets and markets draw more people
+        /// <summary>Zebra crossings from this loop over a road to the next one (CityBuilder.Roads).</summary>
+        public readonly List<Crossing> crossings = new List<Crossing>();
 
         public WalkZone(IList<Vector2> ring)
         {

@@ -112,6 +112,8 @@ namespace KampungRun
                 Visuals = gameObject.AddComponent<VehicleVisuals>();
                 Visuals.Setup(this);
             }
+            // traffic gets a seeded mix of the model's optional parts (dirt, roof rack, stickers...): no street of clones
+            if (role == VehicleRole.Traffic) VehicleVariety.Apply(gameObject, UnityEngine.Random.Range(int.MinValue, int.MaxValue));
 
             // Body collider sits above the wheels so the suspension does the supporting.
             // KL assets bring a COL_ proxy (already turned into a disabled box on the root).
@@ -219,9 +221,46 @@ namespace KampungRun
             }
         }
 
+        // parked at the kerb: settles on its wheels, then goes kinematic (no suspension, no forces) until something
+        // hits it or someone takes it
+        float _settle = -1f;
+        public bool Asleep { get; private set; }
+
+        public void ParkAsleep(float settle = 1.2f) => _settle = settle;
+
+        void Sleep()
+        {
+            Asleep = true;
+            Body.linearVelocity = Vector3.zero;
+            Body.angularVelocity = Vector3.zero;
+            Body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            Body.isKinematic = true;
+            Body.interpolation = RigidbodyInterpolation.None;
+        }
+
+        public void Wake()
+        {
+            _settle = -1f;
+            if (!Asleep) return;
+            Asleep = false;
+            Body.isKinematic = false;
+            Body.interpolation = RigidbodyInterpolation.Interpolate;
+            Body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        }
+
         void FixedUpdate()
         {
             if (!Body) return;
+            if (Asleep)
+            {
+                if (role != VehicleRole.Parked || driver != null) Wake();
+                else return;
+            }
+            else if (_settle > 0f && (_settle -= Time.fixedDeltaTime) <= 0f)
+            {
+                if (role == VehicleRole.Parked && driver == null && Body.linearVelocity.sqrMagnitude < 0.2f) { Sleep(); return; }
+                _settle = 0.5f;                                 // still rocking: give it a moment
+            }
             float dt = Time.fixedDeltaTime;
             float throttle = 0, steer = 0;
             bool handbrake = false;
@@ -230,6 +269,12 @@ namespace KampungRun
             lastThrottle = throttle; lastSteer = steer; lastHandbrake = handbrake;
             SteerVisual = Mathf.MoveTowards(SteerVisual, steer, dt * 4.5f);
 
+            // the simulated pose, not the transform: with interpolation on, the transform is the smoothed render
+            // pose and can trail the body by up to a step
+            var pose = Matrix4x4.TRS(Body.position, Body.rotation, transform.lossyScale);
+            Quaternion rot = Body.rotation;
+            Vector3 up = rot * Vector3.up, forward = rot * Vector3.forward, sideways = rot * Vector3.right;
+
             // --- suspension ---------------------------------------------------------------
             int groundedCount = 0;
             Vector3 normalSum = Vector3.zero;
@@ -237,17 +282,17 @@ namespace KampungRun
             for (int i = 0; i < 4; i++)
             {
                 if (!_wheels[i] && !_anchorOnly[i]) continue;
-                Vector3 anchor = transform.TransformPoint(_wheelRest[i] + Vector3.up * suspensionRest * 0.5f);
-                if (Physics.Raycast(anchor, -transform.up, out var hit, rayLen, ~(1 << Layers.Vehicle | 1 << Layers.Pickup | 1 << Layers.Character), QueryTriggerInteraction.Ignore))
+                Vector3 anchor = pose.MultiplyPoint3x4(_wheelRest[i] + Vector3.up * suspensionRest * 0.5f);
+                if (Physics.Raycast(anchor, -up, out var hit, rayLen, ~(1 << Layers.Vehicle | 1 << Layers.Pickup | 1 << Layers.Character), QueryTriggerInteraction.Ignore))
                 {
                     float compression = rayLen - hit.distance;
-                    float vel = Vector3.Dot(Body.GetPointVelocity(anchor), transform.up);
+                    float vel = Vector3.Dot(Body.GetPointVelocity(anchor), up);
                     float f = Mathf.Max(0f, compression * _k - vel * _c);
                     // bump stop: past 60% travel the spring gets very stiff, so speed/downforce/landings
                     // can't sink the body into the road
                     float stop = compression - suspensionRest * 0.6f;
                     if (stop > 0f) f += stop * _k * 8f;
-                    Body.AddForceAtPosition(transform.up * f, anchor);
+                    Body.AddForceAtPosition(up * f, anchor);
                     groundedCount++;
                     normalSum += hit.normal;
                     SetWheelVisual(i, hit.distance);
@@ -255,15 +300,16 @@ namespace KampungRun
                 else SetWheelVisual(i, rayLen);
             }
             grounded = groundedCount > 0;
-            UpdateTwoWheelerVisuals(dt, Vector3.Dot(Body.linearVelocity, transform.forward));
+            UpdateTwoWheelerVisuals(dt, Vector3.Dot(Body.linearVelocity, forward));
 
             var v = Body.linearVelocity;
+            if (_impactT > 0f) _impactT -= dt;
             if (grounded)
             {
                 float traction = groundedCount / 4f;
                 Vector3 n = normalSum.normalized;
-                Vector3 fwd = Vector3.ProjectOnPlane(transform.forward, n).normalized;
-                Vector3 right = Vector3.ProjectOnPlane(transform.right, n).normalized;
+                Vector3 fwd = Vector3.ProjectOnPlane(forward, n).normalized;
+                Vector3 right = Vector3.ProjectOnPlane(sideways, n).normalized;
                 float fs = Vector3.Dot(v, fwd);
 
                 // throttle / brake / reverse
@@ -291,10 +337,12 @@ namespace KampungRun
                 // steering: drive yaw rate directly (arcade)
                 float speedFactor = Mathf.Clamp01(Mathf.Abs(fs) / 5f) * Mathf.Lerp(1f, 0.55f, Mathf.Abs(fs) / maxSpeed);
                 float targetYaw = steer * turnRate * Mathf.Deg2Rad * speedFactor * Mathf.Sign(fs) * (handbrake ? 1.35f : 1f);
+                // (just after a big hit the steering lets go for a moment, so a shunt can spin you round)
                 var av = Body.angularVelocity;
-                float yawNow = Vector3.Dot(av, transform.up);
-                float newYaw = Mathf.Lerp(yawNow, targetYaw, dt * 7f * traction);
-                Body.angularVelocity = av + transform.up * (newYaw - yawNow);
+                float yawNow = Vector3.Dot(av, up);
+                float yawGain = 7f * Mathf.Lerp(1f, 0.12f, Mathf.Clamp01(_impactT / 0.35f));
+                float newYaw = Mathf.Lerp(yawNow, targetYaw, dt * yawGain * traction);
+                Body.angularVelocity = av + up * (newYaw - yawNow);
 
                 Body.AddForce(-n * Mathf.Min(Mathf.Abs(fs) * 0.2f, 3.5f), ForceMode.Acceleration); // downforce (capped)
                 _spin += fs * dt / Mathf.Max(0.1f, _wheelRadius) * Mathf.Rad2Deg;
@@ -302,14 +350,18 @@ namespace KampungRun
             else
             {
                 // airborne: gently level out so jumps land on the wheels
-                Vector3 axis = Vector3.Cross(transform.up, Vector3.up);
+                Vector3 axis = Vector3.Cross(up, Vector3.up);
                 Body.AddTorque(axis * 6f, ForceMode.Acceleration);
             }
 
             // auto-flip if stuck on the roof/side
-            if (Vector3.Dot(transform.up, Vector3.up) < 0.35f && v.magnitude < 2.5f) _upsideDownTime += dt;
+            if (Vector3.Dot(up, Vector3.up) < 0.35f && v.magnitude < 2.5f) _upsideDownTime += dt;
             else _upsideDownTime = 0f;
-            if (_upsideDownTime > 1.6f) Flip();
+            if (_upsideDownTime > 1.6f || _flipQueued) { _flipQueued = false; DoFlip(); }
+
+            // what we were doing going into this step (a lamp post we smash through gives it back)
+            PreStepVelocity = Body.linearVelocity;
+            PreStepAngular = Body.angularVelocity;
 
             if (Wrecked)
             {
@@ -318,13 +370,36 @@ namespace KampungRun
             }
         }
 
-        public void Flip()
+        bool _flipQueued;
+        float _impactT;
+        public Vector3 PreStepVelocity { get; private set; }
+        public Vector3 PreStepAngular { get; private set; }
+
+        /// <summary>Put it back on its wheels (done on the next physics step).</summary>
+        public void Flip() => _flipQueued = true;
+
+        void DoFlip()
         {
             _upsideDownTime = 0f;
-            var fwd = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+            var fwd = Vector3.ProjectOnPlane(Body.rotation * Vector3.forward, Vector3.up);
             if (fwd.sqrMagnitude < 0.01f) fwd = Vector3.forward;
-            Body.position = Body.position + Vector3.up * 1.2f;
-            Body.rotation = Quaternion.LookRotation(fwd.normalized, Vector3.up);
+            var upright = Quaternion.LookRotation(fwd.normalized, Vector3.up);
+            // find room for it: straight up first, then a little to either side (not into a bridge deck or a wall)
+            var box = GetComponent<BoxCollider>();
+            Vector3 half = (box ? Vector3.Scale(box.size, transform.lossyScale) * 0.5f : new Vector3(1f, 0.7f, 2f)) * 0.9f;
+            Vector3 centre = box ? Vector3.Scale(box.center, transform.lossyScale) : Vector3.up;
+            Vector3 right = upright * Vector3.right;
+            Vector3[] tries = { Vector3.up * 1.2f, Vector3.up * 2.2f, right * 2.5f + Vector3.up * 1.2f, -right * 2.5f + Vector3.up * 1.2f, Vector3.up * 3.4f };
+            Vector3 lift = tries[0];
+            int mask = ~(1 << Layers.Vehicle | 1 << Layers.Character | 1 << Layers.Pickup | 1 << 2);
+            foreach (var t in tries)
+            {
+                if (Physics.CheckBox(Body.position + t + upright * centre, half, upright, mask, QueryTriggerInteraction.Ignore)) continue;
+                lift = t;
+                break;
+            }
+            Body.position += lift;
+            Body.rotation = upright;
             Body.linearVelocity = Vector3.zero;
             Body.angularVelocity = Vector3.zero;
         }
@@ -357,9 +432,32 @@ namespace KampungRun
         void OnCollisionEnter(Collision c)
         {
             float rel = c.relativeVelocity.magnitude;
+            if (Asleep && c.rigidbody != null && !c.rigidbody.isKinematic)
+            {
+                // knocked by something moving: wake up and take some of the blow
+                Wake();
+                Body.linearVelocity = c.rigidbody.linearVelocity * Mathf.Clamp01(c.rigidbody.mass / Body.mass) * 0.6f;
+            }
             if (rel < 3.5f) return;
+            // street furniture doesn't stop a car (Hit & Run): the lamp post goes flying, we carry on
+            var prop = c.collider.GetComponentInParent<Breakable>();
+            if (prop != null && prop.SmashedBy(this, rel)) return;
+            // somebody standing in the road: they go flying, the car barely notices
+            var walker = c.collider.GetComponent<PlayerController>();
+            if (walker != null)
+            {
+                if (PreStepVelocity.magnitude > 7f)
+                {
+                    walker.Knockdown(PreStepVelocity.normalized * PreStepVelocity.magnitude * 0.7f + Vector3.up * 6f);
+                    Body.linearVelocity = PreStepVelocity * 0.8f;
+                    Body.angularVelocity = PreStepAngular;
+                }
+                return;
+            }
             // hitting static world hurts less than car-on-car; big bus hurts more
             var other = c.rigidbody ? c.rigidbody.GetComponent<Vehicle>() : null;
+            // a proper shunt from another car (or a wall at speed) breaks the tyres' hold for a moment
+            if (other != null && rel > 8f || rel > 14f) _impactT = Mathf.Max(_impactT, Mathf.Clamp(rel / 40f, 0.2f, 0.6f));
             float mult = other ? Mathf.Clamp(other.Body.mass / Body.mass, 0.5f, 3f) : 0.6f;
             if (role == VehicleRole.Player) mult *= 0.55f; // be kind to the player
             Damage((rel - 3.5f) * 2.2f * mult);

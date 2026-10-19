@@ -16,6 +16,7 @@ namespace KampungRun
             public Vector3 pos;
             public bool junction = true;                  // a real intersection (traffic slows for these)
             public readonly List<Node> links = new List<Node>();   // where you can drive to next
+            public JunctionControl control;               // signals / give way / crossings (TrafficSignals), if it's a junction drivers stop at
         }
 
         public readonly List<Node> nodes = new List<Node>();

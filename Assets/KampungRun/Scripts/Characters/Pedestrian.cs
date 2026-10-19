@@ -16,7 +16,7 @@ namespace KampungRun
     /// </summary>
     public class Pedestrian : MonoBehaviour
     {
-        enum State { Walk, Idle, Flee, Tumble, Down, Stagger, Grumble, Chat, Watch }
+        enum State { Walk, Idle, Flee, Tumble, Down, Stagger, Grumble, Chat, Watch, Cross }
 
         /// <summary>Things that make a street turn its head.</summary>
         public enum Stir { Horn, Commotion, Crash }
@@ -61,6 +61,13 @@ namespace KampungRun
         Pedestrian _partner;            // who they're chatting to
         Vector3 _chatSpot, _watchAt;
         float _chatLine;
+        // finding a way along a busy pavement: a sideways nudge round whoever's in front, and when we last
+        // had to turn back from something on the loop
+        Vector3 _dodge;
+        float _dodgeCheck, _lastBlocked = -99f;
+        static readonly Collider[] Near = new Collider[12];
+        /// <summary>Not tied to a pavement loop (the driver you just pulled out of a car): flee straight away from you.</summary>
+        public bool roam;
 
         void Awake()
         {
@@ -73,6 +80,7 @@ namespace KampungRun
 
         void OnDestroy()
         {
+            ReleaseCrossing();
             LeaveChat();
             All.Remove(this);
         }
@@ -92,6 +100,7 @@ namespace KampungRun
         /// <summary>Crowd recycling: pop onto another block's sidewalk and carry on walking.</summary>
         public void Relocate(Vector3 pos, WalkZone newZone)
         {
+            ReleaseCrossing();
             LeaveChat();
             zone = newZone;
             transform.position = pos;
@@ -101,6 +110,15 @@ namespace KampungRun
             _look?.Clear();
             PickTarget();
             _drawCheck = 0f;
+        }
+
+        /// <summary>Stand and wait here a while (a bus stop queue), facing `face`, then walk on round the loop.</summary>
+        public void WaitAt(Vector3 spot, Vector3 face, float time)
+        {
+            Relocate(spot, zone);
+            if (face.sqrMagnitude > 0.01f) transform.rotation = Quaternion.LookRotation(Flat(face));
+            _state = State.Idle;
+            _timer = time;
         }
 
         void UpdateDraw()
@@ -157,6 +175,15 @@ namespace KampungRun
             if (zone == null) { _target = transform.position; return; }
             _ringU = zone.Closest(transform.position);
             _goalU = zone.Random();
+            // or now and then over the road at one of the corners' zebras, and on round the next block
+            _xing = null;
+            if (!roam && zone.crossings.Count > 0 && _xCool <= 0f && Random.value < CrossChance)
+            {
+                var c = zone.crossings[Random.Range(0, zone.crossings.Count)];
+                _xing = c;
+                _xSide = c.za == zone ? -1 : 1;
+                _goalU = _xSide < 0 ? c.ua : c.ub;
+            }
             _ringDir = zone.Along(_ringU, _goalU, 1) <= zone.perimeter * 0.5f ? 1 : -1;
             NextWaypoint();
         }
@@ -194,6 +221,8 @@ namespace KampungRun
                 _farDt = 0f;
             }
             if (_hitCooldown > 0) _hitCooldown -= dt;
+            if (_xCool > 0f) _xCool -= dt;
+            if (_xBusy && _state != State.Cross) ReleaseCrossing();      // knocked over, or ran off, halfway across
             if (_comboT > 0) _comboT -= dt; else _combo = 0;
             _greetCooldown -= dt;
             _barkCooldown -= dt;
@@ -230,12 +259,16 @@ namespace KampungRun
                     if (Flat(transform.position - _target).magnitude < 0.6f)
                     {
                         if (!_wayIsGoal && zone != null) { _ringU = _wayU; NextWaypoint(); break; }   // round the corner
+                        if (_xing != null) { BeginCross(); break; }                                  // at the zebra
                         // arrived: sometimes stop for a natter with someone passing, sometimes just stand a while
                         float r = Random.value;
                         if (r < 0.35f && TryStartChat()) break;
                         if (r < 0.6f) { _state = State.Idle; _timer = Random.Range(2f, 6f); }
                         PickTarget();
                     }
+                    break;
+                case State.Cross:
+                    CrossUpdate(dt);
                     break;
                 case State.Idle:
                     _timer -= dt;
@@ -408,6 +441,124 @@ namespace KampungRun
             if (p._state == State.Chat) { p._state = State.Walk; p._look?.Clear(); p.PickTarget(); }
         }
 
+        // ------------------------------------------------------------------ crossing the road
+        // over a zebra to the next block's pavement: walk to the kerb, wait for the green man (or a gap in the
+        // traffic where there are no signals), cross briskly (cars wait while we're out there), and carry on
+        const float CrossChance = 0.35f;
+        Crossing _xing;
+        int _xSide, _xStage;
+        bool _xBusy;
+        float _xT, _xCool, _xCheck;
+        Vector3 _xTo;
+        static readonly Collider[] NearCars = new Collider[24];
+
+        void BeginCross()
+        {
+            LeaveChat();
+            _state = State.Cross;
+            _xStage = 1;
+            _xT = 0f;
+            _xTo = _xing.Kerb(_xSide, _lane * 0.8f);
+            _xTo.y = transform.position.y;
+        }
+
+        void CrossUpdate(float dt)
+        {
+            var c = _xing;
+            if (c == null) { _state = State.Walk; PickTarget(); return; }
+            _xT += dt;
+            switch (_xStage)
+            {
+                case 1:                                         // to the kerb
+                    Move(_xTo, walkSpeed, dt);
+                    if (Flat(transform.position - _xTo).magnitude < 0.35f) { _xStage = 2; _xT = 0f; _xCheck = 0f; }
+                    else if (_xT > 14f) AbandonCross();
+                    break;
+                case 2:                                         // wait for the green man, or a gap
+                {
+                    if (_rig) _rig.speed = 0f;
+                    var face = c.across * -_xSide;
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(face), dt * 5f);
+                    if ((_xCheck -= dt) <= 0f)
+                    {
+                        _xCheck = Random.Range(0.25f, 0.45f);
+                        if (MayCross(c))
+                        {
+                            _xStage = 3;
+                            _xT = 0f;
+                            _xTo = c.Kerb(-_xSide, _lane * 0.8f);
+                            c.busy++;
+                            _xBusy = true;
+                            c.lastUsed = Time.time;
+                            TrafficSignals.PedsStarted++;
+                            break;
+                        }
+                    }
+                    if (_xT > 40f) AbandonCross();               // nobody ever stops: give up and walk on
+                    break;
+                }
+                case 3:                                         // across, briskly
+                    Move(_xTo, walkSpeed * 1.25f, dt);
+                    if (Flat(transform.position - _xTo).magnitude < 0.4f || _xT > 30f)
+                    {
+                        ReleaseCrossing(false);
+                        TrafficSignals.PedsCrossed++;
+                        zone = _xSide < 0 ? c.zb : c.za;
+                        float u = _xSide < 0 ? c.ub : c.ua;
+                        _ringU = u;
+                        _xTo = OnLane(u, transform.position.y);
+                        _xStage = 4;
+                        _xT = 0f;
+                    }
+                    break;
+                case 4:                                         // up onto the far pavement, then on round this block
+                    Move(_xTo, walkSpeed, dt);
+                    if (Flat(transform.position - _xTo).magnitude < 0.6f || _xT > 8f)
+                    {
+                        _xing = null;
+                        _xCool = Random.Range(25f, 70f);
+                        _state = State.Walk;
+                        PickTarget();
+                    }
+                    break;
+            }
+        }
+
+        /// <summary>The green man is on (with time to get over), or nothing is coming.</summary>
+        static bool MayCross(Crossing c)
+        {
+            if (c.junction != null && c.junction.signal) return c.junction.WalkNow(out float left) && left > 3.5f;
+            if (c.busy > 0) return true;                        // people are already out there: the cars are waiting
+            int n = Physics.OverlapSphereNonAlloc(c.centre + Vector3.up, 32f, NearCars, 1 << Layers.Vehicle, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < n; i++)
+            {
+                var rb = NearCars[i].attachedRigidbody;
+                if (rb == null) continue;
+                var rel = Flat(rb.position - c.centre);
+                float d = rel.magnitude;
+                if (d < 7.5f) return false;                     // on the crossing, or right by it
+                float closing = -Vector3.Dot(Flat(rb.linearVelocity), rel / d);
+                if (closing > 1.5f && d / closing < 7f) return false;
+            }
+            return true;
+        }
+
+        void AbandonCross()
+        {
+            ReleaseCrossing();
+            _xCool = 20f;
+            _state = State.Walk;
+            PickTarget();
+        }
+
+        /// <summary>Off the road (or never got on it): the cars needn't wait for us any more.</summary>
+        void ReleaseCrossing(bool forget = true)
+        {
+            if (_xBusy && _xing != null) _xing.busy = Mathf.Max(0, _xing.busy - 1);
+            _xBusy = false;
+            if (forget) _xing = null;
+        }
+
         /// <summary>Move along the ground, stopping at walls and following steps.</summary>
         void Slide(Vector3 step)
         {
@@ -451,39 +602,118 @@ namespace KampungRun
 
         static readonly string[] Grumbles = { "KURANG AJAR!", "HEI!", "SAKIT LAH!", "APA MASALAH KAU?", "JAGA KAU!" };
 
+        // what a pedestrian's feet and eyes collide with: not people, pickups or the see-through trampoline boxes
+        const int WalkMask = ~(1 << Layers.Character | 1 << Layers.Pickup | 1 << 2);
+
         void Move(Vector3 target, float speed, float dt)
         {
             var to = Flat(target - transform.position);
             if (to.sqrMagnitude > 0.01f)
             {
-                var step = to.normalized * Mathf.Min(speed * dt, to.magnitude);
-                if (Physics.Raycast(transform.position + Vector3.up * 0.8f, to.normalized, step.magnitude + 0.5f,
-                        ~(1 << Layers.Character | 1 << Layers.Pickup), QueryTriggerInteraction.Ignore))
+                float left = to.magnitude;
+                var dir = to / left;
+                if (_state == State.Walk || _state == State.Flee) dir = Dodge(dir, dt, left);
+                var step = dir * Mathf.Min(speed * dt, left);
+                if (Physics.Raycast(transform.position + Vector3.up * 0.8f, dir, step.magnitude + 0.5f, WalkMask, QueryTriggerInteraction.Ignore))
                 {
-                    if (_state == State.Walk) PickTarget(); else if (_state == State.Flee) PickFleeTarget();
+                    Blocked();
                     if (_rig) _rig.speed = 0;
                     return;
                 }
                 var p = transform.position + step;
-                if (Physics.Raycast(p + Vector3.up * 1.5f, Vector3.down, out var hit, 3f, ~(1 << Layers.Character | 1 << Layers.Pickup | 1 << Layers.Vehicle), QueryTriggerInteraction.Ignore))
+                if (Physics.Raycast(p + Vector3.up * 1.5f, Vector3.down, out var hit, 3f, WalkMask & ~(1 << Layers.Vehicle), QueryTriggerInteraction.Ignore))
                 {
                     if (hit.point.y > transform.position.y + 0.5f)
                     {
                         // something tall in the way: turn around
-                        if (_state == State.Walk) PickTarget(); else if (_state == State.Flee) PickFleeTarget();
+                        Blocked();
                         return;
                     }
                     p.y = hit.point.y;
                 }
                 transform.position = p;
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(to), dt * 8f);
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), dt * 8f);
             }
             if (_rig) _rig.speed = speed;
         }
 
-        void PickFleeTarget()
+        /// <summary>
+        /// Step round whoever's in our way on the pavement (another pedestrian, or the player standing
+        /// there): a sideways nudge that fades once they're past. Checked a few times a second, close up only.
+        /// </summary>
+        Vector3 Dodge(Vector3 dir, float dt, float left)
+        {
+            if ((_dodgeCheck -= dt) <= 0f)
+            {
+                _dodgeCheck = Random.Range(0.15f, 0.25f);
+                var want = Vector3.zero;
+                var cam = Camera.main;
+                if (!_hidden && cam && (cam.transform.position - transform.position).sqrMagnitude < 45f * 45f)
+                {
+                    var me = transform.position;
+                    var side = new Vector3(dir.z, 0f, -dir.x);
+                    int n = Physics.OverlapSphereNonAlloc(me + dir * 0.9f + Vector3.up * 0.9f, 1.1f, Near, 1 << Layers.Character, QueryTriggerInteraction.Collide);
+                    for (int i = 0; i < n; i++)
+                    {
+                        var t = Near[i].transform;
+                        if (t == transform || t.IsChildOf(transform)) continue;
+                        var d = Flat(t.position - me);
+                        float ahead = Vector3.Dot(d, dir);
+                        if (ahead < 0.05f || ahead > 2f) continue;
+                        float off = Vector3.Dot(d, side);
+                        if (Mathf.Abs(off) > 0.95f) continue;            // they're already beside our line
+                        // pass on the side they leave free (the left - we keep left in Malaysia - when they're dead ahead)
+                        float s = Mathf.Abs(off) < 0.12f ? -1f : -Mathf.Sign(off);
+                        want += side * s * (1f - ahead / 2f) * 1.4f;
+                    }
+                }
+                _dodge = want;
+            }
+            if (_dodge.sqrMagnitude < 1e-4f || left < 0.8f) return dir;
+            return (dir + _dodge).normalized;
+        }
+
+        /// <summary>
+        /// Something solid on the loop ahead (a parked car, a toppled kapcai, a wall): turn back the way we came
+        /// for a while. If it happens again straight away we're boxed in, so wait a bit for it to clear.
+        /// </summary>
+        void Blocked()
+        {
+            if (_state == State.Flee) { PickFleeTarget(true); return; }
+            if (_state != State.Walk) return;
+            if (zone == null) { PickTarget(); return; }
+            if (Time.time - _lastBlocked < 4f)
+            {
+                _lastBlocked = -99f;
+                _state = State.Idle;
+                _timer = Random.Range(2.5f, 5f);
+                PickTarget();
+                return;
+            }
+            _lastBlocked = Time.time;
+            _ringU = zone.Closest(transform.position);
+            _ringDir = -_ringDir;
+            _goalU = zone.Wrap(_ringU + _ringDir * Random.Range(Mathf.Min(6f, zone.perimeter * 0.2f), zone.perimeter * 0.45f));
+            NextWaypoint();
+            _state = State.Idle;                       // a beat to turn round, as people do
+            _timer = Random.Range(0.3f, 0.8f);
+        }
+
+        void PickFleeTarget(bool blocked = false)
         {
             var threat = PlayerController.I ? PlayerController.I.Focus : transform.position;
+            if (zone != null && !roam)
+            {
+                // run off along the pavement (not through the shop fronts): whichever way round the loop takes us
+                // further from the trouble, or back the other way if that's where we just ran into something
+                float u = zone.Closest(transform.position);
+                float dist = Random.Range(10f, 16f);
+                float fwd = Flat(zone.PointAt(u + dist) - threat).sqrMagnitude, back = Flat(zone.PointAt(u - dist) - threat).sqrMagnitude;
+                int dir = fwd >= back ? 1 : -1;
+                if (blocked) dir = Vector3.Dot(Flat(zone.PointAt(u + 1f) - zone.PointAt(u - 1f)), transform.forward) > 0f ? -1 : 1;
+                _target = OnLane(u + dir * dist, transform.position.y);
+                return;
+            }
             var away = Flat(transform.position - threat).normalized;
             if (away.sqrMagnitude < 0.1f) away = Random.insideUnitSphere;
             var p = transform.position + Flat(away + Random.insideUnitSphere * 0.5f).normalized * 12f;
@@ -732,6 +962,7 @@ namespace KampungRun
         {
             var zone = WalkZone.FromRect(new Rect(pos.x - 30, pos.z - 30, 60, 60), 0f);
             var p = Spawn(pos, zone, GameManager.I.transform, "chr_townman");
+            p.roam = true;
             p.Flee(6f);
             Fx.Word(pos + Vector3.up * 2.2f, "KERETA AKU!");
             VoiceSynth.SayAt(VoiceSynth.Townsperson("man", 1), "man1", "KERETA AKU!", pos + Vector3.up * 1.6f, 1f, true);

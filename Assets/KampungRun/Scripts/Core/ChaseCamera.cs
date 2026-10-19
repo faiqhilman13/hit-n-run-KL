@@ -30,6 +30,11 @@ namespace KampungRun
         public const float FootDistance = 3.9f, FootHeight = 1.55f, FootPitch = 9f;
 
         float _dist, _rise, _footPull, _fovKick, _baseFov;
+        // indoors (a walk-in room: Interiors): 0 out .. 1 in, eased, and the room
+        float _indoor;
+        Arch.RoomSpec _room;
+        /// <summary>Indoors: how far back and how far down the camera sits (tight rooms), and the pitch it settles to.</summary>
+        public const float IndoorDistance = 2.3f, IndoorPitch = 17f, IndoorHeightScale = 0.92f;
         Camera _cam;
         float _lookIdle;
         Vector3 _focus;
@@ -41,7 +46,7 @@ namespace KampungRun
         void Awake()
         {
             I = this;
-            _mask = ~(LayerMask.GetMask("Ignore Raycast") | (1 << Layers.Vehicle) | (1 << Layers.Character) | (1 << Layers.Pickup));
+            _mask = ~(LayerMask.GetMask("Ignore Raycast") | (1 << Layers.Vehicle) | (1 << Layers.Character) | (1 << Layers.Pickup) | (1 << Layers.Ward));
         }
 
         public void Shake(float amount) => _shake = Mathf.Max(_shake, amount);
@@ -93,6 +98,17 @@ namespace KampungRun
             // on foot behind the player: the platformer camera
             var player = PlayerController.I;
             bool onFoot = !driving && player != null && target == player.transform && !player.Driving;
+            // walked into a room (a shop, a house): pull in close and look down a little, so the room fits round you
+            var room = onFoot ? Interiors.RoomAt(target.position, -0.05f) : null;
+            if (room != null && !room.shell) room = null;                  // (the open-sided mamak is the street)
+            if (room != null) _room = room;
+            _indoor = Mathf.MoveTowards(_indoor, room != null ? 1f : 0f, dt * 2.2f);
+            if (_indoor <= 0f) _room = null;
+            if (_indoor > 0f)
+            {
+                _dist = Mathf.Lerp(_dist, Mathf.Lerp(distance + _footPull, Mathf.Min(distance, IndoorDistance), _indoor), dt * 4f);
+                if (_lookIdle > 0.6f) pitch = Mathf.Lerp(pitch, IndoorPitch, dt * 2f * _indoor);
+            }
             if (onFoot)
             {
                 var mv = player.MoveDir;
@@ -123,7 +139,7 @@ namespace KampungRun
             }
 
             // the aim point stays tight on a car (so it sits low in the frame at speed instead of drifting up)
-            var want = target.position + Vector3.up * (height + _rise);
+            var want = target.position + Vector3.up * (height * Mathf.Lerp(1f, IndoorHeightScale, _indoor) + _rise);
             float k = 1f - Mathf.Exp(-dt * (driving ? 30f : 12f));
             if (onFoot && !player.Grounded)
             {
@@ -143,9 +159,17 @@ namespace KampungRun
             var rot = Quaternion.Euler(pitch, yaw, 0);
             var dir = rot * Vector3.back;
             float d = _dist;
-            if (Physics.SphereCast(_focus, 0.35f, dir, out var hit, _dist, _mask, QueryTriggerInteraction.Ignore))
-                d = Mathf.Max(1.2f, hit.distance - 0.1f);
-            transform.position = _focus + dir * d;
+            // indoors a thinner probe, and no minimum distance: better close on your shoulder than through the wall
+            // (outside, the far side of a wall faces away and the room would vanish behind its own facade)
+            float probe = Mathf.Lerp(0.35f, 0.2f, _indoor), minD = Mathf.Lerp(1.2f, 0.25f, _indoor);
+            if (Physics.SphereCast(_focus, probe, dir, out var hit, _dist, _mask, QueryTriggerInteraction.Ignore))
+                d = Mathf.Max(minD, hit.distance - 0.1f);
+            var pos = _focus + dir * d;
+            // backed up against a wall indoors: rise up over the shoulder and look down instead
+            if (_indoor > 0f && d < 1.3f) pos += Vector3.up * (1.3f - d) * 0.9f * _indoor;
+            // ...and never up in the ceiling
+            if (_room != null && _indoor > 0f) pos.y = Mathf.Min(pos.y, Mathf.Lerp(pos.y, _room.CeilingY - 0.4f, _indoor));
+            transform.position = pos;
             transform.rotation = Quaternion.LookRotation(_focus - transform.position + Vector3.up * 0.3f);
             if (_shake > 0)
             {
@@ -163,5 +187,6 @@ namespace KampungRun
         public const int Pickup = 10;
         public const int Detail = 11;       // street clutter: drawn only near the camera
         public const int World = 0;
+        public const int Ward = 12;         // walk-in shop doorways: only pedestrians' raycasts see it (CityBuilder.DoorWards)
     }
 }

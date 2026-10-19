@@ -2,8 +2,8 @@
   "asset": "chr_adik",
   "height_m": 1.12,
   "mesh_height_m": 1.12,
-  "triangles": 68126,
-  "lod1_triangles": 19074,
+  "triangles": 76102,
+  "lod1_triangles": 21308,
   "bones": 23,
   "clips": [
     "chr_adik|_tpose",
@@ -30,8 +30,8 @@
     "Blink"
   ],
   "bounds_m": [
-    1.1203151941299438,
-    0.4245131015777588,
+    1.1366394758224487,
+    0.44475704431533813,
     1.1200000047683716
   ],
   "palette": "kl_character_palette.png",
