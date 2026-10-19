@@ -512,6 +512,7 @@ namespace KampungRun
                 if (hit == null) hit = c.GetComponentInParent<Breakable>();
                 if (hit == null) hit = c.GetComponentInParent<BurungKamera>();
                 if (hit == null) hit = c.GetComponentInParent<Critter>();
+                if (hit == null) hit = c.GetComponentInParent<IPunchable>() as Component;      // mission goons (Missions/Goon.cs)
                 if (hit == null && c.attachedRigidbody && !c.attachedRigidbody.isKinematic && c.attachedRigidbody.mass < 30f) { hit = c.attachedRigidbody; bias = 0.5f; }
                 if (hit == null) continue;
                 var to = hit.transform.position - transform.position;
@@ -543,6 +544,8 @@ namespace KampungRun
                 if (br) { if (seen.Add(br)) { br.Hit(transform.position, force, true); hitSomething = true; } continue; }
                 var cam = c.GetComponentInParent<BurungKamera>();
                 if (cam) { if (seen.Add(cam)) { cam.Smash(); hitSomething = true; HitStop.Do(0.06f); } continue; }
+                var goon = c.GetComponentInParent<IPunchable>();
+                if (goon != null) { if (seen.Add((Object)goon)) { goon.Punched(dir, force, heavy); hitSomething = true; } continue; }
                 var critter = c.GetComponentInParent<Critter>();
                 if (critter) { if (seen.Add(critter)) { critter.Kicked(dir, force); hitSomething = true; if (critter.isChicken) Quip(Sorry, 0.35f); } continue; }
                 var body = c.attachedRigidbody;
