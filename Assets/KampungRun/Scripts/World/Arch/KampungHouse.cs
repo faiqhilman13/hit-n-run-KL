@@ -108,7 +108,7 @@ namespace KampungRun.Arch
                 {
                     float top = y1 - rise * (k + 1), z0 = VerZ1 + k * run;
                     m.Box(F, -gap + 0.05f, gap - 0.05f, 0f, top, z0, z0 + run, tread, Faces.Top | Faces.Left | Faces.Right);
-                    m.Rect(new Frame(F.P(-gap + 0.05f, 0f, z0 + run), F.r, Vector3.up, F.n), 0f, 2f * gap - 0.1f, top - rise, top, 0f, White, ArchTex.Steps, 0.35f);
+                    m.Rect(new Frame(F.P(gap - 0.05f, 0f, z0 + run), -F.r, Vector3.up, F.n), 0f, 2f * gap - 0.1f, top - rise, top, 0f, White, ArchTex.Steps, 0.35f);
                 }
                 // the cheek walls: following the stair down, a hand above the treads, capped
                 float zFoot = VerZ1 + steps * run;

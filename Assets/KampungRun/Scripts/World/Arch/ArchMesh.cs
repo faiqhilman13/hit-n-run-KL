@@ -218,6 +218,14 @@ namespace KampungRun.Arch
         public void Box(in Frame f, float x0, float x1, float y0, float y1, float z0, float z1, Color32 col, ArchTex tex = ArchTex.White,
                         Faces faces = Faces.All, float tile = 0f)
         {
+            // a mirrored frame (n != up x r) would wind every face inside out: build in its unmirrored twin, x negated
+            if (Vector3.Dot(f.n, Vector3.Cross(f.u, f.r)) < 0f)
+            {
+                var lr = faces & (Faces.Left | Faces.Right);
+                faces = (faces & ~(Faces.Left | Faces.Right)) | ((lr & Faces.Left) != 0 ? Faces.Right : 0) | ((lr & Faces.Right) != 0 ? Faces.Left : 0);
+                Box(new Frame(f.o, -f.r, f.u, f.n), -x1, -x0, y0, y1, z0, z1, col, tex, faces, tile);
+                return;
+            }
             float U(float a) => tile > 0f ? a / tile : 0f;
             bool T0 = tile > 0f;
             if ((faces & Faces.Front) != 0)

@@ -234,7 +234,7 @@ namespace KampungRun.Arch
             float run = 0.27f, len = steps * run;
             var foot = top - dir * len;                                // where the stair starts on the pavement
             var across = Vector3.Cross(Vector3.up, dir);
-            var f = new Frame(foot, dir, Vector3.up, -across);
+            var f = new Frame(foot, dir, Vector3.up, across);                // (n = up x r, or the treads' boxes turn inside out)
             if (detail)
                 for (int k = 0; k < steps; k++)
                 {
