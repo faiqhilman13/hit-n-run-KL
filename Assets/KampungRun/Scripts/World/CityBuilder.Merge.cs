@@ -111,7 +111,7 @@ namespace KampungRun
         static void MergedMesh(List<(CombineInstance ci, Vector2 uv, Material own)> parts, string name, Material mat, int layer, ShadowCastingMode shadows, Transform root, Mesh m)
         {
             m ??= Combine(parts, name);
-            m.UploadMeshData(true);          // GPU copy only: the CPU side is not needed again
+            MeshKeep.Upload(m);          // GPU copy only: the CPU side is not needed again
             var go = new GameObject(name) { layer = layer };
             go.transform.SetParent(root, false);
             go.isStatic = true;

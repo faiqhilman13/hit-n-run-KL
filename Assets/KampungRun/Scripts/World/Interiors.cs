@@ -158,7 +158,7 @@ namespace KampungRun
             {
                 b.mesh = _mesh.ToMesh("Interior_" + r.kind);
                 b.mesh.RecalculateBounds();
-                b.mesh.UploadMeshData(true);
+                MeshKeep.Upload(b.mesh);
                 go.AddComponent<MeshFilter>().sharedMesh = b.mesh;
                 var mr = go.AddComponent<MeshRenderer>();
                 mr.sharedMaterial = ArchKit.Material;

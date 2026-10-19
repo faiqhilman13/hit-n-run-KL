@@ -76,7 +76,7 @@ namespace KampungRun.Arch
                 tris += m.T.Count / 3;
                 var mesh = m.ToMesh($"ArchFar_{c.key.x}_{c.key.y}");
                 mesh.RecalculateBounds();
-                mesh.UploadMeshData(true);
+                MeshKeep.Upload(mesh);
                 c.far = Renderer($"Far_{c.key.x}_{c.key.y}", mesh);
             }
             Debug.Log($"[Arch] {Buildings} buildings in {_cells.Count} cells; distance versions {tris} triangles in {clock.ElapsedMilliseconds} ms");
@@ -92,6 +92,23 @@ namespace KampungRun.Arch
             r.sharedMaterial = ArchKit.Material;
             r.shadowCastingMode = ShadowCastingMode.On;
             return r;
+        }
+
+        /// <summary>Every cell rebuilt as a CPU-readable mesh (the drawn ones are GPU-only), for audits
+        /// such as Editor/ColliderAudit.</summary>
+        public List<Mesh> ReadableMeshes(bool detail)
+        {
+            var list = new List<Mesh>();
+            var m = new ArchMesh();
+            foreach (var c in _cells.Values)
+            {
+                m.Clear();
+                foreach (var s in c.specs) s.Build(m, detail);
+                var mesh = m.ToMesh($"ArchAudit_{c.key.x}_{c.key.y}");
+                mesh.RecalculateBounds();
+                list.Add(mesh);
+            }
+            return list;
         }
 
         /// <summary>Build the detail round a spot straight away (spawns, teleports), so nothing pops in.</summary>
@@ -151,7 +168,7 @@ namespace KampungRun.Arch
             if (c.building == null) return;
             var mesh = c.building.ToMesh($"ArchNear_{c.key.x}_{c.key.y}");
             mesh.RecalculateBounds();
-            mesh.UploadMeshData(true);
+            MeshKeep.Upload(mesh);
             c.near = Renderer($"Near_{c.key.x}_{c.key.y}", mesh).gameObject;
             if (c.far) c.far.enabled = false;
             c.building = null;

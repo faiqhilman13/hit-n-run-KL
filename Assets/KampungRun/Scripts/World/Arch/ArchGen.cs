@@ -26,7 +26,8 @@ namespace KampungRun.Arch
         /// </summary>
         public static void Collider(BuildingSpec s, List<Vector3> v, List<int> t)
         {
-            float top = s.height + (s.flatRoof ? 0.05f : 0.6f);
+            bool flat = s.flatRoof || ((s.kind == BuildingKind.Shop || s.kind == BuildingKind.House) && Shophouse.FlatRoofed(s));
+            float top = s.height + (flat ? 0.05f : 0.6f);
             if (s.kind == BuildingKind.Shop && Interior.RoomsOf(s).Count > 0 && Shophouse.Arcade(s, out int sf, out float sa, out float sg))
             {
                 ShopWithRooms(s, sf, sa, sg, top, v, t);

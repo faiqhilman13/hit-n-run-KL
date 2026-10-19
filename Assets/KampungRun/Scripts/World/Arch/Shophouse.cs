@@ -121,7 +121,9 @@ namespace KampungRun.Arch
             L.trim = L.rng.NextDouble() < 0.75 ? Trim : ArchMesh.Shade(L.wall, 1.12f);
             L.shutter = Pick(L, Shutters);
             L.tile = L.rng.NextDouble() < 0.82 ? TileRed : TileGreen;
-            L.flat = L.style == ShopStyle.Modern || L.D > 30f || s.flatRoof;
+            // the gable roof spans the front's width and the lot's depth: anything far from that rectangle (real-KL
+            // footprints can be trapezoids, L-shapes, wider at the back) gets a flat roof capping its real outline
+            L.flat = L.style == ShopStyle.Modern || L.D > 30f || s.flatRoof || !Rectish(ring, p0, dir, inward, W, L.D);
             L.sign = L.rng.Next(16);
             if (s.sign >= 0) L.sign = s.sign & 15;
             L.plaque = L.rng.Next(8);
@@ -131,6 +133,24 @@ namespace KampungRun.Arch
             L.A = HasArcade(s.kind, L.D, L.lv, L.G) ? ArcadeDepth : 0f;
             L.P = L.style == ShopStyle.PreWar ? 1.0f : L.style == ShopStyle.Deco ? 1.3f : 0.9f;
             return L;
+        }
+
+        /// <summary>Does the lot get a flat roof (physics stands you on the slab, not over the ridge)?</summary>
+        public static bool FlatRoofed(BuildingSpec s) => Setup(s, false, out _, out _).flat;
+
+        /// <summary>Is the footprint close to the rectangle "front edge x depth" a gable roof covers?</summary>
+        static bool Rectish(Vector2[] ring, Vector2 p0, Vector2 dir, Vector2 inward, float W, float D)
+        {
+            float area = 0f;
+            for (int i = 0; i < ring.Length; i++)
+            {
+                var q = ring[i] - p0;
+                float x = Vector2.Dot(q, dir), z = Vector2.Dot(q, inward);
+                if (x < -0.6f || x > W + 0.6f || z < -0.6f) return false;
+                var a = ring[i]; var b = ring[(i + 1) % ring.Length];
+                area += a.x * b.y - b.x * a.y;
+            }
+            return Mathf.Abs(area) * 0.5f >= 0.88f * W * D;
         }
 
         /// <summary>One bay of a lot's front, as planned (Interior.RoomsOf reads these to know which shops are open).</summary>

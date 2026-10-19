@@ -171,7 +171,7 @@ namespace KampungRun
                     if (kind == 2) m.SetColors(p.c); else m.SetUVs(0, p.uv);
                     m.SetTriangles(p.t, 0);
                     m.RecalculateBounds();
-                    m.UploadMeshData(true);
+                    MeshKeep.Upload(m);
                     var go = new GameObject(m.name) { layer = kind == 1 ? Layers.Detail : Layers.World };
                     go.transform.SetParent(root, false);
                     go.isStatic = true;
