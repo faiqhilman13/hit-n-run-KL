@@ -27,11 +27,13 @@ import kl_family as F
 import kl_landmarks as L
 import kl_cars as CARS
 import kl_landmarks2 as L2
-for mod in (K, H, C, V, E, E1, F, L, CARS, L2):
+import kl_landmarks3 as L3
+for mod in (K, H, C, V, E, E1, F, L, CARS, L2, L3):
     importlib.reload(mod)
 E.KIT.update(E1.KIT_P1)
 E.KIT.update(L.KIT_LANDMARKS)
 E.KIT.update(L2.KIT_LANDMARKS2)
+E.KIT.update(L3.KIT_LANDMARKS3)
 
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 
@@ -315,6 +317,7 @@ KITS = {
                          "env_pbg_bench", "env_pbg_fountain"],
     "env_kl_landmarks2": ["env_lm2_batu_caves", "env_lm2_merdeka118", "env_lm2_tugu_negara", "env_lm2_istana_negara",
                           "env_lm2_thean_hou", "env_lm2_masjid_jamek", "env_lm2_pavilion", "env_lm2_stadium_merdeka"],
+    "env_kl_landmarks3": list(L3.KIT_LANDMARKS3),
     "env_chowkit_market": ["env_market_canopy_blue", "env_market_canopy_red", "env_market_canopy_teal",
                            "env_market_canopy_yellow", "env_crate_oranges", "env_traffic_barrier", "env_tarp_stack",
                            "env_road_straight_wet"],
@@ -329,7 +332,7 @@ HERO_MODULES = {"env_chowkit_shop_a", "env_market_canopy_blue", "env_road_corner
                 "env_kb_house_teal", "env_kb_banana_plant", "env_kb_rain_tree", "env_kb_skyline",
                 "env_bf_shopfront_yellow", "env_bf_flower_stall", "env_bf_lamp", "env_bf_rail_viaduct", "env_bf_lrt_car",
                 "env_lm_kl_sentral", "env_lm_muzium_negara", "env_lm_masjid_negara", "env_pbg_gazebo", "env_pbg_pergola",
-                "env_pbg_fountain"} | set(L2.KIT_LANDMARKS2)
+                "env_pbg_fountain"} | set(L2.KIT_LANDMARKS2) | set(L3.KIT_LANDMARKS3)
 
 
 def build_kit(kit_id):
@@ -378,12 +381,18 @@ def build_kit(kit_id):
     print("STATS", kit_id, len(table), "modules")
 
 
+ONLY = {}      # kit -> the modules to build (kl_build.py -- <kit>:<module>,<module>)
+
+
 def KIT_MODULES(kit_id):
-    return KITS[kit_id]
+    return [m for m in KITS[kit_id] if kit_id not in ONLY or m in ONLY[kit_id]]
 
 
 if __name__ == "__main__":
     for aid in ARGS:
+        if ":" in aid:
+            aid, mods = aid.split(":", 1)
+            ONLY[aid] = mods.split(",")
         if aid in CHARACTER_BUILDERS:
             build_character(aid)
         elif aid in VEHICLE_BUILDERS:

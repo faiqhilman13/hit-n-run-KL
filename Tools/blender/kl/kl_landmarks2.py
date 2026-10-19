@@ -177,37 +177,63 @@ def tugu_negara():
 
 # ============================================================================ Istana Negara
 def istana_negara():
-    """The royal palace: long white wings with arcades, a tall central hall under three big
-    golden domes, and the ceremonial gate with two guard boxes out front."""
+    """Istana Negara: the cream palace - the great gold dome patterned in chevrons on a drum of windows over the
+    centre, a second gold dome below it on the porch, little gold domes on the side pavilions, dark grey hipped roofs
+    on the wings, and the grand arched gate with its gold domes."""
     m = K.Mesher()
+    lo = K.LOD_CULL > 0
     m.box((0, 4, 0.4), (36, 20, 0.8), "concrete")
     m.box((0, 8, 0.85), (34, 12, 0.1), "grass")
-    # wings
+
+    def gold_dome(c, r):
+        onion_dome(m, c, r, "gold")
+        if not lo:
+            c = Vector(c)
+            for k in range(12):
+                a = k / 12 * math.tau
+                p0 = c + Vector((math.cos(a) * r * 0.92, math.sin(a) * r * 0.92, r * 0.25))
+                p1 = c + Vector((math.cos(a) * r * 0.35, math.sin(a) * r * 0.35, r * 1.55))
+                m.tube(p0, p1, r * 0.05, r * 0.03, "brass", seg=4)
     for s in (1, -1):
-        m.box((s * 11, 6, 4.8), (12, 9, 8.2), "marble")
-        for i in range(5):                                                                  # arcade
+        m.box((s * 11, 6, 4.8), (12, 9, 8.2), "cream")
+        for i in range(5):                                                                  # arched windows, gold frames
             x = s * (6.2 + i * 2.3)
-            m.box((x, 1.4, 3.2), (1.4, 0.3, 4.4), "window_dark")
-            m.ball((x, 1.35, 5.4), (0.7, 0.15, 0.7), "window_dark", seg=10, rings=6)
-        m.box((s * 11, 6, 9.2), (12.6, 9.6, 0.6), "gold")
-        onion_dome(m, (s * 16, 3, 9.5), 1.2, "gold")
-    # central hall + three domes
-    m.box((0, 6, 7), (10, 10, 12.6), "marble")
-    for i in range(3):
-        m.box((-3 + i * 3, 0.95, 5.6), (1.8, 0.3, 7), "window_dark")
-    m.box((0, 6, 13.6), (10.6, 10.6, 0.6), "gold")
-    onion_dome(m, (0, 6, 13.9), 4.2, "gold")
+            m.box((x, 1.42, 3.0), (1.6, 0.25, 3.6), "gold")
+            m.box((x, 1.35, 3.0), (1.2, 0.25, 3.2), "window_dark")
+            m.ball((x, 1.35, 4.7), (0.6, 0.15, 0.6), "window_dark", seg=10, rings=6)
+        m.box((s * 11, 6, 9.0), (12.6, 9.6, 0.4), "white")
+        m.prism((s * 11, 6, 9.2), (12.6, 9.6, 2.6), "lamp_grey")                           # dark hipped roofs
+
+        gold_dome((s * 16.5, 2.0, 9.0), 1.3)
+    # the centre: a tall cream block, the drum of windows and the great dome
+    m.box((0, 6, 7), (11, 11, 12.6), "cream")
+    m.box((0, 0.45, 6.0), (4.0, 0.3, 7.0), "gold")
+    m.box((0, 0.35, 6.0), (3.2, 0.3, 6.4), "window_dark")
+    m.cyl((0, 6, 14.3), 5.0, 5.0, 2.6, "white", seg=18)
+    if not lo:
+        for k in range(12):
+            a = k / 12 * math.tau
+            m.box((math.cos(a) * 5.02, 6 + math.sin(a) * 5.02, 14.3), (1.2, 0.15, 1.6), "window_dark", rot=(0, 0, a + math.pi / 2))
+    m.cyl((0, 6, 15.75), 5.3, 5.3, 0.3, "gold", seg=18)
+    gold_dome((0, 6, 15.9), 4.6)
+    # the porch with the second dome
+    m.box((0, -0.5, 4.6), (8, 4, 8.4), "cream")
+    gold_dome((0, -0.5, 8.8), 2.4)
     for s in (1, -1):
-        onion_dome(m, (s * 4.6, 2.5, 13.9), 1.8, "gold")
-    # front gate: pillars, golden arch, guard boxes
+        gold_dome((s * 4.6, 2.5, 13.0), 1.4)
+    # front gate: a big gold-framed arch between dark pylons with gold domes, guard boxes
     gy = -8.5
     for s in (1, -1):
-        m.box((s * 5, gy, 3.5), (1.4, 1.4, 7), "marble")
-        onion_dome(m, (s * 5, gy, 7.0), 0.8, "gold")
-        m.box((s * 8.5, gy - 0.5, 1.6), (1.8, 1.8, 3.2), "marble")                           # guard boxes
+        m.box((s * 5, gy, 3.5), (2.0, 1.6, 7), "charcoal")
+        gold_dome((s * 5, gy, 7.0), 0.9)
+        m.box((s * 8.5, gy - 0.5, 1.6), (1.8, 1.8, 3.2), "cream")
         m.box((s * 8.5, gy - 1.42, 1.5), (1.1, 0.1, 2.2), "window_dark")
-        onion_dome(m, (s * 8.5, gy - 0.5, 3.2), 0.9, "gold")
-    m.box((0, gy, 6.6), (9, 1.0, 0.8), "gold")
+        gold_dome((s * 8.5, gy - 0.5, 3.2), 0.8)
+    m.box((0, gy, 6.6), (8.6, 1.2, 1.0), "cream")
+    if not lo:
+        for k in range(9):
+            a = math.pi * k / 8
+            m.box((math.cos(a) * 3.6, gy - 0.65, 3.4 + math.sin(a) * 2.6), (0.9, 0.2, 0.5), "gold", rot=(0, -a + math.pi / 2, 0))
     for i in range(9):                                                                      # gate bars
         m.tube((-4 + i, gy, 0.3), (-4 + i, gy, 3.2), 0.06, 0.06, "gold", seg=6)
     m.box((0, gy, 3.3), (8.6, 0.12, 0.2), "gold")
@@ -216,72 +242,120 @@ def istana_negara():
 
 # ============================================================================ Thean Hou
 def thean_hou():
-    """Three-tier Chinese temple on a terrace: red columns and walls, jade-green tiled roofs
-    with upswept eaves and gold ridge dragons, rows of red lanterns."""
+    """Thean Hou Temple: three tiers of red-pillared halls on a white-balustraded terrace, roofs of orange-gold glazed
+    tile with sharply upswept eaves and dragon ridges, red lanterns everywhere."""
     m = K.Mesher()
+    lo = K.LOD_CULL > 0
     m.box((0, 2, 1.0), (32, 26, 2.0), "marble")                                              # terrace
     for k in range(6):
         m.box((0, -11.4 - k * 0.5, 1.0 - k * 0.17 - 0.08), (10, 0.5, 2.0 - k * 0.34), "marble")
+    # white balustrades round the terrace
     for s in (1, -1):
-        m.box((s * 13, -10.5, 1.8), (6, 0.4, 1.6), "marble")                               # balustrades
+        m.box((s * 10.5, -10.8, 2.5), (11, 0.4, 1.0), "white")
+        m.box((s * 15.8, 2, 2.5), (0.4, 25, 1.0), "white")
+    m.box((0, 14.8, 2.5), (31, 0.4, 1.0), "white")
+    if not lo:
+        for x in range(-15, 16, 2):
+            if abs(x) > 5:
+                m.box((x, -10.8, 2.6), (0.35, 0.5, 1.3), "white")
+
     def roof(z, w, d, h):
         m.box((0, 2, z), (w, d, 0.4), "bf_red")
-        m.prism((0, 2, z + 0.2), (w + 1.5, d + 2.5, h), "jade_green")
+        m.prism((0, 2, z + 0.2), (w + 1.5, d + 2.5, h), "temple_orange")
+        m.box((0, 2 - (d + 2.5) / 2, z + 0.25), (w + 1.5, 0.3, 0.35), "gold")
         for s in (1, -1):                                                                  # upswept eave corners
             for t in (1, -1):
                 m.tube((s * (w / 2 + 0.2), 2 + t * (d / 2 + 0.8), z + 0.3),
-                       (s * (w / 2 + 1.6), 2 + t * (d / 2 + 1.8), z + 1.6), 0.25, 0.08, "jade_green", seg=6)
+                       (s * (w / 2 + 2.0), 2 + t * (d / 2 + 2.0), z + 2.0), 0.3, 0.08, "temple_orange", seg=6)
         m.box((0, 2, z + h + 0.25), (w * 0.9, 0.5, 0.5), "gold")                           # ridge
         for s in (1, -1):
-            m.ball((s * w * 0.45, 2, z + h + 0.8), (0.5, 0.3, 0.7), "gold", seg=8, rings=6)  # ridge dragons
+            m.ball((s * w * 0.45, 2, z + h + 0.8), (0.5, 0.3, 0.7), "jade_green", seg=8, rings=6)  # ridge dragons
             m.tube((s * w * 0.45, 2, z + h + 1.2), (s * w * 0.52, 2, z + h + 2.0), 0.2, 0.05, "gold", seg=6)
+        if not lo:
+            m.ball((0, 2, z + h + 0.9), (0.6, 0.6, 0.6), "gold", seg=8, rings=6)
     # hall 1
     m.box((0, 2, 5.0), (22, 16, 6.0), "bf_red")
+    m.box((0, -5.95, 5.2), (21, 0.2, 2.0), "white")
     for i in range(8):
         m.tube((-10.5 + i * 3, -6.4, 2.0), (-10.5 + i * 3, -6.4, 8.0), 0.35, 0.35, "bf_red", seg=10)
-        m.ball((-10.5 + i * 3, -6.8, 7.2), (0.45, 0.45, 0.55), "lamp_red", seg=10, rings=7)   # lanterns
+        m.ball((-10.5 + i * 3, -6.8, 7.2), (0.45, 0.45, 0.55), "lantern_red", seg=10, rings=7)   # lanterns
         m.cyl((-10.5 + i * 3, -6.8, 7.8), 0.25, 0.25, 0.12, "gold", seg=8)
     m.box((0, -6.05, 4.5), (4, 0.2, 4.6), "gold")                                           # doors
     roof(8.2, 24, 18, 3.2)
     m.box((0, 2, 12.9), (15, 11, 3.0), "bf_red")
+    m.box((0, -3.6, 12.9), (14, 0.2, 1.2), "white")
     roof(14.4, 17, 13, 2.6)
     m.box((0, 2, 18.2), (9, 7, 2.4), "bf_red")
     roof(19.4, 11, 9, 2.4)
     m.cyl((0, 2, 22.8), 0.6, 0.2, 1.8, "gold", seg=8)
+    # side pavilions with their own little roofs
+    for s in (1, -1):
+        m.box((s * 13, 8, 4.0), (5, 5, 4.0), "bf_red")
+        m.prism((s * 13, 8, 6.0), (6.5, 6.5, 2.0), "temple_orange")
+        m.cyl((s * 13, 8, 8.4), 0.4, 0.1, 1.0, "gold", seg=6)
+    # strings of lanterns across the forecourt
+    if not lo:
+        for y in (-13.5, -16.5):
+            for i in range(9):
+                m.ball((-12 + i * 3, y, 5.4), (0.4, 0.4, 0.5), "lantern_red", seg=8, rings=6)
+            m.tube((-13, y, 5.9), (13, y, 5.9), 0.03, 0.03, "wire_black", seg=4)
+        for x in (-13, 13):
+            for y in (-13.5, -16.5):
+                m.tube((x, y, 0), (x, y, 6.0), 0.12, 0.12, "bf_red", seg=6)
     return m
 
 
 # ============================================================================ Masjid Jamek
 def masjid_jamek():
-    """KL's old mosque: red brick with white stone bands, horseshoe arches, three white onion
-    domes and slim minarets topped with chhatri pavilions."""
+    """Masjid Jamek at the confluence: a prayer hall of red brick banded in white behind a deep white arcade of
+    cusped arches, three white onion domes (the middle one biggest), two tall banded minarets with chhatri tops,
+    rows of little domed turrets, and the stepped half-round terrace down to the water at the point."""
     m = K.Mesher()
+    lo = K.LOD_CULL > 0
     m.box((0, 2, 0.4), (32, 26, 0.8), "marble")
-    # prayer hall: brick with white bands
-    m.box((0, 5, 4.6), (18, 14, 7.6), "brick_red")
+    # the stepped terrace to the confluence (behind the qibla wall, +Y)
+    for k in range(4):
+        m.cyl((0, 14.5 + k * 0.6, 0.6 - k * 0.15), 9.0 - k * 0.8, 9.0 - k * 0.8, 0.3, "marble", seg=16)
+    # prayer hall: brick banded in white
+    m.box((0, 7, 4.6), (18, 12, 7.6), "brick_red")
     for z in (2.2, 4.6, 7.0, 8.3):
-        m.box((0, 5, z), (18.2, 14.2, 0.35), "white")
-    for i in range(5):                                                                      # arcade of arches
-        x = -7.2 + i * 3.6
-        m.box((x, -2.1, 3.0), (2.2, 0.3, 3.6), "window_dark")
-        m.ball((x, -2.15, 4.8), (1.1, 0.15, 1.0), "window_dark", seg=12, rings=6)
-        m.ball((x, -2.2, 4.8), (1.35, 0.1, 1.25), "white", seg=12, rings=6)
+        m.box((0, 7, z), (18.2, 12.2, 0.35), "white")
+    # the white arcade round the front and sides
+    for side in ((0, -1.0, 24, 0.0), (-11.5, 6, 14, math.pi / 2), (11.5, 6, 14, -math.pi / 2)):
+        cx, cy, L, rot = side
+        c, s = math.cos(rot), math.sin(rot)
+        n = int(L / 2.4)
+        m.box((cx, cy, 2.6), (L, 2.2, 5.2) if rot == 0 else (2.2, L, 5.2), "white")
+        m.box((cx, cy, 5.4), (L + 0.4, 2.6, 0.5) if rot == 0 else (2.6, L + 0.4, 0.5), "brick_red")
+        for i in range(n):
+            t = -L / 2 + (i + 0.5) * L / n
+            x, y = cx + t * c, cy + t * s
+            ox, oy = (0, -1.12) if rot == 0 else ((-1.12, 0) if rot > 0 else (1.12, 0))
+            m.box((x + ox, y + oy, 1.9), (1.3, 0.12, 3.0) if rot == 0 else (0.12, 1.3, 3.0), "window_dark")
+            m.ball((x + ox, y + oy, 3.4), (0.65, 0.1, 0.75) if rot == 0 else (0.1, 0.65, 0.75), "window_dark", seg=10, rings=6)
+            if not lo:
+                m.ball((x, y, 5.9), (0.35, 0.35, 0.5), "white", seg=8, rings=5)
     # domes
-    onion_dome(m, (0, 5, 8.4), 3.4, "white")
+    onion_dome(m, (0, 7, 8.4), 3.6, "white")
     for s in (1, -1):
-        onion_dome(m, (s * 6.5, 5, 8.4), 2.2, "white")
-    # minarets with chhatris
+        onion_dome(m, (s * 6.4, 7, 8.4), 2.3, "white")
+    # the two tall minarets (front corners) and smaller turrets (back corners)
     for s in (1, -1):
-        for y in (-3.5, 12.5):
-            x = s * 11.5
-            m.cyl((x, y, 6), 1.1, 0.9, 12, "brick_red", seg=10)
-            for z in (3, 6, 9, 11.6):
-                m.cyl((x, y, z), 1.15, 1.15, 0.35, "white", seg=10)
-            for k in range(6):                                                              # chhatri posts
-                a = k / 6 * math.tau
-                m.tube((x + math.cos(a) * 0.9, y + math.sin(a) * 0.9, 12), (x + math.cos(a) * 0.9, y + math.sin(a) * 0.9, 13.6),
-                       0.1, 0.1, "white", seg=6)
-            onion_dome(m, (x, y, 13.6), 1.1, "white")
+        x, y = s * 12.5, -3.0
+        m.cyl((x, y, 8.5), 1.15, 0.95, 17, "brick_red", seg=10)
+        for z in range(2, 17, 2):
+            m.cyl((x, y, z), 1.2 - z * 0.012, 1.2 - z * 0.012, 0.45, "white", seg=10)
+        m.cyl((x, y, 17.2), 1.5, 1.5, 0.4, "white", seg=10)
+        for k in range(6):                                                                  # chhatri posts
+            a = k / 6 * math.tau
+            m.tube((x + math.cos(a) * 1.0, y + math.sin(a) * 1.0, 17.4), (x + math.cos(a) * 1.0, y + math.sin(a) * 1.0, 19.0),
+                   0.1, 0.1, "white", seg=6)
+        onion_dome(m, (x, y, 19.0), 1.2, "white")
+        x2, y2 = s * 9.5, 13.0
+        m.cyl((x2, y2, 5.5), 0.8, 0.7, 11, "brick_red", seg=8)
+        for z in (3, 6, 9, 10.8):
+            m.cyl((x2, y2, z), 0.85, 0.85, 0.3, "white", seg=8)
+        onion_dome(m, (x2, y2, 11.0), 0.9, "white")
     return m
 
 
@@ -318,27 +392,40 @@ def pavilion():
 
 # ============================================================================ Stadium Merdeka
 def stadium_merdeka():
-    """Open-air stadium: a white oval of raked stands with a blue lower tier around a green
-    pitch and running track, four floodlight towers and the covered VIP stand."""
+    """Stadium Merdeka: the open oval bowl - stands striped blue, red, yellow and white round the red running track
+    and the pitch - the main grandstand under its scalloped roof of red-and-white awnings, and the floodlight masts."""
     m = K.Mesher()
     rx, ry = 13, 16
     m.box((0, 0, 0.15), (36, 36, 0.3), "concrete")
-    # pitch + track (flat ovals)
-    for k, (col, sc, z) in enumerate((("tile_brown", 1.0, 0.32), ("pitch_green", 0.8, 0.36))):
+    for k, (col, sc, z) in enumerate((("tile_red", 1.0, 0.32), ("pitch_green", 0.8, 0.36))):
         m.cyl((0, 0, z), rx * sc, rx * sc, 0.08, col, seg=28, scale_xy=(1, ry / rx))
     m.box((0, 0, 0.42), (rx * 0.9, ry * 1.1, 0.02), "pitch_green")
     m.box((0, 0, 0.44), (0.12, ry * 1.1, 0.02), "white")
-    # raked stands: rings of steps
+    stripes = ["stand_blue", "bf_red", "crate_yellow", "white"]
     for t in range(7):                                                                     # stepped seating
         r = 1.02 + t * 0.06
-        oval_ring(m, rx * r, ry * r, 0.5 + t * 0.45, 1.0 + t * 0.9, 0.9, "stand_blue" if t < 4 else "white", gap=True)
-    # outer wall
+        n = 36
+        for i in range(n):
+            a0, a1 = i / n * math.tau, (i + 1) / n * math.tau
+            p0 = Vector((math.cos(a0) * rx * r, math.sin(a0) * ry * r, 0))
+            p1 = Vector((math.cos(a1) * rx * r, math.sin(a1) * ry * r, 0))
+            mid = (p0 + p1) / 2
+            if mid.y < -ry * r * 0.9:
+                continue
+            d = p1 - p0
+            col = stripes[(i // 3) % 4] if t < 5 else "white"
+            m.box((mid.x, mid.y, 0.5 + t * 0.45), (d.length + 0.15, 0.9, 1.0 + t * 0.9), col, rot=(0, 0, math.atan2(d.y, d.x)))
     oval_ring(m, rx * 1.47, ry * 1.47, 3.3, 6.6, 0.6, "white", n=28, gap=True)
-    # covered VIP stand on the west side
-    m.box((-rx * 1.3, 0, 8.0), (4, 14, 0.4), "white", rot=(0, -0.15, 0))
-    for y in (-6, 0, 6):
-        m.tube((-rx * 1.45, y, 6.6), (-rx * 1.45, y, 8.2), 0.2, 0.2, "steel", seg=6)
-    # floodlights
+    # the main grandstand (west): a roof of scalloped awnings striped red and white
+    gx = -rx * 1.32
+    m.box((gx, 0, 7.6), (4.5, 16, 0.4), "white")
+    for i in range(8):
+        y = -7 + i * 2.0
+        m.ball((gx - 2.3, y, 7.2), (0.6, 1.0, 0.9), "bf_red" if i % 2 == 0 else "white", seg=8, rings=4)
+        m.box((gx, y, 7.85), (4.6, 1.0, 0.12), "bf_red" if i % 2 == 0 else "white")
+    for y in (-7, -2, 3, 7):
+        m.tube((gx + 1.8, y, 3.0), (gx + 1.8, y, 7.5), 0.18, 0.18, "steel", seg=6)
+    m.box((gx - 1.0, 0, 8.6), (0.3, 6.0, 1.0), "sign_blank")
     for sx in (1, -1):
         for sy in (1, -1):
             x, y = sx * rx * 1.3, sy * ry * 1.25
@@ -348,7 +435,6 @@ def stadium_merdeka():
     return m
 
 
-# collision boxes: the solid core of each landmark (center, size) in authoring coords
 KIT_LANDMARKS2 = {
     "env_lm2_batu_caves": (batu_caves, ((0, 10, 9), (34, 14, 18))),
     "env_lm2_merdeka118": (merdeka_118, ((0, 0, 30), (30, 30, 60))),

@@ -1,0 +1,73 @@
+{
+ "asset": "env_kl_landmarks3",
+ "modules": [
+  {
+   "id": "env_lm3_maybank",
+   "triangles": 1860,
+   "lod1_triangles": 96,
+   "size_m": [
+    55.25,
+    56.67,
+    159.0
+   ],
+   "collision": false
+  },
+  {
+   "id": "env_lm3_merdeka118",
+   "triangles": 2272,
+   "lod1_triangles": 348,
+   "size_m": [
+    86.28,
+    110.78,
+    440.6
+   ],
+   "collision": false
+  },
+  {
+   "id": "env_lm3_kl_sentral",
+   "triangles": 550,
+   "lod1_triangles": 262,
+   "size_m": [
+    151.0,
+    113.0,
+    19.1
+   ],
+   "collision": false
+  },
+  {
+   "id": "env_lm3_muzium_negara",
+   "triangles": 1406,
+   "lod1_triangles": 338,
+   "size_m": [
+    74.99,
+    26.48,
+    30.43
+   ],
+   "collision": false
+  },
+  {
+   "id": "env_lm3_masjid_negara",
+   "triangles": 3978,
+   "lod1_triangles": 530,
+   "size_m": [
+    99.1,
+    114.5,
+    51.5
+   ],
+   "collision": false
+  },
+  {
+   "id": "env_lm3_batu_caves",
+   "triangles": 3368,
+   "lod1_triangles": 1298,
+   "size_m": [
+    43.05,
+    46.0,
+    33.78
+   ],
+   "collision": false
+  }
+ ],
+ "materials": 1,
+ "blender": "5.2.1 LTS"
+}
