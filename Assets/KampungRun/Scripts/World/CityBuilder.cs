@@ -227,6 +227,7 @@ namespace KampungRun
             Lap("roads");
             foreach (var p in patches) BuildPatch(p);           // first: its landmarks claim the named places
             FinishRails();
+            BuildStations();
             Lap("patches");
             for (int c = 0; c < NX; c++)
                 for (int r = 0; r < NZ; r++)
@@ -390,6 +391,7 @@ namespace KampungRun
             }
             PatchTrees(p, root, solids);
             _railLines.AddRange(RailRuns(p));
+            _pavements.AddRange(p.rings);
             // the flyovers' parapets and hammerhead piers, modelled
             foreach (var (a, b, o) in p.deckEdges)
                 _arch.Add(new Arch.ParapetRun { pts = new[] { a, b }, outward = new Vector3(o.x, 0f, o.y) });

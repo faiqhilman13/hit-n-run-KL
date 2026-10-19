@@ -146,6 +146,7 @@ namespace KampungRun
             {
                 var top = new Vector3[pts.Length];
                 for (int i = 0; i < pts.Length; i++) top[i] = new Vector3(pts[i].x, RunningTop(mono, pts[i].y), pts[i].z);
+                _railTops.Add((mono, top));
                 for (int i = 0; i + 1 < top.Length; i++)
                 {
                     // long stretches are split so each piece streams with its own city cell

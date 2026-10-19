@@ -65,7 +65,7 @@ namespace KampungRun.EditorTools
             Time.timeScale = 0f;
             try
             {
-                var solidMask = ~((1 << Layers.Character) | (1 << Layers.Pickup) | (1 << Layers.Vehicle) | (1 << ProxyLayer) | (1 << 2) | (1 << 5));
+                var solidMask = ~((1 << Layers.Character) | (1 << Layers.Pickup) | (1 << Layers.Vehicle) | (1 << ProxyLayer) | (1 << 2) | (1 << 5) | (1 << Layers.Ward));
                 int k = 0;
                 foreach (var mr in Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None))
                 {
