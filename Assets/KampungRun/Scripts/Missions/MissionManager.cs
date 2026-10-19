@@ -17,8 +17,17 @@ namespace KampungRun
         public bool Active => Current != null;
         public Objective Step => Active && _step < Current.objectives.Count ? Current.objectives[_step] : null;
         public float TimeLeft { get; private set; }
+        /// <summary>How many times a mission has failed this session, and why the last one did (tests read these).</summary>
+        public int Failures { get; private set; }
+        public string LastFailure { get; private set; }
 
         int _step;
+        bool _fresh;                          // the step before _step+1 isn't running (a mission just started)
+        int _cpStep;                          // H&R-style checkpoint: a retry starts from here
+        Vector3 _cpPos;
+        Quaternion _cpRot;
+        /// <summary>Someone in the street got punched or run over (clean-driving and escort objectives listen).</summary>
+        public event System.Action<Pedestrian> PedHit;
         readonly List<GameObject> _beacons = new List<GameObject>();
         readonly List<GameObject> _raceBeacons = new List<GameObject>();
         GameObject _targetBeacon;
@@ -66,14 +75,21 @@ namespace KampungRun
             Dialogue.Say(m.intro, () => StartMission(m));
         }
 
-        public void StartMission(Mission m)
+        public void StartMission(Mission m) => StartMission(m, 0);
+
+        /// <summary>Start a mission (from a checkpoint step on a retry).</summary>
+        public void StartMission(Mission m, int fromStep)
         {
             Current = m;
-            _step = -1;
+            _step = fromStep - 1;
+            _fresh = true;
+            _cpStep = fromStep;
             _startPos = PlayerController.I.transform.position;
             _startRot = PlayerController.I.transform.rotation;
+            _cpPos = _startPos;
+            _cpRot = _startRot;
             foreach (var n in npcs.Values) n.hasMission = false;
-            HUD.I.BigMessage(m.title, m.isRace ? "PERLUMBAAN" : "MISI BARU");
+            HUD.I.BigMessage(m.title, fromStep > 0 ? "CUBA LAGI" : m.isRace ? "PERLUMBAAN" : "MISI BARU");
             ProcAudio.Play2D(ProcAudio.Fanfare, 0.5f, 0.9f);
             if (!string.IsNullOrEmpty(m.startCar) && !PlayerController.I.Driving)
             {
@@ -85,13 +101,24 @@ namespace KampungRun
 
         void Next()
         {
-            if (_step >= 0 && _step < Current.objectives.Count) Current.objectives[_step].End(this);
+            if (!_fresh && _step >= 0 && _step < Current.objectives.Count) EndStep(Current.objectives[_step]);
+            _fresh = false;
             ClearBeacons();
             _step++;
             if (_step >= Current.objectives.Count) { Complete(); return; }
             var o = Current.objectives[_step];
             o.failReason = null;
+            o.debugForceDone = false;
+            if (o.checkpoint && _step > _cpStep)
+            {
+                _cpStep = _step;
+                _cpPos = PlayerController.I.transform.position;
+                _cpRot = PlayerController.I.transform.rotation;
+                if (PlayerController.I.Driving) _cpPos = PlayerController.I.vehicle.transform.position + PlayerController.I.vehicle.transform.right * -3f;
+                HUD.I.Toast("CHECKPOINT");
+            }
             TimeLeft = o.timeLimit * CityBuilder.WorldScale;   // limits were set on the old compressed map
+            if (!string.IsNullOrEmpty(o.hideNpc) && Npc(o.hideNpc)) Npc(o.hideNpc).gameObject.SetActive(false);
             o.Begin(this);
             if (!string.IsNullOrEmpty(o.text)) ProcAudio.Play2D(ProcAudio.Blip, 0.4f);
         }
@@ -154,26 +181,32 @@ namespace KampungRun
         void Fail(string reason)
         {
             var m = Current;
-            if (Step != null) Step.End(this);
+            if (Step != null) EndStep(Step);
             Current = null;
             ClearBeacons();
             ClearRaceBeacons();
             if (_targetBeacon) _targetBeacon.SetActive(false);
+            Failures++;
+            LastFailure = reason;
+            Debug.Log($"[Mission] '{m.title}' failed at step {_step + 1}: {reason}");
             ProcAudio.Play2D(ProcAudio.Fail, 0.8f);
             HUD.I.BigMessage("MISI GAGAL", reason);
             SamanMeter.I.suppressed = false;
-            // put everything back like H&R's retry
-            Dialogue.Say(new[] { new Line("", "Tekan E untuk cuba lagi.") }, () =>
+            // put everything back like H&R's retry (from the last checkpoint the mission reached)
+            int from = _cpStep;
+            var pos = from > 0 ? _cpPos : _startPos;
+            var rot = from > 0 ? _cpRot : _startRot;
+            Dialogue.Say(new[] { new Line("", from > 0 ? "Tekan E untuk cuba lagi dari checkpoint." : "Tekan E untuk cuba lagi.") }, () =>
             {
-                GameManager.I.ResetForRetry(_startPos, _startRot);
-                StartMission(m);
+                GameManager.I.ResetForRetry(pos, rot);
+                StartMission(m, from);
             });
         }
 
         public void Abort()
         {
             if (!Active) return;
-            if (Step != null) Step.End(this);
+            if (Step != null) EndStep(Step);
             Current = null;
             ClearBeacons();
             ClearRaceBeacons();
@@ -182,7 +215,13 @@ namespace KampungRun
             RefreshGivers();
         }
 
-        public void NotifyPedHit(Pedestrian p) { }
+        void EndStep(Objective o)
+        {
+            o.End(this);
+            if (!string.IsNullOrEmpty(o.hideNpc) && Npc(o.hideNpc)) Npc(o.hideNpc).gameObject.SetActive(true);
+        }
+
+        public void NotifyPedHit(Pedestrian p) => PedHit?.Invoke(p);
 
         // ------------------------------------------------------------- beacons
         GameObject MakeBeacon(Vector3 at, float width)
@@ -198,7 +237,12 @@ namespace KampungRun
             return go;
         }
 
-        public void Beacon(Vector3 at, float width) => _beacons.Add(MakeBeacon(at, width));
+        public GameObject Beacon(Vector3 at, float width)
+        {
+            var b = MakeBeacon(at, width);
+            _beacons.Add(b);
+            return b;
+        }
 
         void ClearBeacons()
         {

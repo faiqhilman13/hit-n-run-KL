@@ -20,6 +20,10 @@ namespace KampungRun
         public float timeLimit;       // 0 = no timer
         public string failReason;     // set to fail the mission
         public bool debugForceDone;   // tests: skip this step
+        /// <summary>A retry after failing a later step starts from here (Hit &amp; Run checkpoints).</summary>
+        public bool checkpoint;
+        /// <summary>A cast member who steps out of the scene while this step runs (the objective plays them).</summary>
+        public string hideNpc;
         public virtual Vector3? Target => null;
         public virtual string Progress => null;
         public virtual float? TargetHealth => null;
@@ -41,6 +45,8 @@ namespace KampungRun
 
         public override void Begin(MissionManager m)
         {
+            _done = false;
+            _talking = false;
             _target = m.Npc(_npc);
             if (_target == null) { _done = true; return; }
             _target.gameObject.SetActive(true);
@@ -66,7 +72,7 @@ namespace KampungRun
         readonly Line[] _lines;
         bool _done;
         public DialogueObjective(params Line[] lines) { _lines = lines; text = ""; }
-        public override void Begin(MissionManager m) => Dialogue.Say(_lines, () => _done = true);
+        public override void Begin(MissionManager m) { _done = false; Dialogue.Say(_lines, () => _done = true); }
         public override bool Tick(MissionManager m, float dt) => _done;
     }
 
@@ -126,6 +132,8 @@ namespace KampungRun
 
         public override void Begin(MissionManager m)
         {
+            _got = 0;
+            _items.Clear();
             foreach (var s in _spots)
             {
                 var go = ModelFactory.Spawn(_model, s, Quaternion.identity, m.transform, "MissionItem");
@@ -196,18 +204,24 @@ namespace KampungRun
         readonly Dictionary<string, Color> _paint;
         Vehicle _target;
         RouteDriver _driver;
-        float _lostTime;
+        float _lostTime, _closeTime;
         bool _started;
+        /// <summary>Closer than this for 3 s and the driver spots the tail (0: never).</summary>
+        public float spookDist;
 
         /// <param name="stops">where the car goes; it drives the streets between them</param>
         public FollowObjective(string text, string car, List<Vector3> stops, float maxDist = 70f, Dictionary<string, Color> paint = null)
         { this.text = text; _car = car; _stops = stops; _maxDist = maxDist; _paint = paint; }
 
         public override Vector3? Target => _target ? _target.transform.position : (Vector3?)null;
-        public override string Progress => _lostTime > 0 ? $"HILANG! {Mathf.CeilToInt(5f - _lostTime)}" : null;
+        public override string Progress => _lostTime > 0 ? $"HILANG! {Mathf.CeilToInt(5f - _lostTime)}"
+            : _closeTime > 0 ? $"TERLALU DEKAT! {Mathf.CeilToInt(3f - _closeTime)}" : null;
+        public Vehicle Car => _target;
 
         public override void Begin(MissionManager m)
         {
+            _lostTime = _closeTime = 0f;
+            _started = false;
             var route = GameManager.I.City.roads.Route(_stops);
             var start = route[0];
             var dir = (route.Count > 1 ? route[1] - start : Vector3.forward);
@@ -238,6 +252,12 @@ namespace KampungRun
             float d = Vector3.Distance(P.Focus, _target.transform.position);
             if (d > _maxDist) _lostTime += dt; else _lostTime = 0f;
             if (_lostTime > 5f) failReason = "Kau hilang jejak!";
+            if (spookDist > 0f)
+            {
+                if (d < spookDist) _closeTime += dt; else _closeTime = Mathf.Max(0f, _closeTime - dt);
+                if (_closeTime > 0f) MissionOverlay.Hint("Jangan rapat sangat - nanti dia perasan!");
+                if (_closeTime > 3f) failReason = "Dia perasan kau ikut dia!";
+            }
             return _driver.Finished;
         }
 
@@ -265,6 +285,8 @@ namespace KampungRun
         public override void Begin(MissionManager m)
         {
             var roads = GameManager.I.City.roads;
+            _next = 0;
+            _opponents.Clear(); _drivers.Clear(); _marks.Clear();
             _total = _checkpoints.Count * _laps;
             // line the rivals up on the street behind the start, the way the course comes in
             var lead = roads.Route(new List<Vector3> { _checkpoints[_checkpoints.Count - 1], _checkpoints[0] });
@@ -398,6 +420,8 @@ namespace KampungRun
 
         public override void Begin(MissionManager m)
         {
+            _done = 0;
+            _things.Clear();
             foreach (var s in _spots)
             {
                 if (_kind == "bird")

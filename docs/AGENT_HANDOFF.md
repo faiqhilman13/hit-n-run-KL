@@ -908,3 +908,66 @@ The user said the cars were "a bit too simplistic", then asked for a compact, li
 - The Iriz still reads a little MPV-like.
 - The `Body_LOD1` stand-in has opaque windows, so distant cars hide their drivers.
 - Optional parts enabled after a `Recolor` keep the base palette. None of them use `car_paint`.
+
+
+## Update — missions pass: less drive-and-collect (20 Oct 2026, `missions-pass` worktree)
+
+The user said the original Simpsons game was criticised for repetitive driving/collecting and asked us to minimise that. The mission system was audited and redesigned so every mission has one clear verb that differs from its neighbours. Story, cast, chapters and the MegaMaju / Datuk Mega / Cendol Ajaib plot are unchanged.
+
+**Audit (before), 25 story missions by primary verb:** drive-to 5 (L1M1, L2M4, L3M2, L4M3, L5M1), collect 5 (L1M2, L2M1, L3M3, L4M1, L5M2), smash-the-things (collect by punching) 5 (L1M4, L2M5, L4M2, L5M4, L5M5), destroy a car 5 (L1M3, L2M2, L3M5, L4M4, L4M5), tail 3, race 1, evade 1. That makes 20 of 25 drive/collect/destroy. Races: 5 (unchanged).
+
+**After:**
+
+| Ch | Mission | Verb | Twist |
+| --- | --- | --- | --- |
+| 1 | Teh Tarik Kurang Manis | drive clean | 3 saman = fail: red lights, hitting people, big crashes, speeding >70 (Pak Mat already owes RM50) |
+| 1 | Burung Pelik | photograph | perched robot mynahs flit off if you get close, sprint or drive near |
+| 1 | Periuk Kenduri | search rooms | walk into kampung houses; locals point the way after 2 misses |
+| 1 | Bas Mini Samseng | wreck | (classic, kept) |
+| 1 | Van Hitam | sneak | 2 guards with ground sight cones; knock out from behind; steal a tin |
+| 2 | Bahan Rahsia | haggle | menu haggle with Ah Chong: sweet talk, bluff (only works if he's in a good mood), lowball once, fake walk-away |
+| 2 | Bubur Lambuk | carry carefully | open pot: crashes, hard braking, hard corners and landings spill it |
+| 2 | Ikut Teksi | tail | too close for 3 s = spotted |
+| 2 | Rusuhan Cendol | defend | hold Aunty's pot 60 s against cendol zombies; punches cure them |
+| 2 | Kilang Cendol | smash | crates hidden inside Petaling St shops, then evade; payoff by phone, no drive home |
+| 3 | Rempit Senja | race | (kept) |
+| 3 | Hantar Adik Mengaji | escort on foot | Adik won't get in a car; traffic can hit her; punch promoters away before they reach her |
+| 3 | Antena Menara | disguise | technician outfit: guards barely notice unless you run or get close; plant 3 jammers (hold 2 s) |
+| 3 | Polis Bingung | hide | heat only drains inside a shop/house with no patrol car near; getting busted is a fail |
+| 3 | Van Pemancar | wreck | (kept) |
+| 4 | Guli Hilang | stealth collect | Along patrols the yard with a torch cone; no takedowns |
+| 4 | Bukti Datuk | photograph unseen | Datuk walks Dataran with 2 outward-facing bodyguards |
+| 4 | Penawar Untuk Semua | brawl | 8 zombies mob you at the mamak; 3 knockdowns = fail; car hits don't cure |
+| 4 | Limo Datuk | ram | armoured limo: 5 solid hits before it reaches the towers |
+| 4 | Pertempuran Menara Kembar | boss | Mega-Mynah: red ring telegraph, dive, dazed window to punch; 3 phases |
+| 5 | Order Pertama | carry carefully | soup on the bike |
+| 5 | Ragut! | foot chase | thief runs the pavement loops, tips crates behind him, takes 4 hits |
+| 5 | Ikut Van Ekspres | tail | spook distance |
+| 5 | Pengintip Chow Kit | search rooms | Chow Kit shops |
+| 5 | Gudang Ekspres | sneak | 3 guards; pour cure into 3 crates (hold); then evade; payoff by phone |
+
+Tally after: drive-type 3 (each with a twist, at most one per chapter: L1 clean drive, L2 and L5 fragile; none in L3/L4), collect 1 (stealth), smash 1, wreck 2, ram 1, tail 2, race 1, photo 2, search 2, sneak 2, haggle 1, defend 1, escort 1, disguise 1, hide 1, brawl 1, boss 1, foot chase 1. Driving-primary missions fell from ~20/25 to 9/25.
+
+**Code (all in `Scripts/Missions/` unless noted):**
+- `ObjectivesPlus.cs` (new): CleanDrive, Fragile, Ram, Photo (+ `PerchedBird`), Haggle, Sneak (+ `GuardSpec`, disguise, dressing hook), Search (reads `Interiors.I.Rooms`, front-door openings), Hide, Escort, Defend, Brawl, FootChase (path from `City.walkZones`), Boss (`MegaMynah`), `MissionLooks` (suits, zombies, `Open()` ground-spot finder), `MissionSpin`.
+- `Goon.cs` (new): mission-controlled character (patrol / seek / follow / path), sight cone painted on the ground with the beacon shader, punchable, knocked by cars. `IPunchable` interface.
+- `MissionOverlay.cs` (new): its own canvas: meter under the Meter Saman, a hint line, a photo viewfinder, shutter flash. Auto-hides each frame.
+- `MissionManager.cs`: checkpoints (`Objective.checkpoint`; retry resumes there), `PedHit` event, `Beacon` returns its object, `hideNpc` support, `Failures`/`LastFailure` counters, fail log line.
+- `Objectives.cs`: `checkpoint`, `hideNpc`; objectives reset their state in `Begin` (retries used to auto-complete collects/talks); `FollowObjective.spookDist`.
+- `MissionBook.cs`: all five chapters rewritten; new NPC Ah Chong at Petaling St.
+- **Shared file, surgical:** `Characters/PlayerController.cs` (+3 lines): punches/kicks and lock-on now hit `IPunchable`. No World/Vehicles files touched.
+
+**Verification (batch, graphics on):**
+- New `Tests/MissionTests.cs`: `PlayEveryMission` (Timeout 1 h; `-mxLevel=N` runs one chapter) plays each story mission through real mechanics where possible: real punches knock out guards from behind and floor the thief (3 punches), birds and the Datuk are framed in the camera and snapped for real (no forced snaps), searches walk into each room, hiding walks into the nearest shop (lost police in ~3.4 s), the boss's dives are dodged and it is punched while dazed (beaten in ~21 s), the haggle is won with the sequence sweet/bluff/bluff/bluff/walk (RM30 to RM18), and the disguise cut suspicion from 0.36 to 0.04 for the same exposure. Chapters 4 and 5 passed in full on the final code. Chapters 1 to 3 passed in an earlier full run, which then hit the old 180 s default timeout in chapter 4. They were not re-run after the last tweaks (boss tracking, braking spill, marble spacing, phone-call payoffs).
+- `CheckpointRetry` test written, **not run yet**.
+- SmokeTests **not re-run** after this pass. `PlayThroughAllLevels` forces unknown objective types done after 0.5 s, so it should still pass, but that is unverified.
+- Screens: `Tools/promo_frames/x_missions/` (`sheet_L1..L5.jpg`, per-step PNGs, `report.txt`).
+
+**Known gaps / next steps:**
+- Run the full SmokeTests suite and `CheckpointRetry`, then re-run `PlayEveryMission` across all five chapters.
+- Difficulty is untuned by a human. Values to tune: defend spawn rate, guard detection rates, brawl knockdown interval, fragile spill rates (a full emergency stop costs about 25%) and boss HP (4 per phase).
+- Goons move by transform with ground snapping. They pass through walls and fences, so place them in the open (`MissionLooks.Open` does this).
+- The photo birds are only `Prop_BurungKamera` at 2.2x scale and can still read small at 17 m. The brawl's stage shot didn't frame the zombies.
+- The search needs interiors on. If too few rooms are found it falls back to pavement spots.
+- The races are unchanged.
+- Ideas not built: rooftop/LRT set-piece, a market QTE (the haggle is menu-based), phone-booth chains.
