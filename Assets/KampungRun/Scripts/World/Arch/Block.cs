@@ -115,7 +115,7 @@ namespace KampungRun.Arch
                 for (int k = 0; k < bays; k++)
                 {
                     float x0 = k * bw + 0.25f, x1 = (k + 1) * bw - 0.25f;
-                    var back = b.tower ? ArchTex.Glass : (k % 3 == 1 ? ArchTex.DoorGlass : ArchTex.GlassShop);
+                    var back = b.tower ? ArchTex.Glass : ShopBacks[Hash(b.s.seed, 301 + k) % ShopBacks.Length];
                     if (kind == BuildingKind.Civic) back = k == bays / 2 ? ArchTex.DoorGlass : ArchTex.Glass;
                     _holes.Add(new Opening(x0, x1, 0.0f, Mathf.Min(3.3f, b.G - 0.7f), b.detail ? 0.25f : 0f, back, back == ArchTex.Glass ? Glass : White, Reveal));
                 }
@@ -144,6 +144,8 @@ namespace KampungRun.Arch
             {
                 // a canopy over the ground floor
                 m.Box(f, -0.05f, len + 0.05f, b.G - 0.55f, b.G - 0.3f, 0f, 1.6f, b.tower ? Metal : b.trim);
+                // and the shops' signboards along its edge, the way every KL block's ground floor is lettered
+                if (kind == BuildingKind.Flats || (kind == BuildingKind.Office && !b.glass)) ShopSigns(m, f, len, b, bays, bw);
                 if (kind == BuildingKind.Civic && len > 10f)
                 {
                     // a portico: four columns under a pediment
@@ -204,7 +206,7 @@ namespace KampungRun.Arch
                     if (r < 0.3) AcUnit(m, f, h.x1 + 0.15f, h.y0 + 0.05f);
                     else if (r < 0.5) Laundry(m, f, (h.x0 + h.x1) * 0.5f, h.y0 - 0.2f, b.rng);
                 }
-                if (kind == BuildingKind.Flats && k % 2 == 1 && len > 8f && main)
+                if (kind == BuildingKind.Flats && (k % 2 == 1 || b.lv >= 8) && len > 8f && main)
                 {
                     // balconies on alternate floors along the front
                     for (int q = 0; q + 1 < bays; q += 2)
@@ -215,6 +217,13 @@ namespace KampungRun.Arch
                         m.Rect(f, x0 + 0.05f, x1 - 0.05f, y0 + 0.1f, y0 + 0.95f, 1.21f, b.trim, ArchTex.Rail, 1.0f);
                         m.Box(f, x0, x0 + 0.1f, y0, y0 + 1.05f, 0f, 1.2f, b.trim, Faces.Left | Faces.Right | Faces.Top);
                         m.Box(f, x1 - 0.1f, x1, y0, y0 + 1.05f, 0f, 1.2f, b.trim, Faces.Left | Faces.Right | Faces.Top);
+                        // the condo's air-con condenser out on the balcony, and a pot plant or the wash
+                        if (b.lv >= 8)
+                        {
+                            int hb = Hash(b.s.seed, k * 31 + q);
+                            if (hb % 3 != 0) AcUnit(m, f, x1 - 1.05f, y0 + 0.62f, 0.15f);
+                            if (hb % 5 == 1) Laundry(m, f, x0 + 0.8f, y0 + 1.9f, b.rng);
+                        }
                     }
                 }
                 if (k < b.lv - 1 && (kind != BuildingKind.Office))
@@ -253,10 +262,70 @@ namespace KampungRun.Arch
             ArchMesh.Col(0.4f, 0.75f, 0.45f), ArchMesh.Col(0.95f, 0.55f, 0.75f), ArchMesh.Col(0.6f, 0.4f, 0.75f),
         };
 
-        static void AcUnit(ArchMesh m, in Frame f, float x, float y)
+        static void AcUnit(ArchMesh m, in Frame f, float x, float y, float z = 0.06f)
         {
-            m.Box(f, x, x + 0.85f, y - 0.6f, y, 0.06f, 0.38f, ArchMesh.Col(0.93f, 0.93f, 0.92f), Faces.All & ~Faces.Front & ~Faces.Back);
-            m.Rect(f, x, x + 0.85f, y - 0.6f, y, 0.38f, White, ArchTex.AC);
+            m.Box(f, x, x + 0.85f, y - 0.6f, y, z, z + 0.32f, ArchMesh.Col(0.93f, 0.93f, 0.92f), Faces.All & ~Faces.Front & ~Faces.Back);
+            m.Rect(f, x, x + 0.85f, y - 0.6f, y, z + 0.32f, White, ArchTex.AC);
+        }
+
+        static int Hash(int seed, int salt)
+        {
+            unchecked
+            {
+                uint h = (uint)seed * 2654435761u ^ (uint)salt * 2246822519u;
+                h ^= h >> 15; h *= 2246822519u; h ^= h >> 13; h *= 3266489917u; h ^= h >> 16;
+                return (int)(h & 0x7fffffff);
+            }
+        }
+
+        // what the ground-floor shops of a block show through their fronts (the streets pass: not all the same shelf)
+        static readonly ArchTex[] ShopBacks = { ArchTex.GlassShop, ArchTex.DoorGlass, ArchTex.Kopitiam, ArchTex.Hardware, ArchTex.Textile, ArchTex.GoldShop,
+                                                ArchTex.Roller, ArchTex.Folding, ArchTex.GlassShop, ArchTex.Kopitiam, ArchTex.Fridge };
+
+        static readonly Color32 SignEdge = ArchMesh.Col(0.2f, 0.18f, 0.2f);
+
+        /// <summary>Signboards along the ground-floor canopy's edge: one shop to a bay or two, each its own board.</summary>
+        static void ShopSigns(ArchMesh m, in Frame f, float len, B b, int bays, float bw)
+        {
+            float y0 = b.G - 0.62f, y1 = b.G + 0.3f, z = 1.62f;
+            int k = 0;
+            while (k < bays)
+            {
+                int h = Hash(b.s.seed, 101 + k);
+                int span = Mathf.Min(bays - k, bw < 2.6f ? 2 : 1 + (h % 2));
+                float x0 = k * bw + 0.08f, x1 = (k + span) * bw - 0.08f;
+                if ((h >> 3) % 7 != 0)                                       // now and then a shop without a board
+                {
+                    var tex = Shophouse.SignTex(h >> 5, out float v0, out float v1);
+                    m.Box(f, x0, x1, y0, y1, z - 0.1f, z, SignEdge, Faces.Left | Faces.Right | Faces.Top | Faces.Bottom);
+                    m.Quad(f.P(x0, y0, z), f.P(x1, y0, z), f.P(x1, y1, z), f.P(x0, y1, z), White, tex, 0f, v0, 1f, v1);
+                }
+                k += span;
+            }
+        }
+
+        /// <summary>A billboard on the roof of a mid-rise block, facing the street over its main front.</summary>
+        static void RoofBillboard(ArchMesh m, B b, float y)
+        {
+            var s = b.s;
+            int front = Shophouse.FrontEdge(s);
+            Vector2 a = s.ring[front], c = s.ring[(front + 1) % s.ring.Length];
+            float len = (c - a).magnitude;
+            if (len < 8f) return;
+            var f = Frame.Edge(a, c, y);
+            int h = Hash(s.seed, 211);
+            float w = Mathf.Min(len - 1f, 9f), ht = w * 0.42f, cx = len * 0.5f, zb = -1.6f;
+            ArchTex[] boards = { ArchTex.Billboard0, ArchTex.Billboard1, ArchTex.Billboard2, ArchTex.Billboard3, ArchTex.Billboard4, ArchTex.Billboard5 };
+            var tex = boards[h % boards.Length];
+            for (int k = 0; k < 3; k++)
+            {
+                float x = cx - w * 0.4f + w * 0.4f * k;
+                m.Box(f, x - 0.08f, x + 0.08f, 0f, 2.2f, zb - 0.6f, zb - 0.44f, Metal);
+                m.Box(f, x - 0.06f, x + 0.06f, 0f, 2.2f + ht * 0.6f, zb - 0.22f, zb - 0.1f, Metal);
+            }
+            m.Box(f, cx - w * 0.5f, cx + w * 0.5f, 2.2f, 2.2f + ht, zb - 0.1f, zb, ArchMesh.Col(0.26f, 0.25f, 0.28f), Faces.All & ~Faces.Front);
+            m.Rect(f, cx - w * 0.5f, cx + w * 0.5f, 2.2f, 2.2f + ht, zb + 0.001f, White, tex);
+            m.Box(f, cx - w * 0.5f, cx + w * 0.5f, 2.1f, 2.2f, zb - 0.1f, zb + 0.5f, Metal);           // the catwalk
         }
 
         // ------------------------------------------------------------------------------------------ roofs
@@ -283,6 +352,8 @@ namespace KampungRun.Arch
                 if (b.detail) m.Box(f, -0.02f, len + 0.02f, parapet, parapet + 0.1f, -0.26f, 0.04f, b.trim, Faces.Front | Faces.Back | Faces.Top);
             }
             if (!b.detail) return;
+            if (!b.tower && (s.kind == BuildingKind.Flats || s.kind == BuildingKind.Office) && b.lv >= 3 && b.lv <= 12 && Hash(s.seed, 207) % 3 == 0)
+                RoofBillboard(m, b, y + 0.04f);
             var cen = s.Centre();
             float area = Mathf.Abs(s.Area());
             if (b.tower)

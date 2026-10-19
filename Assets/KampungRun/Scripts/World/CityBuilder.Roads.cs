@@ -171,7 +171,7 @@ namespace KampungRun
                     if (kind == 2) m.SetColors(p.c); else m.SetUVs(0, p.uv);
                     m.SetTriangles(p.t, 0);
                     m.RecalculateBounds();
-                    m.UploadMeshData(true);
+                    MeshKeep.Upload(m);
                     var go = new GameObject(m.name) { layer = kind == 1 ? Layers.Detail : Layers.World };
                     go.transform.SetParent(root, false);
                     go.isStatic = true;
@@ -260,6 +260,8 @@ namespace KampungRun
             foreach (var kv in _cityBoxes) PaintBox(kv.Key.Item1, kv.Key.Item2, kv.Value, ends);
             foreach (var kv in ends) if (kv.Value.signal) SignalPoles(kv.Key.Item1, kv.Key.Item2, kv.Value);
             Lap("boxes");
+            int signs = RoadSigns(ends);
+            Lap("signs");
             PaintPatches();
             Lap("patches");
             int linked = LinkCrossings();
@@ -273,7 +275,71 @@ namespace KampungRun
             Debug.Log($"[Roads] painted {_citySegs.Count} streets, {_cityBoxes.Count} junction boxes: {_paint.quads} quads; " +
                       $"{_signalled.Count} signalled junctions, {TrafficSignals.Crossings.Count} crossings ({linked} joining two pavements), " +
                       $"{TrafficSignals.Junctions.Count} junctions to give way at; {_lampsAdded} lamp posts, {_city.parkingBays.Count} parking bays, " +
-                      $"{_city.motoBays.Count} motorcycle bays; ms:{laps} (furniture {_swFurn.ElapsedMilliseconds}, of which lamp props {_swLamp.ElapsedMilliseconds})");
+                      $"{_city.motoBays.Count} motorcycle bays, {signs} signs and banners; ms:{laps} (furniture {_swFurn.ElapsedMilliseconds}, of which lamp props {_swLamp.ElapsedMilliseconds})");
+        }
+
+        /// <summary>
+        /// The signs a driver reads in KL (the streets pass): JKR overhead direction boards on gantries across the approach
+        /// to about a third of the signalled crossroads' arms (blue for the city's roads, green on the outer ring), a blue
+        /// street-name post on a corner of each signalled junction, and banners or the Jalur Gemilang on the lamp posts.
+        /// Modelled by the architecture library (Arch.StreetSign), streamed with the buildings; the posts are solid.
+        /// </summary>
+        int RoadSigns(Dictionary<(int, int), JunctionControl> ends)
+        {
+            int n = 0;
+            foreach (var kv in ends)
+            {
+                if (!kv.Value.signal) continue;
+                var (i, k) = kv.Key;
+                var jp = new Vector3(RoadX(i), 0f, RoadZ(k));
+                var arms = _cityBoxes[(i, k)];
+                bool[] open = { arms.n, arms.e, arms.s, arms.w };
+                bool outer = i <= 1 || k <= 1 || i >= NX - 1 || k >= NZ - 1;
+                for (int arm = 0; arm < 4; arm++)
+                {
+                    if (!open[arm] || Hash01(jp.x + arm * 13f, jp.z, 941) > 0.34f) continue;
+                    var f = new Frame(jp, ArmDir(arm));
+                    if (!PavementSide(f, 1f, false, 0, 0) || !PavementSide(f, -1f, false, 0, 0)) continue;
+                    float s = StopLine + 36f;
+                    for (int tries = 0; tries < 3; tries++, s += 7f)
+                        if (!NearLamp(f.P(s, -10.65f), 1.6f) && !NearLamp(f.P(s, 10.65f), 1.6f)) break;
+                    int seed = Mathf.RoundToInt(Hash01(jp.x, jp.z + arm, 943) * 0x3fffffff);
+                    if (outer || Hash01(jp.x, jp.z + arm, 947) < 0.2f) seed |= 0x40000000;
+                    _arch.Add(new Arch.StreetSign { kind = Arch.SignKind.Gantry, o = f.P(s, -10.65f, G), r = f.t, span = 21.3f, seed = seed });
+                    foreach (float t in new[] { -10.65f, 10.65f })
+                        _ground.ColliderOnly(f.P(s, t, G + 4.05f), new Vector3(0.44f, 8.1f, 0.44f));
+                    n++;
+                }
+                // a street-name post on one corner where both streets have a pavement
+                for (int q = 0; q < 4; q++)
+                {
+                    int qa = (q + (int)(Hash01(jp.x, jp.z, 949) * 4f)) % 4, qb = (qa + 1) % 4;
+                    if (!open[qa] || !open[qb]) continue;
+                    var corner = jp + (ArmDir(qa) + ArmDir(qb)) * 12.3f;
+                    int col = Mathf.FloorToInt((corner.x - X0) / Pitch), row = Mathf.FloorToInt((corner.z - Z0) / Pitch);
+                    if (col < 0 || row < 0 || col >= NX || row >= NZ || ZoneAt(col, row) == Zone.Patch || RiverAt(col, row) != null) continue;
+                    corner.y = G;
+                    _arch.Add(new Arch.StreetSign { kind = Arch.SignKind.NamePost, o = corner, r = ArmDir(qa), span = 0f, seed = Mathf.RoundToInt(Hash01(corner.x, corner.z, 951) * 0x3fffffff) });
+                    _ground.ColliderOnly(corner + Vector3.up * 1.5f, new Vector3(0.14f, 3f, 0.14f));
+                    n++;
+                    break;
+                }
+            }
+            // banners and flags on the lamp posts (high up: no physics)
+            if (!GameManager.WebLite)
+                foreach (var at in _lampSpots)
+                {
+                    if (Hash01(at.x, at.z, 953) > 0.45f) continue;
+                    float gx = (at.x - X0) / Pitch, gz = (at.z - Z0) / Pitch;
+                    float rx = X0 + Mathf.Round(gx) * Pitch, rz = Z0 + Mathf.Round(gz) * Pitch;
+                    float dx = Mathf.Abs(at.x - rx), dz = Mathf.Abs(at.z - rz);
+                    if (Mathf.Min(dx, dz) > 12.5f) continue;                       // not by a grid road
+                    var toRoad = dx < dz ? new Vector3(Mathf.Sign(rx - at.x), 0f, 0f) : new Vector3(0f, 0f, Mathf.Sign(rz - at.z));
+                    _arch.Add(new Arch.StreetSign { kind = Arch.SignKind.LampBanner, o = new Vector3(at.x, G + 4.5f, at.z) + toRoad * 0.12f, r = toRoad, span = 0.72f,
+                                                    seed = Mathf.RoundToInt(Hash01(at.x, at.z, 955) * 0x3fffffff) });
+                    n++;
+                }
+            return n;
         }
 
         /// <summary>Is this end of a city segment a crossroads with a zebra, stop line and arrows?</summary>
@@ -368,6 +434,8 @@ namespace KampungRun
                     float qs = Vector3.Dot(q - f.o, f.s), qt = Vector3.Dot(q - f.o, f.t);
                     if (qs > s0 - 6f && qs < s1 + 6f && qt * side > 6f && qt * side < 26f) skips.Add(new Vector2(qs - 8f, qs + 8f));
                 }
+                var joins = new List<Vector2>(skips);
+                var buses = new List<Vector2>();
                 float za = xa ? XingFar + 12f : ra ? 28f : s0, zb = xb ? L - XingFar - 12f : rb ? L - 28f : s1;
                 // a bus stop on this side: a yellow bay with BAS in it, and no other kerb lines along it
                 foreach (var (bpos, _) in _city.busStops)
@@ -378,6 +446,7 @@ namespace KampungRun
                     if (b1 - b0 < 9f) continue;
                     BusBay(f, b0, b1, side);
                     skips.Add(new Vector2(b0 - 0.3f, b1 + 0.3f));
+                    buses.Add(new Vector2(b0 - 0.3f, b1 + 0.3f));
                 }
                 // marked parking bays down the kerb of some shopping streets (cars park in them: GameManager)
                 if (ParkingSide(f, side) && Hash01(a.x + side * 3f, a.z, ns ? 71 : 73) < 0.8f)
@@ -396,6 +465,7 @@ namespace KampungRun
                 // the monsoon drain's covers down the pavement (only where there is one: a block, not a patch or river)
                 if (PavementSide(f, side, ns, i, k))
                 {
+                    KerbPaint(f, side, s0, s1, xa || ra, xb || rb, joins, buses);
                     DrainCovers(f, side, xa || ra ? XingFar + 1.2f : s0 + 2f, xb || rb ? L - XingFar - 1.2f : s1 - 2f, skips);
                     _swFurn.Start();
                     Furniture(f, side, xa, xb, ra, rb, skips);
@@ -556,6 +626,11 @@ namespace KampungRun
                 _lampSpots.Add(at);
                 _lampsAdded++;
             }
+            // the streets pass: a row of kapcai parked on the pavement nose-out at the kerb, and now and then a hawker's
+            // cart under its umbrella (between the railings, the lamps and the signs; solid)
+            if (!lite && TownSide(f, side)) PavementClutter(f, side, skips);
+            // and a covered walkway down the pavement past the office towers and condos
+            if (WalkwaySide(f, side)) CoveredWalkway(f, side, xa, xb, skips);
             // the traffic on this side of the road heads +s if side > 0 (it keeps left), so its signs face -s
             var face = -f.s * side;
             float ts = side * 10.8f;
@@ -571,6 +646,101 @@ namespace KampungRun
             {
                 float s = L * 0.5f + side * 14f;
                 if (!InSkip(s, skips)) SignPost(f.P(s, ts, G), face, hm < 0.35f ? 2 : 3);
+            }
+        }
+
+        /// <summary>Town (not the kampung, a park or a landmark) on this side of the street.</summary>
+        bool TownSide(Frame f, float side)
+        {
+            var probe = f.P(Pitch * 0.5f, side * (Road * 0.5f + 5f));
+            int col = Mathf.FloorToInt((probe.x - X0) / Pitch), row = Mathf.FloorToInt((probe.z - Z0) / Pitch);
+            if (col < 0 || row < 0 || col >= NX || row >= NZ || IsKampungCell(col, row)) return false;
+            var z = ZoneAt(col, row);
+            return z == Zone.Shops || z == Zone.ChowKit || z == Zone.Mamak || z == Zone.Pasar || z == Zone.Brickfields || z == Zone.Office || z == Zone.Condo;
+        }
+
+        /// <summary>Offices or condos on this side (their pavements get a covered walkway, about two in three).</summary>
+        bool WalkwaySide(Frame f, float side)
+        {
+            var probe = f.P(Pitch * 0.5f, side * (Road * 0.5f + 5f));
+            int col = Mathf.FloorToInt((probe.x - X0) / Pitch), row = Mathf.FloorToInt((probe.z - Z0) / Pitch);
+            if (col < 0 || row < 0 || col >= NX || row >= NZ || IsKampungCell(col, row)) return false;
+            var z = ZoneAt(col, row);
+            return (z == Zone.Office || z == Zone.Condo) && Hash01(f.o.x + side, f.o.z + f.s.z * 2f, 971) < 0.66f;
+        }
+
+        void CoveredWalkway(Frame f, float side, bool xa, bool xb, List<Vector2> skips)
+        {
+            float a = xa ? 31f : 14f, b = Pitch - (xb ? 31f : 14f);
+            // break it round bus stops and patch streets coming in
+            var cuts = new List<Vector2>(skips);
+            foreach (var (bp, _) in _city.busStops)
+            {
+                float bs = Vector3.Dot(bp - f.o, f.s), bt = Vector3.Dot(bp - f.o, f.t);
+                if (bt * side > 9f && bt * side < 16f) cuts.Add(new Vector2(bs - 7f, bs + 7f));
+            }
+            foreach (var ff in _footbridgeFeet)
+            {
+                float fs = Vector3.Dot(ff - f.o, f.s), ft = Vector3.Dot(ff - f.o, f.t);
+                if (ft * side > 8f && ft * side < 18f) cuts.Add(new Vector2(fs - 13f, fs + 13f));
+            }
+            cuts.Sort((p, q) => p.x.CompareTo(q.x));
+            float s = a;
+            foreach (var c in cuts)
+            {
+                if (c.y <= s || c.x >= b) continue;
+                if (c.x - s > 8f) Walkway(f, side, s, c.x);
+                s = Mathf.Max(s, c.y);
+            }
+            if (b - s > 8f) Walkway(f, side, s, b);
+        }
+
+        void Walkway(Frame f, float side, float s0, float s1)
+        {
+            var along = side > 0f ? f.s : -f.s;
+            var o = f.P(side > 0f ? s0 : s1, side * 11.75f, G);
+            var item = new Arch.PavementBits { kind = Arch.PavementBits.Kind.Walkway, o = o, r = along, count = Mathf.RoundToInt(s1 - s0), seed = 0 };
+            _arch.Add(item);
+            Arch.StreetDress.SolidsOf(item, _archCv, _archCt);
+        }
+
+        bool NearBusStop(Vector3 p, float r)
+        {
+            foreach (var (b, _) in _city.busStops) if ((b.x - p.x) * (b.x - p.x) + (b.z - p.z) * (b.z - p.z) < r * r) return true;
+            return false;
+        }
+
+        void PavementClutter(Frame f, float side, List<Vector2> skips)
+        {
+            float h1 = Hash01(f.o.x + side * 5f + f.s.x, f.o.z + f.s.z, 961);
+            var along = side > 0f ? f.s : -f.s;                   // (so the row faces the road: n = up x r)
+            if (h1 < 0.75f)
+            {
+                float s0 = h1 < 0.38f ? 31f : 61.5f;
+                int n = 4 + Mathf.FloorToInt(Hash01(f.o.x, f.o.z + side, 962) * 5f);
+                bool clear = true;
+                for (int k = 0; k < n && clear; k++)
+                {
+                    var p = f.P(s0 + k * 0.86f, side * 11.35f);
+                    if (InSkip(s0 + k * 0.86f, skips) || NearLamp(p, 1.1f) || NearBusStop(p, 9f)) clear = false;
+                }
+                if (clear)
+                {
+                    var item = new Arch.PavementBits { kind = Arch.PavementBits.Kind.Bikes, o = f.P(side > 0f ? s0 : s0 + (n - 1) * 0.86f, side * 11.35f, G), r = along, count = n,
+                                                       seed = Mathf.RoundToInt(Hash01(f.o.x, f.o.z, 964 + (int)side) * 0x3fffff) };
+                    _arch.Add(item);
+                    Arch.StreetDress.SolidsOf(item, _archCv, _archCt);
+                }
+            }
+            if (Hash01(f.o.x - side * 3f, f.o.z + f.s.x, 965) < 0.3f)
+            {
+                var p = f.P(51f, side * 11.7f, G);
+                if (!InSkip(51f, skips) && !NearLamp(p, 2.2f) && !NearBusStop(p, 9f))
+                {
+                    var item = new Arch.PavementBits { kind = Arch.PavementBits.Kind.Stall, o = p, r = along, seed = Mathf.RoundToInt(Hash01(p.x, p.z, 966) * 0x3fffff) };
+                    _arch.Add(item);
+                    Arch.StreetDress.SolidsOf(item, _archCv, _archCt);
+                }
             }
         }
 
@@ -768,6 +938,31 @@ namespace KampungRun
                 float ss = s - 0.33f + n * 0.13f;
                 _paint.Poly(GrateDark, 0, 1, Vector3.up, f.P(ss - 0.035f, t0 + side * 0.07f, Ycover + 0.001f), f.P(ss - 0.035f, t1 - side * 0.07f, Ycover + 0.001f),
                             f.P(ss + 0.035f, t1 - side * 0.07f, Ycover + 0.001f), f.P(ss + 0.035f, t0 + side * 0.07f, Ycover + 0.001f));
+            }
+        }
+
+        static readonly Color KerbWhite = new Color(0.95f, 0.95f, 0.92f), KerbBlack = new Color(0.12f, 0.12f, 0.13f), KerbYellow = new Color(0.98f, 0.80f, 0.12f);
+
+        /// <summary>
+        /// KL's painted kerbs: black-and-white blocks down the street, yellow-and-black for the last stretch before a
+        /// junction (no stopping) and along a bus stop's bay. Painted on the kerb's face and its top edge (road paint
+        /// layer: they read from a long way off). `skips` are bus bays (yellow) and patch streets coming in (no kerb).
+        /// </summary>
+        void KerbPaint(Frame f, float side, float from, float to, bool junctionA, bool junctionB, List<Vector2> joins, List<Vector2> buses)
+        {
+            const float block = 1.2f, top0 = 10f, top1 = 10.18f;
+            float face = side * 9.995f;
+            var toRoad = -f.t * side;
+            bool Yellow(float s) => junctionA && s < from + 14f || junctionB && s > to - 14f || InSkip(s, buses);
+            bool Cut(float s) => InSkip(s, joins);
+            int n = 0;
+            for (float s = from; s < to - 0.05f; s += block, n++)
+            {
+                float e = Mathf.Min(to, s + block), m = (s + e) * 0.5f;
+                if (Cut(m) || NearRoundabout(f.P(m, 0f), RingOuter + 4f)) continue;
+                var col = n % 2 == 1 ? KerbBlack : Yellow(m) ? KerbYellow : KerbWhite;
+                _paint.Poly(col, 0, 0, toRoad, f.P(s, face, 0.004f), f.P(e, face, 0.004f), f.P(e, face, G - 0.004f), f.P(s, face, G - 0.004f));
+                _paint.Poly(col, 0, 0, Vector3.up, f.P(s, side * top0, G + 0.006f), f.P(e, side * top0, G + 0.006f), f.P(e, side * top1, G + 0.006f), f.P(s, side * top1, G + 0.006f));
             }
         }
 

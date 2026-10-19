@@ -183,7 +183,23 @@ namespace KampungRun.Tests
                                                 ("Home", "10_kampung") })
             {
                 if (!city.places.TryGetValue(key, out var at)) { Debug.Log($"[Streets] no place {key}"); continue; }
-                yield return Spot(name, at);
+                if (key == "Home") { yield return Spot(name, at); continue; }
+                // the street nearest the place: the middle of the longest link (at least 25 m) among the nodes round it
+                Vector3 best = at, bestDir = Vector3.forward;
+                float bestScore = float.MaxValue;
+                foreach (var n in city.roads.nodes)
+                {
+                    if (n.pos.y > 1f || (n.pos - at).sqrMagnitude > 90f * 90f) continue;
+                    foreach (var l in n.links)
+                    {
+                        float len = Vector3.Distance(n.pos, l.pos);
+                        if (len < 25f || l.pos.y > 1f) continue;
+                        var mid = (n.pos + l.pos) * 0.5f;
+                        float score = Vector3.Distance(mid, at) - len * 0.5f;
+                        if (score < bestScore) { bestScore = score; best = mid; bestDir = (l.pos - n.pos).normalized; }
+                    }
+                }
+                yield return Spot(name, best, bestDir, 7.5f);
             }
             // the filler districts: mid-block on a street, looking along it
             Vector3 MidNS(int i, int k) => new Vector3(CityBuilder.RoadX(i), 0f, CityBuilder.RoadZ(k) + CityBuilder.Pitch * 0.5f);
@@ -198,6 +214,14 @@ namespace KampungRun.Tests
             var j = Ground(new Vector3(CityBuilder.RoadX(12), 0f, CityBuilder.RoadZ(3)));
             var jl = j + new Vector3(4f, 1f, 6f);
             yield return View("17_junction", Pick(jl, j + new Vector3(-24f, 3.2f, -22f), j + new Vector3(-14f, 3.2f, -14f), j + new Vector3(-6f, 3.2f, -18f)), jl, 62f);
+            // set pieces: the mamak's tables, a petrol station
+            foreach (var (key, name) in new[] { ("Mamak", "20_mamak"), ("Petrol", "21_petrol") })
+                if (city.places.TryGetValue(key, out var sp))
+                {
+                    var look = sp + Vector3.up * 1.5f;
+                    yield return View(name, Pick(look, sp + new Vector3(-14f, 4f, 20f), sp + new Vector3(14f, 4f, -20f), sp + new Vector3(0f, 4f, -22f),
+                                                 sp + new Vector3(0f, 4f, 22f), sp + new Vector3(-20f, 5f, 0f), sp + new Vector3(0f, 25f, -30f)), look, 60f);
+                }
             // the skyline from high up
             yield return View("18_city_high", new Vector3(-330f, 95f, -470f), new Vector3(-60f, 0f, -120f), 60f);
             if (city.places.TryGetValue("Towers", out var klcc))
