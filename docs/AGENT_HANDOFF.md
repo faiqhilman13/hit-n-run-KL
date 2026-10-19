@@ -1096,3 +1096,15 @@ The user asked for streets that feel like real Kuala Lumpur (compact and lived i
 
 **Merged** into `world-kl-revamp`: `missions-pass`, `landmarks-pass` and `streets-pass` (their sections are above). The streets agent was cut off by the usage limit mid-round; its last uncommitted Shophouse/Block edits were committed as "round 2".
 - After the merge, the arch atlas must be force-reimported (8 × 12 = 96 slices). Otherwise the Editor keeps the old 64-slice array and the city shows magenta and garbled textures.
+
+**After the merge (lead)**
+- **Landmarks:** the kit-3 Merdeka 118, KL Sentral, Muzium Negara and Masjid Negara are exported and wired (`LandmarkModels`, `LandmarkFit` (0, 0, yaw)). Batu Caves is exported but not wired (`BatuCavesBlock` still uses the kit-2 model and its ramp). The kit-2 rewrites (Thean Hou, Istana, Masjid Jamek, Stadium Merdeka) are not re-exported.
+- **Missions:**
+  - Hiding now latches once you're inside unseen, and `SamanMeter.Hidden` blocks the arrest. The police car that parked at the shopfront used to cancel the hide and arrest you.
+  - MissionTests' sneak driver knocks out guards standing by a crate.
+- **Stations:** an LRT station with no second line found puts its platforms outside the 7 m girder. The stair search now reaches 40 m. KL Sentral is boxed in by buildings and still has no stair.
+- **Verified on the merged branch:**
+  - SmokeTests 15/16; `TouchControlsWork` is the known live-Editor cursor lock. `CarsRideOnRoadSurface` failed on the old KL Sentral and Muzium Negara mesh colliders until the new models went in.
+  - MissionTests 2/2: `PlayEveryMission` plays all 25 missions in 178 s, and `CheckpointRetry` passes.
+  - Floating area is about 4.7k m², down from about 38k.
+- **Not done:** a web build and benchmark of the merged world. The KL Railway Station (about 37k triangles) and Petronas (about 29k) want trimming for WebGL.
