@@ -13,6 +13,8 @@ namespace KampungRun
         public static SamanMeter I { get; private set; }
         public float heat;                 // 0..100
         public bool Wanted { get; private set; }
+        /// <summary>Set while the player hides indoors unseen (HideObjective): the police can't arrest what they can't find.</summary>
+        public static bool Hidden;
         public float BustProgress { get; private set; }
         public bool suppressed;            // during some missions / cutscenes
 
@@ -22,7 +24,7 @@ namespace KampungRun
         AudioSource _siren;
         const int Fine = 50;
 
-        void Awake() => I = this;
+        void Awake() { I = this; Hidden = false; }
 
         public void AddHeat(float amount)
         {
@@ -99,7 +101,7 @@ namespace KampungRun
 
             // busted: police right next to you while you're stopped (or on foot)
             float playerSpeed = player.Speed;
-            bool close = nearest < (player.Driving ? 7f : 4f);
+            bool close = !Hidden && nearest < (player.Driving ? 7f : 4f);
             if (close && playerSpeed < 3f) BustProgress += dt / 1.6f;
             else BustProgress = Mathf.Max(0f, BustProgress - dt);
             if (BustProgress >= 1f) Busted();

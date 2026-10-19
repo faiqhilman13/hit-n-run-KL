@@ -43,7 +43,8 @@ namespace KampungRun
                 {
                     centre = mid, along = tan, monorail = mono,
                     platform = mono ? mid.y + 0.3f : mid.y + 1.0f,
-                    inner = mono ? half + 1.5f : half + 1.75f,
+                    // the LRT's one girder (both tracks on a 7 m deck) when no second line was found beside it
+                    inner = mono ? half + 1.5f : (span > 0f ? half + 1.75f : 3.75f),
                     width = mono ? 3.6f : 4.2f,
                     length = mono ? 42f : 58f,
                     seed = Mathf.Abs(st.name.GetHashCode()) % 997,
@@ -159,7 +160,7 @@ namespace KampungRun
             var x = s.Across * side;
             var g = new Vector3(s.centre.x, 0f, s.centre.z);
             var edgeMid = g + x * s.Outer;
-            // the pavement point nearest the platform's outer edge, out on this side, 6 to 26 m away
+            // the pavement point nearest the platform's outer edge, out on this side, 5 to 40 m away
             float best = float.MaxValue;
             Vector3 foot = default, tan = default;
             foreach (var ring in _pavements)
@@ -167,7 +168,7 @@ namespace KampungRun
                 {
                     var p = new Vector3(ring[i].x, 0f, ring[i].y);
                     float out_ = Vector3.Dot(p - g, x) - s.Outer, alongOff = Vector3.Dot(p - g, a);
-                    if (out_ < 5f || out_ > 26f || Mathf.Abs(alongOff) > s.length * 0.5f + 10f) continue;
+                    if (out_ < 5f || out_ > 40f || Mathf.Abs(alongOff) > s.length * 0.5f + 25f) continue;
                     float d = out_ + Mathf.Abs(alongOff) * 0.5f;
                     if (d >= best) continue;
                     var n = new Vector3(ring[(i + 1) % ring.Length].x, 0f, ring[(i + 1) % ring.Length].y) - p;
@@ -185,7 +186,7 @@ namespace KampungRun
             s.gaps[side > 0 ? 1 : 0] = az;
             var end = g + a * az + x * s.Outer + Vector3.up * s.platform;
             var lk = new Vector3(end.x - top.x, 0f, end.z - top.z);
-            if (lk.magnitude > 30f) return false;
+            if (lk.magnitude > 40f) return false;
             _arch.Add(new Arch.StationLinkSpec { bottom = bottom, top = top, end = end });
             // solids: the flight (a ramp), the linkway's slab, parapets both sides
             var fl = top - bottom;

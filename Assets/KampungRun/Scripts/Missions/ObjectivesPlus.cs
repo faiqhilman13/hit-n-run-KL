@@ -1072,7 +1072,7 @@ namespace KampungRun
     {
         float _scan, _nearPolice = 999f, _lastHeat;
         Vector3? _door;
-        bool _hidden;
+        bool _hidden, _seen;
         public bool Hidden => _hidden;
 
         public HideObjective(string text) { this.text = text; }
@@ -1084,6 +1084,7 @@ namespace KampungRun
             _lastHeat = 100f;
             _scan = 0f;
             _door = null;
+            _hidden = _seen = false;
         }
 
         public override bool Tick(MissionManager m, float dt)
@@ -1103,7 +1104,13 @@ namespace KampungRun
                 var r = Interiors.I != null ? Interiors.I.Nearest(P.transform.position, x => HasDoor(x)) : null;
                 if (r != null && (r.Centre - P.Focus).sqrMagnitude < 90f * 90f) _door = DoorOf(r); else _door = null;
             }
-            _hidden = !P.Driving && Interiors.RoomAt(P.transform.position) != null && _nearPolice > 10f;
+            // inside unseen and you stay hidden while you stay in; slip in under their noses and they saw you
+            // (until they drift off)
+            bool inside = !P.Driving && Interiors.RoomAt(P.transform.position) != null;
+            if (!inside) _hidden = false;
+            else if (!_hidden && _nearPolice > (_seen ? 20f : 10f)) { _hidden = true; _seen = false; }
+            else if (!_hidden) _seen = true;
+            SamanMeter.Hidden = _hidden;
             if (_hidden)
             {
                 sm.heat -= 16f * dt;
@@ -1123,6 +1130,7 @@ namespace KampungRun
 
         public override void End(MissionManager m)
         {
+            SamanMeter.Hidden = false;
             // only a skipped or abandoned step leaves the chase running
             if (SamanMeter.I != null && SamanMeter.I.Wanted && failReason == null) SamanMeter.I.ClearAll();
         }

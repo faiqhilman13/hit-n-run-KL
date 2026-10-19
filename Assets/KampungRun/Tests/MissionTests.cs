@@ -227,9 +227,7 @@ namespace KampungRun.Tests
                         foreach (var g in new List<Goon>(sn.guards))
                         {
                             if (g == null || gm.Missions.Step != o) break;
-                            bool nearGoal = false;
-                            foreach (var gl in sn.Goals) if (Vector3.Distance(gl, g.transform.position - g.transform.forward * 1.1f) < 3f) nearGoal = true;
-                            if (nearGoal) { Log($"{_tag} sneak: guard stands by a goal, skipped"); continue; }
+                            // (a guard standing over a crate is knocked out too: you'd never get to it otherwise)
                             for (int k = 0; k < 6 && g && !g.Down; k++)
                             {
                                 Stand(p, g.transform.position - g.transform.forward * 1.1f, g.transform.position);
