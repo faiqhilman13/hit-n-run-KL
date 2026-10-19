@@ -89,6 +89,7 @@ namespace KampungRun
 
         readonly Dictionary<long, List<Vector2>> _greenGrid = new Dictionary<long, List<Vector2>>();
         readonly Dictionary<long, List<Vector3>> _greenSpots = new Dictionary<long, List<Vector3>>();   // (x, z, radius)
+        readonly List<(Vector3, float)> _keepClear = new List<(Vector3, float)>();   // no trees within r of these
         readonly List<Vector2> _floraAt = new List<Vector2>();      // the blocks' own trees and plants (AddFlora)
 
         static long GreenKey(int x, int z) => ((long)x << 32) ^ (uint)z;
@@ -177,6 +178,7 @@ namespace KampungRun
             _greenSpots.Clear();
             foreach (var f in _floraAt) MarkTree(f);
             foreach (var p in _city.places.Values) MarkSpot(p, 5f);
+            foreach (var (p, r) in _keepClear) MarkSpot(p, r);              // (forecourts, the mamak's tables: the streets pass)
             foreach (var p in _city.itemSpots) MarkSpot(p, 1.5f);
             foreach (var p in _city.coinSpots) MarkSpot(p, 1.5f);
             var cv = new List<Vector3>();

@@ -75,6 +75,25 @@ namespace KampungRun
             Debug.Log($"[Roads] real-KL streets: {streets} stretches painted, {xings} zebras");
         }
 
+        /// <summary>The streets pass: the kerb painted in blocks along a real-KL street (black and white, yellow and black
+        /// near a junction), on its face and the top edge, wherever the asphalt meets a raised pavement.</summary>
+        void PatchKerb(Frame f, float side, float edge, float s0, float s1, bool junctionA, bool junctionB, RoadMask mask)
+        {
+            const float block = 1.2f;
+            int n = 0;
+            for (float s = s0; s < s1 - 0.05f; s += block, n++)
+            {
+                float e = Mathf.Min(s1, s + block), m = (s + e) * 0.5f;
+                bool yellow = junctionA && m < s0 + 9f || junctionB && m > s1 - 9f;
+                var col = n % 2 == 1 ? KerbBlack : yellow ? KerbYellow : KerbWhite;
+                var probe = f.P(m, edge + side * 0.3f);
+                if (mask.Inside(probe.x, probe.z)) continue;              // a side street or a driveway: no kerb here
+                // (the measured edge is good to 0.15 m: paint the top just inside it, so nothing hangs over the road)
+                _paint.Poly(col, 0, 0, Vector3.up, f.P(s, edge + side * 0.16f, G + 0.006f), f.P(e, edge + side * 0.16f, G + 0.006f),
+                            f.P(e, edge + side * 0.42f, G + 0.006f), f.P(s, edge + side * 0.42f, G + 0.006f));
+            }
+        }
+
         void PaintPatch(KLPatch p, RoadNetwork.Node[] nodes, ref int streets, ref int xings)
         {
             var md = p.meshes.Find(m => m.key == "road");
@@ -188,6 +207,7 @@ namespace KampungRun
                         float edge = side > 0 ? L : -Rt;
                         foreach (float off in new[] { 0.45f, 0.7f })
                             _paint.Band(f.P(s0, edge - side * off), f.P(s1, edge - side * off), 0.1f, Ypaint, PaintYellow);
+                        PatchKerb(f, side, edge, s0, s1, R[e.a] > 0f, R[e.b] > 0f, mask);
                         for (float gs = s0 + RR(rnd, 3f, 9f); gs < s1 - 1f; gs += RR(rnd, 13f, 19f))
                         {
                             float t0 = edge - side * 0.08f, t1 = edge - side * 0.32f;

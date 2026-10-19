@@ -17,5 +17,8 @@ namespace KampungRun.Arch
         Leaves /*T*/, Frond /*T*/, Bark /*T*/, PalmTrunk /*T*/, Banana /*T*/, Bougainvillea, Frangipani,   // plants (Flora.cs)
         Hazard, RoadSigns0, RoadSigns1,                                                                    // bridges (Bridgework.cs)
         Goods, Fridge, Photos, Screens, Floor /*T*/, Rugs, Menus,                                          // walk-in interiors (Interior.cs)
+        Signs4, Signs5, Signs6, Signs7, Blades0, Blades1, JkrBlue, JkrGreen,                               // the streets pass: KL signage
+        JkrMore, StreetNames, Mart, Petrol, Bunting, Billboard2, Billboard3, Mamak,
+        Billboard4, Billboard5, BusStop, KerbBW, Grime /*T*/,
     }
 }

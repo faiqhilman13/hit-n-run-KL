@@ -67,6 +67,8 @@ namespace KampungRun.Arch
         /// whatever the sun and the city's painted shade say (the flag rides in the texture slice, +100).
         /// </summary>
         public bool Inside;
+        /// <summary>Builds nothing (the street dressing's collider pass runs the dressing just to find its solids).</summary>
+        public bool Mute;
         public const float InsideFlag = 100f;
         float Slice(ArchTex tex) => (float)tex + (Inside ? InsideFlag : 0f);
 
@@ -75,6 +77,7 @@ namespace KampungRun.Arch
         public void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color32 col, ArchTex tex,
                          float u0 = 0f, float v0 = 0f, float u1 = 1f, float v1 = 1f)
         {
+            if (Mute) return;
             var nrm = Vector3.Cross(d - a, b - a);
             float len = nrm.magnitude;
             if (len < 1e-8f) return;
@@ -92,6 +95,7 @@ namespace KampungRun.Arch
         /// <summary>A triangle, a -> b -> c clockwise seen from its front.</summary>
         public void Tri(Vector3 a, Vector3 b, Vector3 c, Color32 col, ArchTex tex, Vector2 ua, Vector2 ub, Vector2 uc)
         {
+            if (Mute) return;
             var nrm = Vector3.Cross(b - a, c - a);
             float len = nrm.magnitude;
             if (len < 1e-8f) return;
@@ -110,6 +114,7 @@ namespace KampungRun.Arch
         public void TriN(Vector3 a, Vector3 b, Vector3 c, Vector3 na, Vector3 nb, Vector3 nc, Color32 ca, Color32 cb, Color32 cc,
                          ArchTex tex, Vector2 ua, Vector2 ub, Vector2 uc)
         {
+            if (Mute) return;
             int i = V.Count;
             V.Add(a); V.Add(b); V.Add(c);
             N.Add(na); N.Add(nb); N.Add(nc);

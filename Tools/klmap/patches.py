@@ -692,7 +692,16 @@ class PatchBuild:
                 else:
                     lv = 2 + int(real_area > 150) + int(real_area > 400) + (rng.randint(1, 8) if real_area > 1500 else 0)
             worship = b['tags'].get('amenity') == 'place_of_worship' or btype in ('mosque', 'temple', 'church')
+            n0 = len(self.arch)
             self.add_building(g, max(1.0, float(lv)), btype, rng, worship)
+            self.shop_midrise(n0, btype)
+
+    def shop_midrise(self, n0, btype):
+        """The streets pass: a mid-rise block (6-11 storeys) that isn't flats is one of KL's 1970s commercial
+        blocks (Jalan TAR, Jalan Tun Perak, Chow Kit): shops and a five-foot way under ribbon windows, signboards
+        on every bay. The game's shophouse generator models those (its Modern style), not the walk-up flats one."""
+        if len(self.arch) > n0 and self.arch[-1]['kind'] == 'Flats' and btype not in ('apartments', 'residential', 'dormitory'):
+            self.arch[-1]['kind'] = 'Shop'
 
     HOMES = ('house', 'detached', 'terrace', 'bungalow', 'semidetached_house', 'apartments', 'residential', 'dormitory', 'hotel',
              'school', 'university', 'college', 'hospital', 'government', 'public', 'civic', 'industrial', 'warehouse', 'garage', 'shed', 'hut')
@@ -827,7 +836,9 @@ class PatchBuild:
                                 else:
                                     lv = lo + (hi - lo) * rng.random() ** 2
                                 lv = max(lo, min(hi, round(lv)))
+                                n0 = len(self.arch)
                                 self.add_building(fp, lv, 'yes' if lv < 12 else 'office', rng)
+                                self.shop_midrise(n0, 'yes')
                                 self.infill += 1
                         z += d + 3.0
                     x += w + 3.0

@@ -1,6 +1,6 @@
 """
-The painted detail textures of the architecture library (Scripts/World/Arch): one 2048 x 2048 sheet of
-8 x 8 cells of 256 px, imported by Unity as a Texture2DArray (one slice per cell, top-left first), so
+The painted detail textures of the architecture library (Scripts/World/Arch): one 2048 x 3072 sheet of
+8 x 12 cells of 256 px, imported by Unity as a Texture2DArray (one slice per cell, top-left first), so
 buildings can tile any cell (roof tiles, planks, breeze blocks) without bleeding into its neighbours.
 
 Hit & Run's way of painting (see docs/AGENT_HANDOFF.md, the SHAR remaster study): flat fills, thin dark
@@ -1043,6 +1043,388 @@ def c_menus():
     return im
 
 
+# ------------------------------------------------------------------------------------- the streets pass (KL signage)
+# More shop signs: Malay, Chinese, Tamil and English, the way a KL row mixes them (Brickfields, Masjid India, Chow Kit)
+SIGNS2 = [   # (in the order of Interior.SignShop's kinds, sign & 15: kopi, hardware, runcit, textile, kopi, runcit, kopi, gold,
+             #  runcit, kopi, barber, runcit, hardware, textile, kopi, textile)
+    ('நியூ சரவணா', 'RESTORAN NEW SARAVANAA', 'ta'),
+    (None, 'BENGKEL MOTOR AZMAN', None),
+    (None, 'KEDAI TELEFON BIMBIT', None),
+    ('ஸ்ரீ கணேஷ் புடவை', 'SRI GANESH SAREES', 'ta'),
+    ('金龙茶餐室', 'KEDAI KOPI KUM LOONG', 'zh'),
+    (None, 'BAKERI ROTI MAJU', None),
+    (None, 'NASI KANDAR PELITA 24 JAM', None),
+    ('ராஜா ஜுவல்லர்ஸ்', 'RAJA JEWELLERS', 'ta'),
+    (None, 'KLINIK DR. RAHMAN', None),
+    ('海南鸡饭', 'NASI AYAM HAINAN', 'zh'),
+    (None, 'BARBER ABANG', None),
+    ('光明眼镜', 'KONG MING OPTICAL', 'zh'),
+    ('成发电器', 'KEDAI ELEKTRIK SENG HUAT', 'zh'),
+    (None, 'KEDAI DOBI EXPRESS', None),
+    ('福记烧腊', 'FOOK KEE ROAST', 'zh'),
+    (None, 'BUTIK TUDUNG AISYAH', None),
+]
+SIGN_STYLES2 = [  # board, text, edge
+    ((250, 214, 60), (24, 90, 50), (24, 90, 50)),
+    ((24, 90, 50), (250, 230, 120), (250, 230, 120)),
+    ((190, 30, 40), (255, 255, 255), (255, 214, 80)),
+    ((255, 255, 255), (200, 30, 30), (30, 60, 150)),
+    ((30, 60, 150), (255, 255, 255), (250, 214, 60)),
+    ((240, 120, 30), (255, 255, 255), (90, 30, 10)),
+    ((110, 30, 120), (255, 220, 110), (255, 220, 110)),
+    ((20, 20, 24), (255, 70, 70), (255, 70, 70)),
+]
+
+
+def fit_font(d, name, text, size, width, minimum=10):
+    f = font(name, size)
+    while d.textlength(text, font=f) > width and size > minimum:
+        size -= 2
+        f = font(name, size)
+    return f, size
+
+
+def sign2(d, x0, y0, x1, y1, script, rumi, lang, style):
+    """A signboard: the script line big across the top (Chinese or Tamil), the rumi (Malay/English) line under it."""
+    board, text, edge = style
+    d.rectangle([x0, y0, x1, y1], fill=board, outline=INK, width=4)
+    d.rectangle([x0 + 8, y0 + 8, x1 - 8, y1 - 8], outline=edge, width=4)
+    w, h = x1 - x0, y1 - y0
+    if script:
+        name = 'msyhbd.ttc' if lang == 'zh' else 'Nirmala.ttc'
+        f, size = fit_font(d, name, script, int(h * (0.52 if lang == 'zh' else 0.36)), w * 0.86, 12)
+        tw = d.textlength(script, font=f)
+        tx = x0 + (w - tw) / 2
+        ty = y0 + h * (0.04 if lang == 'zh' else 0.1)
+        d.text((tx + 3, ty + 3), script, font=f, fill=INK)
+        d.text((tx, ty), script, font=f, fill=text)
+        f2, _ = fit_font(d, 'arialbd.ttf', rumi, int(h * 0.19), w * 0.9)
+        tw2 = d.textlength(rumi, font=f2)
+        d.text((x0 + (w - tw2) / 2, y1 - h * 0.29), rumi, font=f2, fill=text)
+    else:
+        f, size = fit_font(d, 'impact.ttf', rumi, int(h * 0.5), w * 0.88)
+        tw = d.textlength(rumi, font=f)
+        tx, ty = x0 + (w - tw) / 2, y0 + (h - size * 1.2) / 2
+        d.text((tx + 4, ty + 4), rumi, font=f, fill=INK)
+        d.text((tx, ty), rumi, font=f, fill=text)
+
+
+def c_signs2(k):
+    im, d = cell()
+    for j in range(4):
+        script, rumi, lang = SIGNS2[(k * 4 + j) % len(SIGNS2)]
+        style = SIGN_STYLES2[(k * 4 + j * 3) % len(SIGN_STYLES2)]
+        sign2(d, 0, j * S // 4, S - 1, (j + 1) * S // 4 - 1, script, rumi, lang, style)
+    return im
+
+
+BLADES = [('金龙', (190, 30, 40), (255, 220, 90)), ('药行', (250, 214, 60), (190, 30, 30)), ('酒家', (24, 90, 50), (255, 255, 255)),
+          ('当铺', (30, 60, 150), (255, 255, 255)), ('HOTEL', (255, 255, 255), (200, 30, 30)), ('KLINIK', (255, 255, 255), (30, 120, 60)),
+          ('旅店', (110, 30, 120), (255, 220, 110)), ('KARAOKE', (20, 20, 24), (255, 80, 160))]
+
+
+def c_blades(k):
+    """Vertical blade signs hung off the pilasters (four strips a cell), Chinese characters stacked or a word turned on its side."""
+    im, d = cell((40, 40, 40))
+    w = S // 4
+    for j in range(4):
+        t, bg, fg = BLADES[(k * 4 + j) % len(BLADES)]
+        x0 = j * w
+        d.rectangle([x0 + 2, 2, x0 + w - 3, S - 3], fill=bg, outline=INK, width=5)
+        d.rectangle([x0 + 10, 10, x0 + w - 11, S - 11], outline=fg, width=3)
+        if all(ord(c) > 0x2E80 for c in t):
+            f = font('msyhbd.ttc', int(w * 0.68))
+            n = len(t)
+            for i, ch in enumerate(t):
+                cy = 20 + (S - 40) * (i + 0.5) / n
+                tw = d.textlength(ch, font=f)
+                d.text((x0 + (w - tw) / 2 + 3, cy - w * 0.48 + 3), ch, font=f, fill=INK)
+                d.text((x0 + (w - tw) / 2, cy - w * 0.48), ch, font=f, fill=fg)
+        else:
+            f, size = fit_font(d, 'impact.ttf', t, int(w * 0.62), S - 50, 12)
+            tmp = Image.new('RGBA', (S, w), (0, 0, 0, 0))
+            td = ImageDraw.Draw(tmp)
+            tw = td.textlength(t, font=f)
+            td.text(((S - tw) / 2 + 3, (w - size * 1.2) / 2 + 3), t, font=f, fill=INK)
+            td.text(((S - tw) / 2, (w - size * 1.2) / 2), t, font=f, fill=fg)
+            tmp = tmp.rotate(90, expand=True)
+            im.paste(tmp, (x0, 0), tmp)
+    return im
+
+
+JKR = {
+    'blue': [(('JALAN TUN PERAK', 'up'), ('MASJID JAMEK', 'left'), ('CHOW KIT', 'right')),
+             (('BUKIT BINTANG', 'up'), ('KLCC', 'right'), ('PUDU', 'left')),
+             (('JLN TUANKU ABDUL RAHMAN', 'up'), ('TITIWANGSA', 'right'), ('DATARAN MERDEKA', 'left')),
+             (('BRICKFIELDS', 'up'), ('KL SENTRAL', 'left'), ('JLN TUN SAMBANTHAN', 'right'))],
+    'green': [(('LEBUHRAYA PERSEKUTUAN', 'up'), ('PETALING JAYA', 'left'), ('KLANG', 'right')),
+              (('MRR2', 'up'), ('AMPANG', 'right'), ('CHERAS', 'left')),
+              (('DUKE', 'up'), ('SENTUL', 'left'), ('GOMBAK', 'right')),
+              (('JALAN TUN RAZAK', 'up'), ('KLCC', 'left'), ('JALAN AMPANG', 'right'))],
+}
+JKR_BG = {'blue': (22, 72, 160), 'green': (24, 116, 66)}
+
+
+def arrow(d, cx, cy, r, way, col):
+    """A fat JKR arrow pointing up, left or right."""
+    pts = [(0, -1), (0.6, -0.2), (0.25, -0.2), (0.25, 1), (-0.25, 1), (-0.25, -0.2), (-0.6, -0.2)]
+    if way == 'left': pts = [(y, -x) for x, y in pts]
+    elif way == 'right': pts = [(-y, x) for x, y in pts]
+    d.polygon([(cx + x * r, cy + y * r) for x, y in pts], fill=col)
+
+
+def jkr_board(d, y0, colour, rows):
+    """One JKR overhead direction board (half a cell): three destinations with arrows, white on blue (city roads) or
+    green (highways), route codes in a yellow shield."""
+    bg = JKR_BG[colour]
+    d.rectangle([0, y0, S, y0 + S // 2], fill=bg)
+    d.rectangle([4, y0 + 4, S - 5, y0 + S // 2 - 5], fill=bg, outline=(255, 255, 255), width=6)
+    for r, (t, way) in enumerate(rows):
+        cy = y0 + 46 + r * 76
+        arrow(d, 50, cy, 26, way, (255, 255, 255))
+        f, size = fit_font(d, 'arialbd.ttf', t, 40 if r == 0 else 34, S - 130, 14)
+        if t in ('MRR2', 'DUKE'):
+            tw = d.textlength(t, font=f)
+            d.rounded_rectangle([96, cy - 24, 96 + tw + 24, cy + 24], radius=10, fill=(250, 214, 40), outline=INK, width=3)
+            d.text((108, cy - size * 0.6), t, font=f, fill=INK)
+        else:
+            d.text((98, cy - size * 0.6), t, font=f, fill=(255, 255, 255))
+        if r == 0: d.line([(20, cy + 36), (S - 20, cy + 36)], fill=(255, 255, 255), width=3)
+
+
+def c_jkr(colour):
+    im, d = cell(JKR_BG[colour])
+    for j in range(2): jkr_board(d, j * S // 2, colour, JKR[colour][j])
+    return im
+
+
+def c_jkr2():
+    """The third board of each colour: blue on top, green below."""
+    im, d = cell()
+    jkr_board(d, 0, 'blue', JKR['blue'][2])
+    jkr_board(d, S // 2, 'green', JKR['green'][2])
+    return im
+
+
+STREETS = ['JALAN TUN PERAK', 'JALAN PETALING', 'JALAN TUANKU ABDUL RAHMAN', 'JALAN ALOR', 'JALAN CHOW KIT', 'JALAN AMPANG',
+           'JALAN TUN H.S. LEE', 'JALAN RAJA LAUT']
+
+
+def c_streetnames():
+    """Eight street-name boards (one a row): white on DBKL blue, a white rim, the postcode district small."""
+    im, d = cell((30, 70, 150))
+    h = S // 8
+    for j, t in enumerate(STREETS):
+        y0 = j * h
+        d.rectangle([2, y0 + 2, S - 3, y0 + h - 3], fill=(26, 66, 150), outline=(255, 255, 255), width=4)
+        f, _ = fit_font(d, 'arialbd.ttf', t, 34, S - 40, 12)
+        tw = d.textlength(t, font=f)
+        d.text(((S - tw) / 2, y0 + 6), t, font=f, fill=(255, 255, 255))
+        f2 = font('arialbd.ttf', 14)
+        t2 = '50' + str(100 + j * 37)[-3:] + ' KUALA LUMPUR'
+        tw2 = d.textlength(t2, font=f2)
+        d.text(((S - tw2) / 2, y0 + h - 22), t2, font=f2, fill=(220, 230, 255))
+    return im
+
+
+def c_mart():
+    """A 24-hour convenience store: the striped fascia (top quarter: orange, green and red bands, the name in a white
+    box), and the glass shopfront below with posters (bottom three quarters)."""
+    im, d = cell((255, 255, 255))
+    q = S // 4
+    for k, col in enumerate(((246, 132, 30), (20, 140, 80), (220, 36, 40))):
+        d.rectangle([0, 10 + k * 34, S, 10 + k * 34 + 26], fill=col)
+    d.rounded_rectangle([S * 0.3, 8, S * 0.7, q - 8], radius=14, fill=(255, 255, 255), outline=INK, width=4)
+    f = font('impact.ttf', 70)
+    t = '24-7'
+    tw = d.textlength(t, font=f)
+    d.text(((S - tw) / 2, 14), t, font=f, fill=(220, 36, 40))
+    d.line([(0, q), (S, q)], fill=INK, width=5)
+    clip_glass(im, (0, q + 4, S, S), (170, 214, 236), (120, 170, 210))
+    d = ImageDraw.Draw(im)
+    for x in (S // 3, 2 * S // 3):
+        d.rectangle([x - 5, q, x + 5, S], fill=(200, 200, 204), outline=INK, width=2)
+    r = random.Random(24)
+    for k in range(5):
+        x, y = r.randint(10, S - 120), r.randint(q + 30, S - 160)
+        col = r.choice([(250, 214, 60), (220, 36, 40), (40, 140, 200), (255, 255, 255)])
+        d.rectangle([x, y, x + 100, y + 130], fill=col, outline=INK, width=3)
+        d.text((x + 10, y + 10), r.choice(['SLURPEE', 'PROMO!', 'RM2.50', 'TOP-UP', 'ROTI']), font=font('arialbd.ttf', 20), fill=INK)
+    d.text((24, S - 52), 'BUKA 24 JAM', font=font('arialbd.ttf', 34), fill=(20, 140, 80))
+    return im
+
+
+def c_petrol():
+    """A petrol station: the canopy fascia (top quarter, teal and green bands with the brand), the price pylon (left
+    half below) and the kedai's glass front (right half)."""
+    im, d = cell((236, 246, 244))
+    q = S // 4
+    d.rectangle([0, 0, S, q], fill=(0, 150, 140))
+    d.rectangle([0, q - 26, S, q - 8], fill=(150, 200, 40))
+    f = font('impact.ttf', 66)
+    t = 'PETROLIA'
+    tw = d.textlength(t, font=f)
+    d.text(((S - tw) / 2 + 3, 12 + 3), t, font=f, fill=INK)
+    d.text(((S - tw) / 2, 12), t, font=f, fill=(255, 255, 255))
+    x0, x1 = 10, S // 2 - 10
+    d.rectangle([x0, q + 10, x1, S - 10], fill=(250, 250, 250), outline=INK, width=4)
+    d.rectangle([x0 + 8, q + 18, x1 - 8, q + 100], fill=(0, 150, 140))
+    d.ellipse([x0 + 70, q + 26, x1 - 70, q + 92], fill=(150, 200, 40), outline=INK, width=3)
+    fl, fp = font('arialbd.ttf', 26), font('impact.ttf', 44)
+    for k, (lab, price, col) in enumerate((('RON95', '2.05', (230, 190, 30)), ('RON97', '3.47', (40, 150, 60)), ('DIESEL', '2.15', (30, 30, 30)))):
+        y = q + 120 + k * 80
+        d.rectangle([x0 + 8, y, x0 + 110, y + 64], fill=col)
+        d.text((x0 + 14, y + 18), lab, font=fl, fill=(255, 255, 255))
+        d.rectangle([x0 + 118, y, x1 - 8, y + 64], fill=(20, 20, 20))
+        d.text((x0 + 126, y + 6), price, font=fp, fill=(255, 70, 50))
+    clip_glass(im, (S // 2 + 4, q + 10, S - 6, S - 10), (170, 214, 236), (120, 170, 210))
+    d = ImageDraw.Draw(im)
+    d.rectangle([S // 2 + 4, q + 10, S - 6, S - 10], outline=INK, width=4)
+    d.rectangle([S * 3 // 4 - 40, q + 120, S * 3 // 4 + 40, S - 10], outline=(200, 200, 204), width=6)
+    d.text((S // 2 + 20, q + 30), 'KEDAI MESRA', font=font('arialbd.ttf', 30), fill=(0, 130, 120))
+    return im
+
+
+def c_bunting():
+    """Top half: the Jalur Gemilang (14 red and white stripes, the blue canton with the yellow crescent and star).
+    Bottom half: two lamp-post banners side by side."""
+    im, d = cell((255, 255, 255))
+    h2 = S // 2
+    sh = h2 / 14
+    for k in range(14):
+        d.rectangle([0, k * sh, S, (k + 1) * sh], fill=(204, 0, 1) if k % 2 == 0 else (255, 255, 255))
+    d.rectangle([0, 0, S // 2, sh * 8], fill=(1, 0, 102))
+    cx, cy, r = S * 0.16, sh * 4, sh * 3.1
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(255, 204, 0))
+    d.ellipse([cx - r * 0.72 + r * 0.32, cy - r * 0.8, cx + r * 0.88 + r * 0.32, cy + r * 0.8], fill=(1, 0, 102))
+    sx, sy, R = S * 0.33, sh * 4, sh * 2.9
+    pts = []
+    for i in range(28):
+        a = -math.pi / 2 + i * math.pi / 14
+        rr = R if i % 2 == 0 else R * 0.5
+        pts.append((sx + math.cos(a) * rr, sy + math.sin(a) * rr))
+    d.polygon(pts, fill=(255, 204, 0))
+    texts = [('SELAMAT', 'HARI', 'MERDEKA', (204, 0, 1), (255, 214, 0)), ('KL', 'BANDARAYA', 'MESRA', (30, 90, 170), (255, 255, 255))]
+    for j, (a, b, c, bg, fg) in enumerate(texts):
+        x0 = j * S // 2
+        d.rectangle([x0 + 4, h2 + 4, x0 + S // 2 - 5, S - 5], fill=bg, outline=INK, width=4)
+        for k, t in enumerate((a, b, c)):
+            f, _ = fit_font(d, 'impact.ttf', t, 44, S // 2 - 30, 12)
+            tw = d.textlength(t, font=f)
+            d.text((x0 + (S // 2 - tw) / 2, h2 + 30 + k * 70), t, font=f, fill=fg)
+    return im
+
+
+BILLBOARDS2 = [('CONDO MEWAH', 'DARI RM 388K!', (30, 60, 150), (255, 255, 255), (250, 214, 60)),
+               ('5G LAJU GILA', 'MEGAMAJU TELCO', (110, 30, 120), (255, 255, 255), (255, 120, 200)),
+               ('MILO AIS', 'KUAT & CERGAS', (24, 100, 50), (255, 255, 255), (250, 214, 60)),
+               ('JOM SHOPPING', 'SALE 70%', (220, 36, 40), (255, 255, 255), (255, 230, 120))]
+
+
+def c_billboard2(k):
+    t1, t2, bg, fg, hi = BILLBOARDS2[k]
+    im, d = cell(bg)
+    d.rectangle([0, S * 0.62, S, S], fill=tuple(max(0, v - 40) for v in bg))
+    f, _ = fit_font(d, 'impact.ttf', t1, 96, S * 0.9)
+    tw = d.textlength(t1, font=f)
+    d.text(((S - tw) / 2 + 5, S * 0.18 + 5), t1, font=f, fill=INK)
+    d.text(((S - tw) / 2, S * 0.18), t1, font=f, fill=fg)
+    f2 = font('arialbd.ttf', 48)
+    tw2 = d.textlength(t2, font=f2)
+    d.text(((S - tw2) / 2, S * 0.72), t2, font=f2, fill=hi)
+    d.rectangle([0, 0, S - 1, S - 1], outline=INK, width=8)
+    return im
+
+
+def c_mamak():
+    """A mamak's big fascia (top half: green and yellow, the name, NASI KANDAR / ROTI CANAI / TEH TARIK, plates), and a
+    4D kiosk and newspaper stand front (bottom half)."""
+    im, d = cell((250, 214, 40))
+    h2 = S // 2
+    d.rectangle([0, 0, S, h2], fill=(20, 120, 60))
+    d.rectangle([0, h2 - 40, S, h2], fill=(250, 214, 40))
+    t = 'RESTORAN BISMILLAH'
+    f, _ = fit_font(d, 'impact.ttf', t, 64, S - 30)
+    tw = d.textlength(t, font=f)
+    d.text(((S - tw) / 2 + 3, 20 + 3), t, font=f, fill=INK)
+    d.text(((S - tw) / 2, 20), t, font=f, fill=(255, 230, 90))
+    t2 = 'NASI KANDAR - ROTI CANAI - TEH TARIK'
+    f2, _ = fit_font(d, 'arialbd.ttf', t2, 28, S - 20)
+    tw2 = d.textlength(t2, font=f2)
+    d.text(((S - tw2) / 2, 120), t2, font=f2, fill=(255, 255, 255))
+    for k in range(3):
+        cx = 100 + k * 160
+        d.ellipse([cx - 50, 162, cx + 50, 200], fill=(255, 255, 255), outline=INK, width=3)
+        d.ellipse([cx - 32, 166, cx + 32, 192], fill=[(230, 150, 40), (240, 200, 120), (180, 90, 40)][k])
+    d.text((S // 2 - 90, h2 - 36), 'BUKA 24 JAM', font=font('arialbd.ttf', 28), fill=(20, 120, 60))
+    d.rectangle([0, h2, S, S], fill=(236, 230, 220))
+    for k, (t, bg) in enumerate((('4D', (220, 36, 40)), ('TOTO', (30, 90, 170)), ('DA MA CAI', (250, 160, 30)))):
+        x0 = 12 + k * 166
+        d.rectangle([x0, h2 + 12, x0 + 154, h2 + 96], fill=bg, outline=INK, width=4)
+        ft, _ = fit_font(d, 'impact.ttf', t, 44, 140)
+        tw = d.textlength(t, font=ft)
+        d.text((x0 + (154 - tw) / 2, h2 + 24), t, font=ft, fill=(255, 255, 255))
+    r = random.Random(4)
+    for row in range(2):
+        y = h2 + 120 + row * 66
+        for k in range(8):
+            x = 12 + k * 62
+            d.rectangle([x, y, x + 54, y + 60], fill=(250, 250, 246), outline=INK, width=2)
+            d.rectangle([x + 4, y + 4, x + 50, y + 18], fill=r.choice([(220, 36, 40), (30, 90, 170), (20, 20, 20), (20, 120, 60)]))
+            for l in range(3): d.line([(x + 6, y + 26 + l * 10), (x + 48, y + 26 + l * 10)], fill=(150, 150, 150), width=3)
+    return im
+
+
+def c_busstop():
+    """A bus stop's panels: the roof fascia with BAS and the stop name (top quarter), the route panel (left) and an
+    advert panel (right)."""
+    im, d = cell((236, 236, 236))
+    q = S // 4
+    d.rectangle([0, 0, S, q], fill=(220, 36, 40))
+    d.text((20, 20), 'BAS', font=font('impact.ttf', 80), fill=(255, 255, 255))
+    d.text((180, 30), 'HENTIAN', font=font('arialbd.ttf', 30), fill=(255, 255, 255))
+    d.text((180, 66), 'JALAN TUN PERAK', font=font('arialbd.ttf', 30), fill=(255, 230, 120))
+    d.rectangle([10, q + 10, S // 2 - 10, S - 10], fill=(255, 255, 255), outline=INK, width=4)
+    for k in range(5):
+        y = q + 40 + k * 64
+        d.rounded_rectangle([24, y, 104, y + 44], radius=8, fill=[(220, 36, 40), (30, 90, 170), (20, 140, 80), (250, 160, 30), (110, 30, 120)][k])
+        d.text((34, y + 6), ['U84', 'B114', '300', 'T407', 'GOKL'][k], font=font('arialbd.ttf', 26), fill=(255, 255, 255))
+        d.line([(116, y + 22), (S // 2 - 30, y + 22)], fill=(80, 80, 80), width=6)
+    d.rectangle([S // 2 + 10, q + 10, S - 10, S - 10], fill=(250, 214, 40), outline=INK, width=4)
+    d.text((S // 2 + 30, q + 60), 'TEH', font=font('impact.ttf', 90), fill=(190, 30, 30))
+    d.text((S // 2 + 30, q + 170), 'TARIK', font=font('impact.ttf', 90), fill=(190, 30, 30))
+    d.text((S // 2 + 30, S - 80), 'BOS!', font=font('impact.ttf', 50), fill=INK)
+    return im
+
+
+def c_kerb_bw():
+    """Kerb paint: black and white blocks (the city's kerbs); the yellow/black HAZARD is for junctions and stops."""
+    im, d = cell((248, 248, 244))
+    for k in range(0, 8, 2):
+        d.rectangle([k * S / 8, 0, (k + 1) * S / 8, S], fill=(30, 30, 34))
+    return im
+
+
+def c_grime():
+    """Weathered render [T]: near-white with grey rain streaks and mould hanging from the top (a storey's cornice or
+    sill line), a damp band along the bottom. Tinted by the wall's paint, tiled one storey to a tile."""
+    im, d = cell((250, 250, 250))
+    r = random.Random(85)
+    for k in range(16):
+        x = r.randint(-10, S - 20)
+        w = r.randint(10, 46)
+        h = r.randint(60, 300)
+        g = r.randint(196, 226)
+        d.rectangle([x, 0, x + w, h], fill=(g, g, g))
+        d.ellipse([x, h - w / 2, x + w, h + w / 2], fill=(g, g, g))
+    for k in range(5):                                   # darker mould right under the ledge
+        x = r.randint(0, S - 60)
+        w = r.randint(30, 90)
+        d.rectangle([x, 0, x + w, r.randint(14, 40)], fill=(178, 180, 176))
+    d.rectangle([0, S - 26, S, S], fill=(222, 222, 220))
+    return im
+
+
 CELLS = [
     # row 0
     ('WHITE', c_white), ('GLASS', c_glass), ('GLASS_DARK', c_glass_dark), ('GLASS_SHOP', c_glass_shop),
@@ -1072,17 +1454,26 @@ CELLS = [
     # walk-in interiors (Interior.cs)
     ('GOODS', c_goods), ('FRIDGE', c_fridge), ('PHOTOS', c_photos), ('SCREENS', c_screens), ('FLOOR', c_floor),
     ('RUGS', c_rugs), ('MENUS', c_menus),
+    # row 8: the streets pass, KL signage
+    ('SIGNS4', lambda: c_signs2(0)), ('SIGNS5', lambda: c_signs2(1)), ('SIGNS6', lambda: c_signs2(2)), ('SIGNS7', lambda: c_signs2(3)),
+    ('BLADES0', lambda: c_blades(0)), ('BLADES1', lambda: c_blades(1)), ('JKR_BLUE', lambda: c_jkr('blue')), ('JKR_GREEN', lambda: c_jkr('green')),
+    # row 9
+    ('JKR_MORE', c_jkr2), ('STREETNAMES', c_streetnames), ('MART', c_mart), ('PETROL', c_petrol),
+    ('BUNTING', c_bunting), ('BILLBOARD2', lambda: c_billboard2(0)), ('BILLBOARD3', lambda: c_billboard2(1)), ('MAMAK', c_mamak),
+    # row 10 (rows 10-11 are free)
+    ('BILLBOARD4', lambda: c_billboard2(2)), ('BILLBOARD5', lambda: c_billboard2(3)), ('BUSSTOP', c_busstop), ('KERB_BW', c_kerb_bw), ('GRIME', c_grime),
 ]
+ROWS = 12                     # = ArchImport's flipbook rows (8 across x 12 down, 96 slices; rows past the cells are blank)
 
 
 def main():
-    sheet = Image.new('RGB', (S * N, S * N), (255, 0, 255))
+    sheet = Image.new('RGB', (S * N, S * ROWS), (255, 0, 255))
     for i, (name, fn) in enumerate(CELLS):
         im = fn().convert('RGB')
         if name != 'WHITE':
             im = grain(im, 3, i)
         sheet.paste(im, ((i % N) * S, (i // N) * S))
-    sheet = sheet.resize((256 * N, 256 * N), Image.LANCZOS)
+    sheet = sheet.resize((256 * N, 256 * ROWS), Image.LANCZOS)
     sheet.save(OUT)
     print(OUT, len(CELLS), 'cells')
     names = ', '.join(f'{n}' for n, _ in CELLS)

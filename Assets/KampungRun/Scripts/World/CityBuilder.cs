@@ -206,6 +206,8 @@ namespace KampungRun
             _ground = new StaticBatcher();
             _districts.Clear();
             _floraAt.Clear();
+            _footbridgeFeet.Clear();
+            _keepClear.Clear();
             _patchRoads.Clear();
             var clock = System.Diagnostics.Stopwatch.StartNew();
             var times = new System.Text.StringBuilder();
@@ -483,6 +485,7 @@ namespace KampungRun
                     _arch.Add(s);
                     _interiors.Add(Arch.Interior.RoomsOf(s));
                     Arch.ArchGen.Collider(s, cv, ct);
+                    Arch.Shophouse.StreetSolids(s, cv, ct);           // (the streets pass: crates, kapcai, tables are solid)
                 }
                 var bm = new Mesh { name = p.name + "_buildings", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
                 bm.SetVertices(cv);
@@ -1257,7 +1260,11 @@ namespace KampungRun
             };
             _arch.Add(j);
             Arch.Bridgework.Collider(j, _archCv, _archCt);
+            _footbridgeFeet.Add(j.a); _footbridgeFeet.Add(j.b);
         }
+
+        /// <summary>Where the footbridges' stairs come down (the covered walkways break round them: CityBuilder.Roads).</summary>
+        readonly List<Vector3> _footbridgeFeet = new List<Vector3>();
 
         void BuildZone(Vector3 c, Zone zone)
         {
@@ -1526,6 +1533,7 @@ namespace KampungRun
             _arch.Add(s);
             _interiors.Add(Arch.Interior.RoomsOf(s));
             Arch.ArchGen.Collider(s, _archCv, _archCt);
+            Arch.Shophouse.StreetSolids(s, _archCv, _archCt);
         }
 
         /// <summary>The physics of the filler districts' modelled buildings, in one mesh.</summary>
@@ -1567,22 +1575,23 @@ namespace KampungRun
         /// lots `lotW` wide running from `back` to `front` metres along the facing (the five-foot way is the front 1.9 m).
         /// </summary>
         void ArchShopRow(Vector3 pos, float yaw, int lots, float lotW, float back, float front, int levels, Arch.BuildingKind kind = Arch.BuildingKind.Shop,
-                         bool vary = true, bool flatRoof = false, Arch.InteriorKind[] interiors = null)
+                         bool vary = true, bool flatRoof = false, Arch.InteriorKind[] interiors = null, System.Random dice = null)
         {
+            var rng = dice ?? _rng;                     // (rows added by the streets pass bring their own dice: the layout's stay put)
             var rot = Quaternion.Euler(0, yaw, 0);
             Vector3 fw = rot * Vector3.forward, rt = rot * Vector3.right;
             Vector2 P(float x, float z) { var w = pos + rt * x + fw * z; return new Vector2(w.x, w.z); }
             for (int i = 0; i < lots; i++)
             {
                 float x0 = -lots * lotW * 0.5f + i * lotW, x1 = x0 + lotW;
-                int lv = Mathf.Max(1, levels + (_rng.NextDouble() < 0.25 && vary ? 1 : 0));
+                int lv = Mathf.Max(1, levels + (rng.NextDouble() < 0.25 && vary ? 1 : 0));
                 AddArch(new Arch.BuildingSpec
                 {
                     // front edge first, left to right as seen from the street, then round counter-clockwise
                     ring = new[] { P(x1, front), P(x0, front), P(x0, back), P(x1, back) },
                     edges = new[] { Arch.EdgeFlags.Street, i > 0 ? Arch.EdgeFlags.Party : Arch.EdgeFlags.None, Arch.EdgeFlags.None,
                                     i < lots - 1 ? Arch.EdgeFlags.Party : Arch.EdgeFlags.None },
-                    y0 = G, height = lv * 3.4f, levels = lv, kind = kind, seed = _rng.Next(), flatRoof = flatRoof,
+                    y0 = G, height = lv * 3.4f, levels = lv, kind = kind, seed = rng.Next(), flatRoof = flatRoof,
                     // a lot told what its shop is gets the sign to match
                     interior = interiors != null && i < interiors.Length ? interiors[i] : Arch.InteriorKind.Auto,
                     sign = interiors != null && i < interiors.Length ? Arch.Interior.SignFor(interiors[i]) : -1,
@@ -1613,12 +1622,15 @@ namespace KampungRun
         {
             // rows sit on the north/south (or east/west) edges, shopfront facing the road
             float d = 11.5f;
+            along *= 1.15f;                                  // (callers say +-8: the six-metre lots centre on +-9.2)
             Vector3 pos;
             float yaw;
             if (alongX) { pos = c + new Vector3(along, G, north ? d : -d); yaw = north ? 0 : 180; }
             else { pos = c + new Vector3(north ? d : -d, G, along); yaw = north ? 90 : -90; }
-            // three lots of five metres, the five-foot way where the old row's arcade stood
-            ArchShopRow(pos, yaw, 3, 5f, -5f, 6.9f, RI(2, 4));
+            // three lots of six metres, the five-foot way where the old row's arcade stood; the end lot comes out to the side
+            // street's pavement line, so the rows run on round the corner the way KL's do (the streets pass: they were five
+            // metres, leaving the corners empty)
+            ArchShopRow(pos, yaw, 3, 6f, -5f, 6.9f, RI(2, 4));
             var front = Quaternion.Euler(0, yaw, 0) * Vector3.forward;
             var sideDir = Quaternion.Euler(0, yaw, 0) * Vector3.right;
             // kapcai parked on the five-foot way (kick them over!)
@@ -1649,14 +1661,32 @@ namespace KampungRun
             ShopRow(c, 8, true, alongX, RI(0, 3));
             ShopRow(c, -8, false, alongX, RI(0, 3));
             ShopRow(c, 8, false, alongX, RI(0, 3));
-            // back lane with a few trees
+            // back court with a few trees (kept between the side rows)
             var used = new List<Vector2>();
             for (int i = 0; i < 2; i++)
             {
-                var p = alongX ? new Vector3(R(-15, 15), G, R(-3, 3)) : new Vector3(R(-3, 3), G, R(-15, 15));
+                var p = alongX ? new Vector3(R(-15, 15) * 0.4f, G, R(-3, 3)) : new Vector3(R(-3, 3), G, R(-15, 15) * 0.4f);
                 Tree("Prop_RainTree", c + p, 0.7f);
             }
-            _city.coinSpots.Add(c + new Vector3(alongX ? R(-15, 15) : 0, 1f, alongX ? 0 : R(-15, 15)));
+            _city.coinSpots.Add(c + new Vector3(alongX ? R(-15, 15) * 0.4f : 0, 1f, alongX ? 0 : R(-15, 15) * 0.4f));
+            SideRows(c, alongX);
+        }
+
+        /// <summary>
+        /// Two more lots on each of the other two sides, between the backs of the main rows, facing out: with the main
+        /// rows coming round the corners, the block reads as one solid perimeter of shophouses, like KL (the streets
+        /// pass). Their dice come from where they stand, so nothing else in the layout moves.
+        /// </summary>
+        void SideRows(Vector3 c, bool alongX)
+        {
+            foreach (float sgn in new[] { -1f, 1f })
+            {
+                Vector3 pos = alongX ? c + new Vector3(sgn * 11.5f, G, 0f) : c + new Vector3(0f, G, sgn * 11.5f);
+                float yaw = alongX ? (sgn > 0 ? 90f : -90f) : (sgn > 0 ? 0f : 180f);
+                var dice = new System.Random(Mathf.RoundToInt(pos.x * 7.3f) * 92821 ^ Mathf.RoundToInt(pos.z * 3.1f) * 68917 ^ 5);
+                int lv = 2 + dice.Next(0, 3);
+                ArchShopRow(pos, yaw, 2, 5.9f, -3.5f, 6.9f, lv, dice: dice);
+            }
         }
 
         static readonly string[] KitShops = { "env_chowkit_shop_a", "env_chowkit_shop_b", "env_chowkit_shop_c", "env_chowkit_shop_d", "env_chowkit_shop_e" };
@@ -2065,10 +2095,28 @@ namespace KampungRun
             // two blocks of flats (8 to 15 storeys), modelled
             ArchBlock(c + new Vector3(-8, 0, -8), 0, R(6.5f, 8.5f), R(6f, 8f), G, RI(8, 16), Arch.BuildingKind.Flats, (byte)RI(1, 9), c);
             ArchBlock(c + new Vector3(9, 0, 9), 90, R(6.5f, 8.5f), R(6f, 8f), G, RI(8, 16), Arch.BuildingKind.Flats, (byte)RI(1, 9), c);
-            if (_rng.NextDouble() < 0.6) Billboard(c + new Vector3(14, G, -15), _rng.NextDouble() < 0.5 ? 180 : 90);
-            Tree("Prop_Angsana", c + new Vector3(10, G, -12), 0.9f);
+            // the streets pass: now and then a petrol station on the free corner of a lot on the block's south road
+            // (the billboard and tree it replaces still roll their dice, so the layout stays put)
+            int row = Mathf.FloorToInt((c.z - Z0) / Pitch);
+            bool south = c.z < Z0 + row * Pitch + Pitch * 0.5f;
+            bool petrol = south && Hash01(c.x, c.z, 971) < 0.3f;
+            if (_rng.NextDouble() < 0.6) { bool turn = _rng.NextDouble() < 0.5; if (!petrol) Billboard(c + new Vector3(14, G, -15), turn ? 180 : 90); }
+            if (petrol) { _rng.NextDouble(); PetrolStation(c); }
+            else Tree("Prop_Angsana", c + new Vector3(10, G, -12), 0.9f);
             Tree("Prop_Angsana", c + new Vector3(-12, G, 12), 0.9f);
-            _city.itemSpots.Add(c + new Vector3(12, G + 0.6f, -2));
+            _city.itemSpots.Add(c + (petrol ? new Vector3(1.5f, G + 0.6f, -3f) : new Vector3(12, G + 0.6f, -2)));
+        }
+
+        /// <summary>A petrol station on a condo lot's south-east corner, its forecourt open to the road.</summary>
+        void PetrolStation(Vector3 c)
+        {
+            var st = new Arch.PetrolStation { o = c + new Vector3(11f, G, -12.5f), r = Vector3.right, seed = Mathf.RoundToInt(c.x * 3f + c.z * 7f) };
+            _arch.Add(st);
+            Arch.StreetDress.SolidsOf(st, _archCv, _archCt);
+            Place("Petrol", c + new Vector3(11f, G, -12.5f));
+            for (float dx = -9f; dx <= 9.1f; dx += 4.5f)
+                for (float dz = -7f; dz <= 11.1f; dz += 4.5f)
+                    _keepClear.Add((c + new Vector3(11f + dx, G, -12.5f + dz), 4.5f));     // (no trees on the forecourt)
         }
 
         void MasjidBlock(Vector3 c)
@@ -2111,6 +2159,15 @@ namespace KampungRun
             ShopRow(c, 8, false, true, 1);
             ArchShopRow(c + new Vector3(12, G, 11.5f), 0, 3, 5f, -5f, 6.9f, 2);
             Sign("RESTORAN\nMAMAK 24 JAM", c + new Vector3(-8, 4.6f, 13.6f), 0);
+            // the streets pass: its tables and plastic chairs spill out in front, either side of the doorway
+            foreach (var (x, z) in new[] { (-14.2f, 15.2f), (-14.2f, 17.4f), (-4.4f, 15.2f), (-4.4f, 17.4f) })
+            {
+                var t = new Arch.PavementBits { kind = Arch.PavementBits.Kind.Tables, o = c + new Vector3(x, G, z), r = Vector3.right, count = 2,
+                                                seed = Mathf.RoundToInt(x * 13f + z * 7f) };
+                _arch.Add(t);
+                Arch.StreetDress.SolidsOf(t, _archCv, _archCt);
+                _keepClear.Add((t.o + Vector3.right * 1.15f, 2.2f));
+            }
         }
 
         void PasarBlock(Vector3 c)

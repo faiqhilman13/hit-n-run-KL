@@ -56,10 +56,12 @@ namespace KampungRun.Arch
             public float W, D, G, S, h, A, P;
             public int lv, sign, plaque, seed;
             public ArchTex shopBack, shopBack2;
-            public bool detail, shop, flat;
+            public bool detail, shop, flat, mart, forced, grime;
 
             /// <summary>One bay of a wide front: the same building, its own shop, sign and (unless the row was
             /// painted as one) its own colours.</summary>
+            int bayIndex;
+
             public Lot Bay(float w, bool uniform)
             {
                 var b = (Lot)MemberwiseClone();
@@ -71,6 +73,8 @@ namespace KampungRun.Arch
                     b.shutter = Shutters[rng.Next(Shutters.Length)];
                 }
                 b.sign = rng.Next(16);
+                if (!b.forced && (Hash(b.seed, 31 + b.sign * 7 + (int)(w * 10f) + bayIndex++) & 1) == 0) b.sign += 16;   // the newer signs (no dice drawn)
+                b.mart = false;
                 b.plaque = rng.Next(8);
                 b.shopBack = ShopBacks[rng.Next(ShopBacks.Length)];
                 b.shopBack2 = rng.NextDouble() < 0.6 ? b.shopBack : ShopBacks[rng.Next(ShopBacks.Length)];
@@ -95,6 +99,25 @@ namespace KampungRun.Arch
             t == ArchTex.Louvre || t == ArchTex.PanelShutter || t == ArchTex.Folding || t == ArchTex.Door || t == ArchTex.Breeze ||
             t == ArchTex.Tiles || t == ArchTex.Zinc || t == ArchTex.PlanksH || t == ArchTex.PlanksV || t == ArchTex.Ornament ||
             t == ArchTex.Rail || t == ArchTex.Kerawang || t == ArchTex.Vent || t == ArchTex.Concrete || t == ArchTex.Brick || t == ArchTex.Attap;
+
+        static int Hash(int seed, int salt)
+        {
+            unchecked
+            {
+                uint h = (uint)seed * 2654435761u ^ (uint)salt * 2246822519u;
+                h ^= h >> 15; h *= 2246822519u; h ^= h >> 13; h *= 3266489917u; h ^= h >> 16;
+                return (int)(h & 0x7fffffff);
+            }
+        }
+
+        /// <summary>The slice and rows of signboard `s` (0-31: four boards a slice, Signs0-3 then Signs4-7).</summary>
+        public static ArchTex SignTex(int s, out float v0, out float v1)
+        {
+            s = ((s % 32) + 32) % 32;
+            int cell = s / 4, row = s % 4;
+            v0 = 1f - (row + 1) / 4f; v1 = 1f - row / 4f;
+            return cell < 4 ? (ArchTex)((int)ArchTex.Signs0 + cell) : (ArchTex)((int)ArchTex.Signs4 + cell - 4);
+        }
 
         static float Rand(Lot L, float a, float b) => a + (float)L.rng.NextDouble() * (b - a);
         static T Pick<T>(Lot L, T[] from) => from[L.rng.Next(from.Length)];
@@ -125,11 +148,22 @@ namespace KampungRun.Arch
             // footprints can be trapezoids, L-shapes, wider at the back) gets a flat roof capping its real outline
             L.flat = L.style == ShopStyle.Modern || L.D > 30f || s.flatRoof || !Rectish(ring, p0, dir, inward, W, L.D);
             L.sign = L.rng.Next(16);
-            if (s.sign >= 0) L.sign = s.sign & 15;
+            L.forced = s.sign >= 0;
+            if (L.forced) L.sign = s.sign & 15;
+            else if ((Hash(s.seed, 29) & 1) == 0) L.sign += 16;               // half the lots hang the newer signs (Signs4-7)
             L.plaque = L.rng.Next(8);
             L.shopBack = Pick(L, ShopBacks);
             L.shopBack2 = L.rng.NextDouble() < 0.6 ? L.shopBack : Pick(L, ShopBacks);
             Storeys(L.h, L.lv, out L.G, out L.S);
+            // weathered render (rain streaks and mould under the ledges) on most of the older lots
+            L.grime = Hash(s.seed, 53) % 10 < (L.style == ShopStyle.PreWar ? 7 : L.style == ShopStyle.Deco ? 5 : 4);
+            // now and then a 24-hour mart (a 7-Eleven-ish chain) in a single-fronted lot: glass front, striped fascia
+            if (!L.forced && L.shop && L.lv >= 2 && W <= 7.5f && Hash(s.seed, 77) % 13 == 0)
+            {
+                L.mart = true;
+                L.sign = 5;                                               // (a runcit inside: Interior.SignShop)
+                L.shopBack = L.shopBack2 = ArchTex.GlassShop;
+            }
             L.A = HasArcade(s.kind, L.D, L.lv, L.G) ? ArcadeDepth : 0f;
             L.P = L.style == ShopStyle.PreWar ? 1.0f : L.style == ShopStyle.Deco ? 1.3f : 0.9f;
             return L;
@@ -210,11 +244,52 @@ namespace KampungRun.Arch
                     if (k < B.lv - 1) m.Box(fb, -0.04f, bw + 0.04f, y1 - 0.1f, y1 + 0.12f, 0f, 0.14f, B.trim, Faces.Front | Faces.Top | Faces.Bottom | Faces.Left | Faces.Right);
                 }
                 if (B.lv >= 2) Pilasters(m, fb, B, true, re);
+                if (B.shop && B.lv >= 2 && Hash(s.seed, 41 + i) % 10 < 4) Blade(m, fb, B, bw, Hash(s.seed, 43 + i));
                 Top(m, fb, B);
             }
             if (L.flat) FlatRoof(m, s, L);
             else TileRoof(m, f, L);
             OtherWalls(m, s, L, front);
+        }
+
+        static ArchMesh _scratch;
+
+        /// <summary>
+        /// The solids of a lot's street dressing (the crates, racks, tables, parked kapcai on its five-foot way and the bins
+        /// and gas tanks in its back lane): the same dressing Build hangs on it, run with StreetDress's recorder on, so a
+        /// box stands wherever something is drawn and nowhere else.
+        /// </summary>
+        public static void StreetSolids(BuildingSpec s, List<Vector3> v, List<int> t)
+        {
+            if (!StreetDress.Enabled || s.kind != BuildingKind.Shop) return;
+            var L = Setup(s, true, out int front, out var f);
+            var row = Bays(L);
+            float bw = L.W / row.Length;
+            var rooms = Interior.RoomsOf(s);
+            if (_scratch == null) _scratch = new ArchMesh { Mute = true };
+            StreetDress.Record(v, t);
+            for (int i = 0; i < row.Length; i++)
+            {
+                var B = row[i];
+                if (!B.shop) continue;
+                var fb = f.Shift(i * bw, 0f, 0f);
+                RoomSpec room = null;
+                foreach (var rm in rooms)
+                    if (Mathf.Abs(Vector3.Dot(rm.f.o - fb.o, f.r) - 0.12f) < 0.05f) { room = rm; break; }
+                StreetDress.ShopFront(_scratch, fb, bw, B.A, B.G, room != null ? room.kind : InteriorKind.Closed, s.seed * 7 + i, !s.flatRoof);
+                _scratch.Clear();
+            }
+            var ring = s.ring;
+            if (ring.Length == 4)
+            {
+                int i = (front + 2) % 4;
+                Vector2 a = ring[i], b = ring[(i + 1) % 4];
+                float len = (b - a).magnitude;
+                if ((s.Edge(i) & EdgeFlags.Party) == 0 && len >= 2.4f)
+                    StreetDress.BackLane(_scratch, Frame.Edge(a, b, s.y0), len, L.G, L.S, L.lv, L.seed);
+            }
+            StreetDress.StopRecording();
+            _scratch.Clear();
         }
 
         public const float ArcadeDepth = 1.9f;
@@ -345,7 +420,23 @@ namespace KampungRun.Arch
             m.Box(f, 0f, W, G - 0.14f, G, -A, 0f, Soffit, Faces.Bottom);
             m.QuadFacing(f.P(0f, 0.02f, -A), f.P(W, 0.02f, -A), f.P(W, 0.02f, 0f), f.P(0f, 0.02f, 0f), Vector3.up, White, ArchTex.Steps,
                          0f, 0f, W / 1.2f, A / 1.2f);
-            m.Box(f, 0f, W, G - 0.55f, G, -0.3f, 0.04f, L.trim, Faces.Front | Faces.Bottom | Faces.Back);
+            if (L.detail && L.style == ShopStyle.PreWar && W > 2.6f)
+            {
+                // pre-war lots: the five-foot way opens to the street through an arch between the columns
+                float x0 = ColW, x1 = rightEnd ? W - ColW : W, yb = G - 1.15f, rise = Mathf.Min(0.7f, (x1 - x0) * 0.22f);
+                var arch = new List<Vector2> { new Vector2(x0, G), new Vector2(x0, yb) };
+                const int segs = 8;
+                for (int k = 1; k < segs; k++)
+                {
+                    float u = k / (float)segs;
+                    arch.Add(new Vector2(Mathf.Lerp(x0, x1, u), yb + Mathf.Sin(u * Mathf.PI) * rise));
+                }
+                arch.Add(new Vector2(x1, yb));
+                arch.Add(new Vector2(x1, G));
+                m.Extrude(f, arch, -0.3f, 0.04f, L.trim, ArchTex.White);
+                if (!rightEnd) m.Box(f, W - 0.02f, W, G - 1.15f, G, -0.3f, 0.04f, L.trim, Faces.Front);
+            }
+            else m.Box(f, 0f, W, G - 0.55f, G, -0.3f, 0.04f, L.trim, Faces.Front | Faces.Bottom | Faces.Back);
             if (leftEnd) Column(m, f, 0f, L);
             if (rightEnd) Column(m, f, W - ColW, L);
             if (L.detail && L.rng.NextDouble() < 0.5)
@@ -392,7 +483,7 @@ namespace KampungRun.Arch
                 var col = Tinted(back) ? L.shutter : back == ArchTex.Glass ? Glass : White;
                 _holes.Add(new Opening(x0, x0 + ww, sill, sill + wh, L.detail ? 0.2f : 0f, back, col, Reveal));
             }
-            m.Panel(f, 0f, L.W, y0, y1, 0f, L.wall, ArchTex.White, 0f, _holes);
+            m.Panel(f, 0f, L.W, y0, y1, 0f, L.wall, L.grime ? ArchTex.Grime : ArchTex.White, L.grime ? y1 - y0 : 0f, _holes);
             if (!L.detail) return;
             for (int i = 0; i < _holes.Count; i++) StreetDress.LitWindow(m, f, _holes[i], L.seed + (int)(f.o.x * 13f), k * 17 + i);
             foreach (var h in _holes)
@@ -431,7 +522,7 @@ namespace KampungRun.Arch
             bool grille = L.rng.NextDouble() < 0.6;
             var back = grille ? ArchTex.Grille : ArchTex.Glass;
             _holes.Add(new Opening(0.45f, L.W - 0.45f, sill, top, L.detail ? 0.12f : 0f, back, grille ? White : Glass, Metal));
-            m.Panel(f, 0f, L.W, y0, y1, 0f, L.wall, ArchTex.White, 0f, _holes);
+            m.Panel(f, 0f, L.W, y0, y1, 0f, L.wall, L.grime ? ArchTex.Grime : ArchTex.White, L.grime ? y1 - y0 : 0f, _holes);
             if (!L.detail) return;
             StreetDress.LitWindow(m, f, _holes[0], L.seed + (int)(f.o.x * 13f), k * 17);
             var hh = _holes[0];
@@ -526,13 +617,32 @@ namespace KampungRun.Arch
             }
         }
 
+        /// <summary>A vertical blade sign standing out from the front by the pilaster, read from up and down the street
+        /// (Chinese characters stacked, or HOTEL / KLINIK on its side): Blades0-1, four strips a slice.</summary>
+        static void Blade(ArchMesh m, in Frame f, Lot L, float bw, int h)
+        {
+            float x = (h & 1) == 0 ? bw - 0.2f : 0.2f;
+            float y0 = L.G + 1.0f, y1 = Mathf.Min(L.h - 0.25f, y0 + (L.lv >= 3 ? 3.4f : 2.2f));
+            if (y1 - y0 < 1.4f) return;
+            float z0 = 0.18f, z1 = 0.9f;
+            int strip = (h >> 1) % 8;
+            var tex = strip < 4 ? ArchTex.Blades0 : ArchTex.Blades1;
+            float u0 = (strip % 4) / 4f, u1 = u0 + 0.25f;
+            // the bracket and the board's edges
+            m.Box(f, x - 0.04f, x + 0.04f, y1 - 0.08f, y1, 0f, z1, Dark);
+            m.Box(f, x - 0.04f, x + 0.04f, y0, y1 - 0.08f, z0, z1, SignSide, Faces.Front | Faces.Top | Faces.Bottom);
+            // its two faces (the strip runs up the board)
+            m.QuadFacing(f.P(x + 0.041f, y0, z1), f.P(x + 0.041f, y0, z0), f.P(x + 0.041f, y1 - 0.08f, z0), f.P(x + 0.041f, y1 - 0.08f, z1), f.r, White, tex, u0, 0f, u1, 1f);
+            m.QuadFacing(f.P(x - 0.041f, y0, z0), f.P(x - 0.041f, y0, z1), f.P(x - 0.041f, y1 - 0.08f, z1), f.P(x - 0.041f, y1 - 0.08f, z0), -f.r, White, tex, u0, 0f, u1, 1f);
+        }
+
         /// <summary>The signboard along the floor line over the five-foot way.</summary>
         static void Sign(ArchMesh m, in Frame f, Lot L, bool sides)
         {
             float sy0 = L.G + 0.06f, sy1 = L.G + 0.86f, x0 = 0.3f, x1 = L.W - 0.3f;
-            int s = L.sign, cell = s / 4, row = s % 4;
-            float v0 = 1f - (row + 1) / 4f, v1 = 1f - row / 4f;
-            var tex = (ArchTex)((int)ArchTex.Signs0 + cell);
+            float v0, v1;
+            var tex = SignTex(L.sign, out v0, out v1);
+            if (L.mart) { tex = ArchTex.Mart; v0 = 0.75f; v1 = 1f; x0 = 0.05f; x1 = L.W - 0.05f; sy1 = L.G + 1.0f; }
             if (sides) m.Box(f, x0, x1, sy0, sy1, 0f, 0.12f, SignSide, Faces.Left | Faces.Right | Faces.Top | Faces.Bottom);
             m.Quad(f.P(x0, sy0, 0.12f), f.P(x1, sy0, 0.12f), f.P(x1, sy1, 0.12f), f.P(x0, sy1, 0.12f), White, tex, 0f, v0, 1f, v1);
         }
@@ -670,6 +780,15 @@ namespace KampungRun.Arch
                 if ((e & EdgeFlags.Party) != 0 || len < 2.4f || !L.detail)
                 {
                     m.Rect(fe, 0f, len, 0f, top, 0f, L.wallDark, ArchTex.White);
+                    continue;
+                }
+                // a long blank side wall carries a painted advert (the streets pass: KL's gable-end ads)
+                if (i != (front + 2) % n && len >= 6f && top >= 6.5f && Hash(s.seed, 61 + i) % 10 < 4)
+                {
+                    m.Rect(fe, 0f, len, 0f, top, 0f, L.wallDark, L.grime ? ArchTex.Grime : ArchTex.White, L.grime ? 3.4f : 0f);
+                    float aw = Mathf.Min(len - 1.2f, 9f), ah = Mathf.Min(aw * 0.5f, top - 3.4f), ax = (len - aw) * 0.5f, ay = Mathf.Max(L.G + 0.4f, top - ah - 0.6f);
+                    ArchTex[] ads = { ArchTex.Billboard0, ArchTex.Billboard1, ArchTex.Billboard2, ArchTex.Billboard3, ArchTex.Billboard4, ArchTex.Billboard5 };
+                    m.Rect(fe, ax, ax + aw, ay, ay + ah, 0.02f, White, ads[Hash(s.seed, 67 + i) % ads.Length]);
                     continue;
                 }
                 // a back or side wall: small windows on each floor, a back door, pipes
