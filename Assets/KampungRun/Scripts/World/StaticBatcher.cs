@@ -33,6 +33,9 @@ namespace KampungRun
         /// <summary>An invisible physics box (kit meshes are visual only).</summary>
         public void ColliderOnly(Vector3 center, Vector3 size) => _colliders.Add((center, size, Quaternion.identity));
 
+        /// <summary>An invisible physics box, turned.</summary>
+        public void ColliderOnly(Vector3 center, Vector3 size, Quaternion rotation) => _colliders.Add((center, size, rotation));
+
         public void Box(Vector3 center, Vector3 size, Color color, bool collider = true, float outline = 2.2f, Quaternion? rotation = null) =>
             Add(center, size, color, collider, outline, rotation ?? Quaternion.identity, null, default, 0f);
 

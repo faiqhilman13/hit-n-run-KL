@@ -226,6 +226,7 @@ namespace KampungRun
             BuildRoads();
             Lap("roads");
             foreach (var p in patches) BuildPatch(p);           // first: its landmarks claim the named places
+            FinishRails();
             Lap("patches");
             for (int c = 0; c < NX; c++)
                 for (int r = 0; r < NZ; r++)
@@ -272,7 +273,7 @@ namespace KampungRun
             ["land_park"] = LatMaterials.Pal.Park, ["land_lawn"] = LatMaterials.Pal.Park, ["land_forest"] = new Color(0.3f, 0.56f, 0.26f), ["land_pitch"] = new Color(0.45f, 0.70f, 0.31f),
             ["pond"] = LatMaterials.Pal.Water, ["water"] = LatMaterials.Pal.Water, ["bank"] = LatMaterials.Pal.Wall, ["bed"] = new Color(0.26f, 0.3f, 0.32f),
             ["deck"] = LatMaterials.Pal.Wall, ["rail"] = LatMaterials.Pal.Rail, ["barrier"] = new Color(0.9f, 0.88f, 0.84f),
-            ["pillar"] = new Color(0.78f, 0.76f, 0.72f), ["guideway"] = new Color(0.88f, 0.87f, 0.83f),
+            ["pillar"] = new Color(0.78f, 0.76f, 0.72f), ["guideway"] = new Color(0.78f, 0.75f, 0.70f),
             ["tree_trunk"] = new Color(0.45f, 0.3f, 0.2f), ["tree_leaf_a"] = new Color(0.24f, 0.55f, 0.22f),
             ["tree_leaf_b"] = new Color(0.36f, 0.65f, 0.27f), ["tree_leaf_c"] = new Color(0.28f, 0.6f, 0.36f),
             ["bld_pink"] = new Color(0.95f, 0.7f, 0.7f), ["bld_yellow"] = new Color(0.98f, 0.87f, 0.52f), ["bld_mint"] = new Color(0.66f, 0.88f, 0.74f),
@@ -371,6 +372,7 @@ namespace KampungRun
                 if (md.uv != null) mesh.uv = md.uv;
                 mesh.triangles = md.t;
                 mesh.RecalculateBounds();
+                if (md.key == "pillar_col") { PatchPillars(p, md, solids); continue; }     // CityBuilder.Rail
                 if (md.key.EndsWith("_col"))
                 {
                     // physics only: the architecture library models what stands here (flyover parapets, piers)
@@ -387,6 +389,7 @@ namespace KampungRun
                 if (!NoCollide.Contains(md.key)) solids.Add(new CombineInstance { mesh = mesh, transform = Matrix4x4.identity });
             }
             PatchTrees(p, root, solids);
+            _railLines.AddRange(RailRuns(p));
             // the flyovers' parapets and hammerhead piers, modelled
             foreach (var (a, b, o) in p.deckEdges)
                 _arch.Add(new Arch.ParapetRun { pts = new[] { a, b }, outward = new Vector3(o.x, 0f, o.y) });
