@@ -116,7 +116,18 @@ PALETTE = [
     ("jade_green", (0.10, 0.52, 0.36)), ("marble", (0.95, 0.93, 0.88)), ("brick_red", (0.72, 0.26, 0.18)),
     ("stand_blue", (0.20, 0.36, 0.72)), ("pitch_green", (0.30, 0.66, 0.24)),
 ]
+# landmarks 3 (kl_landmarks3.py: the real-KL landmarks): kept at the end of the atlas, from cell LM3_BASE, so cells
+# other kits append to PALETTE never collide with them
+LM3_BASE = 232
+PALETTE_LM3 = [
+    ("copper", (0.74, 0.40, 0.20)), ("copper_dark", (0.48, 0.24, 0.13)), ("petronas_steel", (0.80, 0.84, 0.88)),
+    ("petronas_glass", (0.40, 0.55, 0.70)), ("deco_blue", (0.46, 0.72, 0.88)), ("canopy_green", (0.38, 0.70, 0.52)),
+    ("maybank_grey", (0.62, 0.64, 0.68)), ("sandstone", (0.90, 0.80, 0.60)), ("dome_blue", (0.16, 0.48, 0.70)),
+    ("lantern_red", (0.90, 0.14, 0.10)), ("verdigris", (0.36, 0.66, 0.58)), ("lamp_green", (0.20, 0.55, 0.32)),
+]
 PAL_INDEX = {name: i for i, (name, _) in enumerate(PALETTE)}
+assert len(PALETTE) <= LM3_BASE, "the palette has run into the landmark cells (LM3_BASE)"
+PAL_INDEX.update({name: LM3_BASE + i for i, (name, _) in enumerate(PALETTE_LM3)})
 # painted surface textures (Tools/gen_surfaces.py order): which cells get grass strokes,
 # mortar lines, timber boards... in the Hit & Run shader
 SURF = dict(grass=1, asphalt=2, paving=3, brick=4, timber=5, plaster=6, concrete=7, leaves=8, water=9, roof=10, floortile=11)
@@ -134,6 +145,7 @@ SURFACE = {
     "leaf": "leaves", "leaf_dark": "leaves", "banana_leaf": "leaves", "trunk": "timber",
     "limestone": "concrete", "limestone_dark": "concrete", "brick_red": "brick", "marble": "plaster",
     "pitch_green": "grass", "jade_green": "roof",
+    "sandstone": "plaster", "deco_blue": "plaster", "copper": "roof", "copper_dark": "roof",
 }
 # atlas alpha = gloss for the Hit & Run shader (car paint, chrome, glass and lamps shine;
 # everything else - skin, cloth, tyres, buildings - stays matte)
@@ -141,7 +153,8 @@ GLOSSY = {"car_paint": 1.0, "car_paint2": 1.0, "chrome": 1.0, "car_glass": 1.0, 
           "lamp_red": 0.9, "lamp_amber": 0.9, "lamp_white": 0.9, "bike_paint": 1.0, "bike_paint2": 1.0,
           "police_white": 1.0, "police_navy": 1.0, "taxi_yellow": 1.0, "taxi_green": 1.0, "truck_red": 0.8,
           "glass": 0.9, "metal": 0.6, "steel": 0.6, "headlamp": 0.9, "tail_red": 0.8, "disc_steel": 0.5,
-          "siren_red": 0.8, "siren_blue": 0.8, "trim_black": 0.35}
+          "siren_red": 0.8, "siren_blue": 0.8, "trim_black": 0.35,
+          "petronas_steel": 0.7, "petronas_glass": 0.8, "dome_blue": 0.5}
 CELLS = 16          # 16 x 16 cells
 CELL_PX = 8         # 128 x 128 px atlas
 
@@ -159,7 +172,7 @@ def write_atlas(path):
         img.scale(size, size)
     img.alpha_mode = 'CHANNEL_PACKED'     # alpha is gloss data, not transparency
     px = [0.0] * (size * size * 4)
-    for name, rgb in PALETTE:
+    for name, rgb in PALETTE + PALETTE_LM3:
         i = PAL_INDEX[name]
         cx, cy = i % CELLS, i // CELLS
         for y in range(CELL_PX):
@@ -195,7 +208,7 @@ def write_palette_table():
     os.makedirs(os.path.dirname(out), exist_ok=True)
     data = {"cells": CELLS, "cellPx": CELL_PX,
             "entries": [{"name": n, "index": PAL_INDEX[n], "r": c[0], "g": c[1], "b": c[2], "gloss": GLOSSY.get(n, 0.0), "alpha": cell_alpha(n)}
-                        for n, c in PALETTE]}
+                        for n, c in PALETTE + PALETTE_LM3]}
     with open(out, "w") as f:
         json.dump(data, f, indent=0)
 

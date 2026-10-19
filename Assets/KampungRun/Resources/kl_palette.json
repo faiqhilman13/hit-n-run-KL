@@ -1783,6 +1783,114 @@
 "b": 0.24,
 "gloss": 0.0,
 "alpha": 0.00392156862745098
+},
+{
+"name": "copper",
+"index": 232,
+"r": 0.74,
+"g": 0.4,
+"b": 0.2,
+"gloss": 0.0,
+"alpha": 0.0392156862745098
+},
+{
+"name": "copper_dark",
+"index": 233,
+"r": 0.48,
+"g": 0.24,
+"b": 0.13,
+"gloss": 0.0,
+"alpha": 0.0392156862745098
+},
+{
+"name": "petronas_steel",
+"index": 234,
+"r": 0.8,
+"g": 0.84,
+"b": 0.88,
+"gloss": 0.7,
+"alpha": 0.8509803921568627
+},
+{
+"name": "petronas_glass",
+"index": 235,
+"r": 0.4,
+"g": 0.55,
+"b": 0.7,
+"gloss": 0.8,
+"alpha": 0.9019607843137255
+},
+{
+"name": "deco_blue",
+"index": 236,
+"r": 0.46,
+"g": 0.72,
+"b": 0.88,
+"gloss": 0.0,
+"alpha": 0.023529411764705882
+},
+{
+"name": "canopy_green",
+"index": 237,
+"r": 0.38,
+"g": 0.7,
+"b": 0.52,
+"gloss": 0.0,
+"alpha": 0.0
+},
+{
+"name": "maybank_grey",
+"index": 238,
+"r": 0.62,
+"g": 0.64,
+"b": 0.68,
+"gloss": 0.0,
+"alpha": 0.0
+},
+{
+"name": "sandstone",
+"index": 239,
+"r": 0.9,
+"g": 0.8,
+"b": 0.6,
+"gloss": 0.0,
+"alpha": 0.023529411764705882
+},
+{
+"name": "dome_blue",
+"index": 240,
+"r": 0.16,
+"g": 0.48,
+"b": 0.7,
+"gloss": 0.5,
+"alpha": 0.7529411764705882
+},
+{
+"name": "lantern_red",
+"index": 241,
+"r": 0.9,
+"g": 0.14,
+"b": 0.1,
+"gloss": 0.0,
+"alpha": 0.0
+},
+{
+"name": "verdigris",
+"index": 242,
+"r": 0.36,
+"g": 0.66,
+"b": 0.58,
+"gloss": 0.0,
+"alpha": 0.0
+},
+{
+"name": "lamp_green",
+"index": 243,
+"r": 0.2,
+"g": 0.55,
+"b": 0.32,
+"gloss": 0.0,
+"alpha": 0.0
 }
 ]
 }

@@ -294,10 +294,85 @@ namespace KampungRun
         static readonly Dictionary<string, (float footprint, float height, float yaw)> LandmarkFit = new Dictionary<string, (float, float, float)>
         {
             // (yaws line the models up with their real footprints: Tools/klmap/probe_landmark_axes.py)
-            ["MasjidJamek"] = (46f, 0f, -90f), ["SultanAbdulSamad"] = (92f, 44f, 101f), ["PasarSeni"] = (56f, 0f, 99f),
+            // (0, 0, yaw): a kit-3 model built at game scale on its real footprint (Tools/klmap/landmark_footprint.py)
+            ["MasjidJamek"] = (46f, 0f, -90f), ["SultanAbdulSamad"] = (0f, 0f, 281f), ["PasarSeni"] = (0f, 0f, 99f),
             ["Merdeka118"] = (0f, 440f, 0f), ["StadiumMerdeka"] = (140f, 30f, 23f), ["MasjidNegara"] = (96f, 58f, 22f),
-            ["KLTower"] = (0f, 272f, 0f), ["Petronas"] = (0f, 294f, 140f), ["KLSentral"] = (118f, 80f, -28f),
+            ["KLTower"] = (0f, 0f, 0f), ["Petronas"] = (0f, 0f, 140f), ["KLSentral"] = (118f, 80f, -28f),
             ["MuziumNegara"] = (70f, 26f, 0f), ["TuguNegara"] = (44f, 0f, 0f),
+            ["KLRailway"] = (0f, 0f, 287f), ["StadiumNegara"] = (0f, 0f, 0f), ["Maybank"] = (0f, 0f, 0f), ["Dayabumi"] = (0f, 0f, 0f),
+            ["Pavilion"] = (0f, 0f, 30f),
+        };
+
+        /// <summary>The kit-3 models (Tools/blender/kl/kl_landmarks3.py) that stand in for the patch files' older ones, and
+        /// the landmarks the patches only name (no model of their own there).</summary>
+        static readonly Dictionary<string, string> LandmarkModels = new Dictionary<string, string>
+        {
+            ["Petronas"] = "env_lm3_petronas", ["KLTower"] = "env_lm3_menara_kl", ["SultanAbdulSamad"] = "env_lm3_sultan_abdul_samad",
+            ["PasarSeni"] = "env_lm3_pasar_seni", ["KLRailway"] = "env_lm3_kl_railway", ["StadiumNegara"] = "env_lm3_stadium_negara",
+            ["Maybank"] = "env_lm3_maybank", ["Dayabumi"] = "env_lm3_dayabumi", ["Pavilion"] = "env_lm3_pavilion",
+        };
+
+        /// <summary>
+        /// Where a kit-3 model stands on ground the patch file filled with ordinary buildings (it only named the place),
+        /// those buildings and trees go: the model's footprint in its authoring frame (kl_landmarks3.py: x, y with the
+        /// front at -Y), turned with its LandmarkFit yaw.
+        /// </summary>
+        static readonly Dictionary<string, Vector2[]> LandmarkSites = new Dictionary<string, Vector2[]>
+        {
+            ["KLRailway"] = new[] { new Vector2(-93f, -29f), new Vector2(49f, -29f), new Vector2(49f, 38f), new Vector2(-93f, 38f) },
+            ["StadiumNegara"] = Ring(37f, 16),
+            ["Maybank"] = new[] { new Vector2(0.2f, 40f), new Vector2(-37f, 1.5f), new Vector2(-12f, -22f), new Vector2(-21f, -32f), new Vector2(2.3f, -53f),
+                                  new Vector2(24.5f, -30f), new Vector2(15f, -21f), new Vector2(39f, 3.3f) },
+            ["Dayabumi"] = new[] { new Vector2(-15f, -30f), new Vector2(-2f, -21f), new Vector2(3f, 11f), new Vector2(-10f, 13f), new Vector2(-8f, 20f),
+                                   new Vector2(27f, -1f), new Vector2(24f, -24f), new Vector2(39f, -44f), new Vector2(35f, -63f), new Vector2(30f, -78f),
+                                   new Vector2(-22f, -68f) },
+            ["Pavilion"] = new[] { new Vector2(82f, -27f), new Vector2(31f, -43f), new Vector2(-79f, -44f), new Vector2(-131f, -41f), new Vector2(-136f, -23f),
+                                   new Vector2(-39f, 49f), new Vector2(-34f, 57f), new Vector2(-1f, 55f), new Vector2(25.6f, 32f), new Vector2(54.5f, 57f),
+                                   new Vector2(102f, 15f) },
+            ["Petronas"] = new[] { new Vector2(81f, -24f), new Vector2(58f, -6f), new Vector2(-58f, -6f), new Vector2(-81f, -23f), new Vector2(-60f, -45f),
+                                   new Vector2(-86f, -76f), new Vector2(-51f, -111f), new Vector2(49f, -111f), new Vector2(83f, -76f), new Vector2(68f, -50f) },
+        };
+
+        static Vector2[] Ring(float r, int n)
+        {
+            var v = new Vector2[n];
+            for (int i = 0; i < n; i++) v[i] = new Vector2(Mathf.Cos(i * Mathf.PI * 2f / n), Mathf.Sin(i * Mathf.PI * 2f / n)) * r;
+            return v;
+        }
+
+        /// <summary>The patch's buildings and trees on a kit-3 landmark's footprint are left out (see LandmarkSites).</summary>
+        static void ClearLandmarkSites(KLPatch p)
+        {
+            foreach (var a in p.anchors)
+            {
+                if (!LandmarkSites.TryGetValue(a.name, out var site) || !LandmarkFit.TryGetValue(a.name, out var fit)) continue;
+                var rot = Quaternion.Euler(0, fit.yaw, 0);
+                var ring = new Vector2[site.Length];
+                for (int i = 0; i < site.Length; i++)
+                {
+                    var w = rot * new Vector3(-site[i].x, 0f, -site[i].y);           // authoring (front -Y) -> Unity local -> world
+                    ring[i] = new Vector2(a.pos.x + w.x, a.pos.y + w.z);
+                }
+                int nb = p.buildings.RemoveAll(b => { var c = b.Centre(); return KLPatch.Inside(ring, c.x, c.y); });
+                int nt = p.trees.RemoveAll(t => KLPatch.Inside(ring, t.x, t.y));
+                if (nb + nt > 0) Debug.Log($"[KLMap] {a.name}: the model's site cleared of {nb} buildings and {nt} trees");
+            }
+        }
+
+        /// <summary>Extra landmark pieces round a patch anchor: (model, world offset from the anchor, yaw).</summary>
+        static readonly Dictionary<string, (string model, Vector2 offset, float yaw)[]> LandmarkExtras = new Dictionary<string, (string, Vector2, float)[]>
+        {
+            // the 95 m flagpole at the south end of the padang (OSM man_made=flagpole)
+            ["Dataran"] = new[] { ("env_lm3_dataran_flagpole", new Vector2(-21.95f, -72.65f), 0f) },
+        };
+
+        /// <summary>The covered stretch of Jalan Petaling (OSM, game x/z in the main frame): the canopy runs along it, a
+        /// gate at each end.</summary>
+        static readonly Vector2[] PetalingStreet =
+        {
+            new Vector2(105.5f, -50.1f), new Vector2(107.3f, -54.9f), new Vector2(111.1f, -70.8f), new Vector2(118.7f, -110.9f),
+            new Vector2(123.1f, -145.8f), new Vector2(124.7f, -158.2f), new Vector2(126.8f, -174.1f), new Vector2(128.3f, -185.5f),
+            new Vector2(137.0f, -246.5f),
         };
 
         static readonly Dictionary<string, Texture2D> _facadeTex = new Dictionary<string, Texture2D>();
@@ -359,6 +434,7 @@ namespace KampungRun
 
         void BuildPatch(KLPatch p)
         {
+            ClearLandmarkSites(p);
             var root = new GameObject("Patch_" + p.name).transform;
             root.SetParent(_city.root, false);
             var solids = new List<CombineInstance>();
@@ -473,7 +549,16 @@ namespace KampungRun
                     StallBounce(KitProp(a.model, pos, face.sqrMagnitude > 0.01f ? Mathf.Atan2(face.x, face.z) * Mathf.Rad2Deg : 0f));
                     continue;
                 }
-                if (!string.IsNullOrEmpty(a.model)) PatchLandmark(a.name, a.model, pos);
+                var lmModel = LandmarkModels.TryGetValue(a.name, out var lm3) ? lm3 : a.model;
+                if (!string.IsNullOrEmpty(lmModel)) PatchLandmark(a.name, lmModel, pos);
+                if (LandmarkExtras.TryGetValue(a.name, out var extras))
+                    foreach (var (xm, off, xyaw) in extras)
+                    {
+                        var xgo = ModelFactory.Spawn(xm, pos + new Vector3(off.x, 0f, off.y), Quaternion.Euler(0, xyaw, 0), _props);
+                        xgo.name = "Landmark_" + a.name + "_" + xm;
+                        SetStatic(xgo, true);
+                        LandmarkSolid(xgo);
+                    }
                 if (AnchorPlaces.TryGetValue(a.name, out var info))
                 {
                     // at the kerb on the landmark's side of the street: people stand there, cars pull up by it
@@ -488,12 +573,7 @@ namespace KampungRun
                     _districts.Add((p.name, info.district, a.pos));
                 }
             }
-            if (p.name == "KotaLama" && _city.places.TryGetValue("Pasar", out var pasar))
-            {
-                // the Chinatown arch over the top of Petaling Street
-                var gate = Prop("Prop_ChinatownGate", SidewalkNear(pasar), 0, false);
-                SetStatic(gate, true);
-            }
+            if (p.name == "KotaLama") PetalingCanopy();
             Debug.Log($"[KLMap] {p.name}: {p.meshes.Count} meshes, {p.nodes.Length} road nodes ({joined}/{p.links.Length} joined to the grid), " +
                       $"{p.rings.Count} pavement loops, {p.anchors.Count} anchors");
         }
@@ -558,10 +638,12 @@ namespace KampungRun
             go.isStatic = true;
             var b = ModelFactory.LocalBounds(go);
             float foot = Mathf.Max(0.01f, Mathf.Max(b.size.x, b.size.z)), tall = Mathf.Max(0.01f, b.size.y);
-            float s = fit.footprint > 0 ? fit.footprint / foot : fit.height / tall;        // across
+            float s = fit.footprint > 0 ? fit.footprint / foot : fit.height > 0 ? fit.height / tall : 1f;        // across
             float sy = fit.height > 0 ? fit.height / tall : s;                            // up
             go.transform.localScale = new Vector3(s, sy, s);
             go.name = "Landmark_" + name;
+            // the kit models: solid exactly where they are drawn (a mesh collider from the distance version)
+            if (model.StartsWith("env_")) { LandmarkSolid(go); return; }
             switch (name)
             {
                 case "Petronas":
@@ -607,6 +689,61 @@ namespace KampungRun
                     if (model.StartsWith("env_")) ModelFactory.UseProxyCollider(go);
                     else ModelFactory.AddBoundsCollider(go, 0.05f);
                     break;
+            }
+        }
+
+        /// <summary>
+        /// A landmark is solid where it is drawn and nowhere else: a MeshCollider from each of its distance-version
+        /// meshes (*_LOD1, the same shapes with less trim), or from the meshes themselves when it has none. The COL_ box
+        /// proxies go (their flat tops stood in the air over domes and setbacks).
+        /// </summary>
+        static void LandmarkSolid(GameObject go)
+        {
+            foreach (var bc in go.GetComponents<BoxCollider>()) Object.Destroy(bc);
+            var mfs = go.GetComponentsInChildren<MeshFilter>(true);
+            bool lod1 = false;
+            foreach (var mf in mfs) if (mf.name.EndsWith("_LOD1")) lod1 = true;
+            foreach (var mf in mfs)
+            {
+                if (mf.sharedMesh == null || mf.name.StartsWith("COL_") || (lod1 && !mf.name.EndsWith("_LOD1"))) continue;
+                var mc = mf.gameObject.AddComponent<MeshCollider>();
+                mc.sharedMesh = mf.sharedMesh;
+            }
+        }
+
+        /// <summary>Petaling Street: the green canopy down the covered stretch of Jalan Petaling, a Chinatown gate at
+        /// each end (both modelled in kit 3).</summary>
+        void PetalingCanopy()
+        {
+            const float bay = 10f, width = 11.5f;
+            var pts = PetalingStreet;
+            for (int i = 0; i + 1 < pts.Length; i++)
+            {
+                Vector2 a = pts[i], b = pts[i + 1];
+                float len = Vector2.Distance(a, b);
+                if (len < 1f) continue;
+                float yaw = Mathf.Atan2(b.x - a.x, b.y - a.y) * Mathf.Rad2Deg;
+                int n = Mathf.Max(1, Mathf.RoundToInt(len / bay));
+                for (int k = 0; k < n; k++)
+                {
+                    var c = Vector2.Lerp(a, b, (k + 0.5f) / n);
+                    var go = ModelFactory.Spawn("env_lm3_petaling_canopy", new Vector3(c.x, G, c.y), Quaternion.Euler(0, yaw, 0), _props);
+                    go.name = "Landmark_PetalingCanopy";
+                    go.transform.localScale = new Vector3(width / 14f, 1f, len / n / bay * 1.02f);
+                    SetStatic(go, true);
+                    LandmarkSolid(go);
+                }
+            }
+            for (int e = 0; e < 2; e++)
+            {
+                Vector2 a = e == 0 ? pts[0] : pts[pts.Length - 1], b = e == 0 ? pts[1] : pts[pts.Length - 2];
+                var at = a + (b - a).normalized * 1.5f;
+                float yaw = Mathf.Atan2(b.x - a.x, b.y - a.y) * Mathf.Rad2Deg + (e == 0 ? 180f : 0f);
+                var gate = ModelFactory.Spawn("env_lm3_petaling_gate", new Vector3(at.x, G, at.y), Quaternion.Euler(0, yaw, 0), _props);
+                gate.name = e == 0 ? "Landmark_Petaling" : "Landmark_PetalingSouth";
+                gate.transform.localScale = new Vector3(width / 13.5f, 1f, 1f);
+                SetStatic(gate, true);
+                LandmarkSolid(gate);
             }
         }
 
@@ -1864,7 +2001,9 @@ namespace KampungRun
         /// mission item spot and a named place (+ facing) for missions and fast travel.</summary>
         void Landmark(Vector3 c, string model, string place, string sign, float yaw)
         {
-            KitProp(model, c + V(0, G, 0), yaw, _ls);
+            var lgo = KitProp(model, c + V(0, G, 0), yaw, _ls);
+            lgo.name = "Landmark_" + place;
+            LandmarkSolid(lgo);
             SignPost(sign, c + V(12f, G, 20.5f), 0);
             // a row of palms along the front, the grounds' corners planted with rain trees
             foreach (float x in new[] { -19f, -11f, 11f, 19f }) KitProp("env_palm", c + V(x, G, 19.5f), R(0, 360), R(1f, 1.2f));
