@@ -206,7 +206,7 @@ namespace KampungRun.Arch
                     if (r < 0.3) AcUnit(m, f, h.x1 + 0.15f, h.y0 + 0.05f);
                     else if (r < 0.5) Laundry(m, f, (h.x0 + h.x1) * 0.5f, h.y0 - 0.2f, b.rng);
                 }
-                if (kind == BuildingKind.Flats && (k % 2 == 1 || b.lv >= 8) && len > 8f && main)
+                if (kind == BuildingKind.Flats && (k % 2 == 1 || b.lv >= 8) && len > 8f && (main || (street && b.lv >= 6)))
                 {
                     // balconies on alternate floors along the front
                     for (int q = 0; q + 1 < bays; q += 2)
@@ -229,6 +229,10 @@ namespace KampungRun.Arch
                 if (k < b.lv - 1 && (kind != BuildingKind.Office))
                     m.Box(f, -0.03f, len + 0.03f, y1 - 0.08f, y1 + 0.08f, 0f, 0.1f, b.trim, Faces.Front | Faces.Top | Faces.Bottom);
             }
+            // a condo's face: bold coloured bands up both ends (KL's cream-and-maroon towers)
+            if (kind == BuildingKind.Flats && b.lv >= 6 && len > 10f)
+                foreach (float x0 in new[] { 0f, len - 1.4f })
+                    m.Box(f, x0, x0 + 1.4f, b.G, b.h, 0f, 0.12f, Accent(b), Faces.Front | Faces.Left | Faces.Right);
             // cornice
             m.Box(f, -0.05f, len + 0.05f, b.h - 0.1f, b.h + 0.2f, 0f, b.detail ? 0.25f : 0.15f, b.trim, Faces.Front | Faces.Top | Faces.Bottom | Faces.Left | Faces.Right);
             // walk-up flats: the stair core at one end, a tower of ventilation blocks standing proud of the roof
@@ -281,6 +285,10 @@ namespace KampungRun.Arch
         // what the ground-floor shops of a block show through their fronts (the streets pass: not all the same shelf)
         static readonly ArchTex[] ShopBacks = { ArchTex.GlassShop, ArchTex.DoorGlass, ArchTex.Kopitiam, ArchTex.Hardware, ArchTex.Textile, ArchTex.GoldShop,
                                                 ArchTex.Roller, ArchTex.Folding, ArchTex.GlassShop, ArchTex.Kopitiam, ArchTex.Fridge };
+
+        static readonly Color32[] Accents = { ArchMesh.Col(0.62f, 0.20f, 0.20f), ArchMesh.Col(0.16f, 0.46f, 0.50f), ArchMesh.Col(0.22f, 0.32f, 0.58f),
+                                              ArchMesh.Col(0.86f, 0.52f, 0.20f), ArchMesh.Col(0.40f, 0.30f, 0.52f) };
+        static Color32 Accent(B b) => Accents[Hash(b.s.seed, 401) % Accents.Length];
 
         static readonly Color32 SignEdge = ArchMesh.Col(0.2f, 0.18f, 0.2f);
 

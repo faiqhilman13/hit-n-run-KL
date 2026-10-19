@@ -420,7 +420,23 @@ namespace KampungRun.Arch
             m.Box(f, 0f, W, G - 0.14f, G, -A, 0f, Soffit, Faces.Bottom);
             m.QuadFacing(f.P(0f, 0.02f, -A), f.P(W, 0.02f, -A), f.P(W, 0.02f, 0f), f.P(0f, 0.02f, 0f), Vector3.up, White, ArchTex.Steps,
                          0f, 0f, W / 1.2f, A / 1.2f);
-            m.Box(f, 0f, W, G - 0.55f, G, -0.3f, 0.04f, L.trim, Faces.Front | Faces.Bottom | Faces.Back);
+            if (L.detail && L.style == ShopStyle.PreWar && W > 2.6f)
+            {
+                // pre-war lots: the five-foot way opens to the street through an arch between the columns
+                float x0 = ColW, x1 = rightEnd ? W - ColW : W, yb = G - 1.15f, rise = Mathf.Min(0.7f, (x1 - x0) * 0.22f);
+                var arch = new List<Vector2> { new Vector2(x0, G), new Vector2(x0, yb) };
+                const int segs = 8;
+                for (int k = 1; k < segs; k++)
+                {
+                    float u = k / (float)segs;
+                    arch.Add(new Vector2(Mathf.Lerp(x0, x1, u), yb + Mathf.Sin(u * Mathf.PI) * rise));
+                }
+                arch.Add(new Vector2(x1, yb));
+                arch.Add(new Vector2(x1, G));
+                m.Extrude(f, arch, -0.3f, 0.04f, L.trim, ArchTex.White);
+                if (!rightEnd) m.Box(f, W - 0.02f, W, G - 1.15f, G, -0.3f, 0.04f, L.trim, Faces.Front);
+            }
+            else m.Box(f, 0f, W, G - 0.55f, G, -0.3f, 0.04f, L.trim, Faces.Front | Faces.Bottom | Faces.Back);
             if (leftEnd) Column(m, f, 0f, L);
             if (rightEnd) Column(m, f, W - ColW, L);
             if (L.detail && L.rng.NextDouble() < 0.5)
@@ -764,6 +780,15 @@ namespace KampungRun.Arch
                 if ((e & EdgeFlags.Party) != 0 || len < 2.4f || !L.detail)
                 {
                     m.Rect(fe, 0f, len, 0f, top, 0f, L.wallDark, ArchTex.White);
+                    continue;
+                }
+                // a long blank side wall carries a painted advert (the streets pass: KL's gable-end ads)
+                if (i != (front + 2) % n && len >= 6f && top >= 6.5f && Hash(s.seed, 61 + i) % 10 < 4)
+                {
+                    m.Rect(fe, 0f, len, 0f, top, 0f, L.wallDark, L.grime ? ArchTex.Grime : ArchTex.White, L.grime ? 3.4f : 0f);
+                    float aw = Mathf.Min(len - 1.2f, 9f), ah = Mathf.Min(aw * 0.5f, top - 3.4f), ax = (len - aw) * 0.5f, ay = Mathf.Max(L.G + 0.4f, top - ah - 0.6f);
+                    ArchTex[] ads = { ArchTex.Billboard0, ArchTex.Billboard1, ArchTex.Billboard2, ArchTex.Billboard3, ArchTex.Billboard4, ArchTex.Billboard5 };
+                    m.Rect(fe, ax, ax + aw, ay, ay + ah, 0.02f, White, ads[Hash(s.seed, 67 + i) % ads.Length]);
                     continue;
                 }
                 // a back or side wall: small windows on each floor, a back door, pipes
