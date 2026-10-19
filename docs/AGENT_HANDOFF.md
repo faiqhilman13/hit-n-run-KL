@@ -1039,3 +1039,60 @@ The user asked for streets that feel like real Kuala Lumpur (compact and lived i
 **Verification.** Batch compile clean through round 3. StreetsCapture ran three rounds (before / round), and the comparison sheets are in `Tools/promo_frames/streets/cmp_before_round/` and `round_sheet_0*.jpg`. City build: about 38.4k arch items, about 944k far triangles (unchanged within noise); road paint went from 320k to 370k quads (patch kerbs). Build-time laps were noisy on the shared machine. SmokeTests: see the final report. The arches, wall ads and condo bands were added last and were checked only by the final compile/smoke run.
 
 **Known gaps.** Patch pavements get no bikes or stalls (pedestrian rings run 1.6 m from the kerb there). There are no Brickfields arches. The mamak has no new fascia. Captures still show empty roads: traffic and parked cars only appear near the player and out of view (GameManager). Tamil glyphs are drawn without complex shaping (PIL has no raqm). No web benchmark was run.
+## Update: invisible floors, elevated rail and stations; three agent branches merged (19-20 Oct 2026, lead, branch `world-kl-revamp`)
+
+**Asked.** Some world assets were wrong: parts of the train tracks and bridges could be climbed and walked on with nothing drawn there, so characters looked like they were floating. Also asked:
+- Revamp the map so it feels like the real KL, using real photos of KL roads and landmarks as reference.
+- Make the missions less repetitive than Hit & Run's drive-and-collect.
+
+**Invisible-floor audit** (`Editor/ColliderAudit.cs`, `Editor/Shots.cs`, `Scripts/Core/MeshKeep.cs`)
+- **Setup:** set env `KR_READABLE_MESHES=1` before Play. This keeps the CPU copy of generated meshes (`MeshKeep.Upload` replaces `UploadMeshData(true)`). Then call `ColliderAudit.Start(path, 2f)` and poll `ColliderAudit.Status` (it runs sliced on `EditorApplication.update`).
+- **How it works:**
+  - Every drawn static mesh gets a MeshCollider proxy on layer 30. The architecture cells are rebuilt readable at full detail (`ArchCity.ReadableMeshes`).
+  - A 2 m grid of downward RaycastAll columns flags solid top faces that have no drawn surface within 0.7 m.
+  - A flag counts as "floating" when there's nothing drawn within 3.5 m above it and the drop to the next drawn surface is more than 2.5 m.
+  - The Ward layer, which only pedestrians see, is excluded.
+- `Shots.Take(eye, target, path)` renders a still from any viewpoint and primes the architecture detail there first.
+- **Results** (m² of floating standable surface):
+
+  | Stage | Floating area |
+  | --- | --- |
+  | Start | ~38k |
+  | After the shophouse fix | ~20k (landmarks most of it) |
+  | Merged, with the landmarks agent's mesh colliders | ~4.7k |
+
+  - In the merged run, the landmarks show none at all.
+  - About 1.4k of the remaining 4.7k is the new station solids (stair and linkway ends); to check.
+  - The rest is scattered tower edges and the Batu Caves ramp.
+  - Reports: `Tools/promo_frames/x_colaudit/`.
+
+**Hollow shophouses** (`Arch/Shophouse.cs` `Rectish`/`FlatRoofed`, `Arch/ArchGen.cs`)
+- Real-KL lots far from a rectangle (trapezoids, L-shapes) got a gable roof over only the "front width × depth" rectangle. That left them hollow and roofless while the collider had a full top.
+- Such lots now get a flat roof capping their real outline, and the collider top follows. Patch floating went from 18k to 1k m².
+- Side effect: some long rows that used to show a pitched roof are now flat-roofed (for example the Kota Lama row at about (181, 38)). Loosen `Rectish`'s 0.88 area ratio if that matters.
+
+**Elevated rail** (`CityBuilder.Rail.cs`, `Arch/Railwork.cs`, `RailTrain.cs`)
+- **Pillars.** `patches.py` writes every rail pillar as a physics-only `pillar_col` box, and nothing drew them. `PatchPillars` now handles them:
+  - It clusters the boxes. The ones matching `p.piers` are flyovers and keep their box.
+  - Every rail pillar becomes an `Arch.RailPierSpec` plus a matching turned box solid (`StaticBatcher.ColliderOnly(c, size, rot)`).
+  - Monorail: twin-line piers merge into one squat column, ad-wrapped in 55% of cases, with a crosshead under both beams.
+  - LRT: a round column with a hammerhead. 188 piers in all.
+- **Track and trains.**
+  - `RailTrackSpec` draws the LRT rails and plinth and the monorail's tyre track.
+  - `FinishRails` joins lines across patches (14 lines) and runs 7 two-car trains (`RailTrain`, ping-pong with braking at the ends).
+  - Monorail trains are ad-wrapped; LRT trains are Kelana Jaya white with a blue and red stripe.
+  - All are built procedurally (`Railwork.TrainCar`).
+- **Frame handedness:** an `Arch.Frame` must have `n = cross(up, r)`, as `Frame.Edge` does, or `Box` faces wind inside out. `Bridgework.Pier`/`Gantry` build their frames the other way round; their small boxes may be inside out.
+
+**Stations** (`Tools/klmap/stations.py` → `Resources/KLMap/stations.json`, `CityBuilder.Stations.cs`, `Arch/Station.cs`)
+- Six real stations sit on the lines: monorail KL Sentral, Tun Sambanthan, Maharajalela, Bukit Bintang and Raja Chulan, plus Pasar Seni on the LRT.
+- Each has side platforms either side of the twin tracks (found by `Twin`) on columns, a barrel-vault zinc roof, an ad fascia with the station name (`LetterSign`) and posters.
+- Each also has a stair up from the nearest pavement-ring point plus a covered linkway into a gap in the platform wall. The solids match what's drawn.
+- **Gaps:**
+  - KL Sentral found no pavement within reach (0 stairs) and no twin track.
+  - Pasar Seni found no twin track (span 0), so its platforms sit over the second girder.
+  - Plaza Rakyat is skipped (no elevated line in the game).
+- References: `Tools/references/{rail,stations}/` (fetched with `Tools/references/fetch_refs.py "<search>"` from Wikimedia Commons).
+
+**Merged** into `world-kl-revamp`: `missions-pass`, `landmarks-pass` and `streets-pass` (their sections are above). The streets agent was cut off by the usage limit mid-round; its last uncommitted Shophouse/Block edits were committed as "round 2".
+- After the merge, the arch atlas must be force-reimported (8 × 12 = 96 slices). Otherwise the Editor keeps the old 64-slice array and the city shows magenta and garbled textures.

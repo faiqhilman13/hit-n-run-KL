@@ -2,17 +2,6 @@
  "asset": "env_kl_landmarks3",
  "modules": [
   {
-   "id": "env_lm3_maybank",
-   "triangles": 1860,
-   "lod1_triangles": 96,
-   "size_m": [
-    55.25,
-    56.67,
-    159.0
-   ],
-   "collision": false
-  },
-  {
    "id": "env_lm3_merdeka118",
    "triangles": 2272,
    "lod1_triangles": 348,

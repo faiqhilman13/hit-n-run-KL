@@ -300,9 +300,9 @@ namespace KampungRun
             // (yaws line the models up with their real footprints: Tools/klmap/probe_landmark_axes.py)
             // (0, 0, yaw): a kit-3 model built at game scale on its real footprint (Tools/klmap/landmark_footprint.py)
             ["MasjidJamek"] = (46f, 0f, -90f), ["SultanAbdulSamad"] = (0f, 0f, 281f), ["PasarSeni"] = (0f, 0f, 99f),
-            ["Merdeka118"] = (0f, 440f, 0f), ["StadiumMerdeka"] = (140f, 30f, 23f), ["MasjidNegara"] = (96f, 58f, 22f),
-            ["KLTower"] = (0f, 0f, 0f), ["Petronas"] = (0f, 0f, 140f), ["KLSentral"] = (118f, 80f, -28f),
-            ["MuziumNegara"] = (70f, 26f, 0f), ["TuguNegara"] = (44f, 0f, 0f),
+            ["Merdeka118"] = (0f, 0f, 0f), ["StadiumMerdeka"] = (140f, 30f, 23f), ["MasjidNegara"] = (0f, 0f, 202f),
+            ["KLTower"] = (0f, 0f, 0f), ["Petronas"] = (0f, 0f, 140f), ["KLSentral"] = (0f, 0f, 332f),
+            ["MuziumNegara"] = (0f, 0f, 180f), ["TuguNegara"] = (44f, 0f, 0f),
             ["KLRailway"] = (0f, 0f, 287f), ["StadiumNegara"] = (0f, 0f, 0f), ["Maybank"] = (0f, 0f, 0f), ["Dayabumi"] = (0f, 0f, 0f),
             ["Pavilion"] = (0f, 0f, 30f),
         };
@@ -314,6 +314,8 @@ namespace KampungRun
             ["Petronas"] = "env_lm3_petronas", ["KLTower"] = "env_lm3_menara_kl", ["SultanAbdulSamad"] = "env_lm3_sultan_abdul_samad",
             ["PasarSeni"] = "env_lm3_pasar_seni", ["KLRailway"] = "env_lm3_kl_railway", ["StadiumNegara"] = "env_lm3_stadium_negara",
             ["Maybank"] = "env_lm3_maybank", ["Dayabumi"] = "env_lm3_dayabumi", ["Pavilion"] = "env_lm3_pavilion",
+            ["Merdeka118"] = "env_lm3_merdeka118", ["KLSentral"] = "env_lm3_kl_sentral", ["MuziumNegara"] = "env_lm3_muzium_negara",
+            ["MasjidNegara"] = "env_lm3_masjid_negara",
         };
 
         /// <summary>
