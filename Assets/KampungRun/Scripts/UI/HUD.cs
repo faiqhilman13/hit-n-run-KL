@@ -35,6 +35,7 @@ namespace KampungRun
         static readonly Color Ink = new Color(0.08f, 0.07f, 0.06f, 1f);
         static readonly Color Red = new Color(0.82f, 0.22f, 0.18f, 1f);
         static readonly Color Gold = new Color(0.95f, 0.75f, 0.2f, 1f);
+        static readonly Color Green = new Color(0.35f, 0.85f, 0.42f, 1f);   // the next mission (its giver's beam is green too)
 
         Font _font;
         Canvas _canvas;
@@ -279,7 +280,26 @@ namespace KampungRun
 
         Camera _mapCam;
         GameObject _mapPanel;
-        RectTransform _mapPlayer;
+        RectTransform _mapPlayer, _mapTarget;
+        Image _mapTargetImg;
+        Sprite _dot;
+
+        /// <summary>A round blip with an ink rim.</summary>
+        Sprite DotSprite()
+        {
+            if (_dot) return _dot;
+            const int n = 32;
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear };
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float d = new Vector2(x - n / 2 + 0.5f, y - n / 2 + 0.5f).magnitude;
+                    tex.SetPixel(x, y, d > n / 2 ? Color.clear : d > n / 2 - 4 ? Ink : Color.white);
+                }
+            tex.Apply();
+            _dot = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f));
+            return _dot;
+        }
 
         /// <summary>H&amp;R-style radar: a top-down orthographic view that turns with the camera.</summary>
         void BuildMinimap()
@@ -297,6 +317,11 @@ namespace KampungRun
             arrow.color = Red;
 
             _mapPlayer = arrowRt;
+            // where the objective (or the next mission's giver) is: on the map, or pinned to its rim pointing the way
+            var tRt = Rect("Target", panel.transform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(20, 20));
+            _mapTargetImg = tRt.gameObject.AddComponent<Image>();
+            _mapTargetImg.raycastTarget = false;
+            _mapTarget = tRt;
             Label("N", panel.transform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -2), new Vector2(40, 24), 16, Ink).text = "";
 
             var camGo = new GameObject("MinimapCamera");
@@ -315,7 +340,7 @@ namespace KampungRun
             data.renderPostProcessing = false;
         }
 
-        void UpdateMinimap(PlayerController p)
+        void UpdateMinimap(PlayerController p, Vector3? target = null, Color targetCol = default)
         {
             bool on = p != null;
             _mapPanel.SetActive(on);
@@ -327,6 +352,20 @@ namespace KampungRun
             _mapCam.orthographicSize = p.Driving ? 150f : 85f;
             float heading = p.Driving ? p.vehicle.transform.eulerAngles.y : p.transform.eulerAngles.y;
             _mapPlayer.localRotation = Quaternion.Euler(0, 0, -(heading - yaw));
+            _mapTarget.gameObject.SetActive(target.HasValue);
+            if (!target.HasValue) return;
+            // the map turns with the camera: world offset into the map's frame, metres into pixels (224 px = 2 x size)
+            var d = target.Value - p.Focus;
+            float a = yaw * Mathf.Deg2Rad, k = 112f / _mapCam.orthographicSize;
+            var px = new Vector2(d.x * Mathf.Cos(a) - d.z * Mathf.Sin(a), d.x * Mathf.Sin(a) + d.z * Mathf.Cos(a)) * k;
+            const float rim = 100f;
+            bool off = px.magnitude > rim;
+            if (off) px = px.normalized * rim;
+            _mapTarget.anchoredPosition = px;
+            _mapTargetImg.sprite = off ? TriangleSprite() : DotSprite();
+            _mapTargetImg.color = targetCol;
+            _mapTarget.sizeDelta = off ? new Vector2(22, 22) : new Vector2(18, 18);
+            _mapTarget.localRotation = off ? Quaternion.Euler(0, 0, Mathf.Atan2(-px.x, px.y) * Mathf.Rad2Deg) : Quaternion.identity;
         }
 
         void PaperOverlay()
@@ -488,8 +527,23 @@ namespace KampungRun
             var mm = gm.Missions;
             var step = mm != null ? mm.Step : null;
             bool hasObj = step != null && !string.IsNullOrEmpty(step.text);
-            _objPanel.SetActive(hasObj);
             Vector3? target = step?.Target;
+            // between missions: the tracker says what's next and who to see, and the arrow points at them
+            var giver = mm != null && !mm.Active && !Dialogue.Showing ? mm.NextGiver : null;
+            bool tracking = !hasObj && giver != null && mm.NextMission != null;
+            _objPanel.SetActive(hasObj || tracking);
+            if (tracking)
+            {
+                var g = giver.transform.position;
+                target = g;
+                var nm = mm.NextMission;
+                int done = GameState.Data.missionsDone[lvl];
+                _objective.text = nm.isRace ? $"Perlumbaan: {nm.title}" : $"Misi seterusnya: {nm.title}";
+                _progress.text = $"Jumpa {giver.displayName} di {CityBuilder.District(g)}";
+                _timer.text = nm.isRace ? "" : $"{Mathf.Min(done + 1, mm.story.Count)}/{mm.story.Count}";
+                _timer.color = Ink;
+                _targetBar.SetActive(false);
+            }
             if (hasObj)
             {
                 _objective.text = step.text;
@@ -514,8 +568,9 @@ namespace KampungRun
                 _arrowDist.text = $"{Mathf.RoundToInt(to.magnitude)}m";
             }
             else _arrowDist.text = "";
+            _arrow.GetComponent<Image>().color = tracking ? Green : Gold;
 
-            UpdateMinimap(p);
+            UpdateMinimap(p, target, tracking ? Green : Gold);
 
             // speedo
             bool driving = p != null && p.Driving;

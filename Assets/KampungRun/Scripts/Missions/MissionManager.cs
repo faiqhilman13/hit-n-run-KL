@@ -36,6 +36,12 @@ namespace KampungRun
 
         public NPC Npc(string key) => npcs.TryGetValue(key, out var n) ? n : null;
 
+        /// <summary>Between missions: the next one on offer and who gives it, so the HUD's tracker can point the way
+        /// (null while a mission runs, or when there's nothing left in the level).</summary>
+        public Mission NextMission { get; private set; }
+        public NPC NextGiver { get; private set; }
+        GameObject _giverBeacon;
+
         public void Setup(List<Mission> storyMissions, Mission raceMission)
         {
             story = storyMissions;
@@ -46,6 +52,7 @@ namespace KampungRun
         public void RefreshGivers()
         {
             foreach (var n in npcs.Values) { n.hasMission = false; n.onTalk = null; }
+            NextMission = null; NextGiver = null;
             if (Active) return;
             int done = GameState.Data.missionsDone[GameState.Level];
             if (done < story.Count)
@@ -56,6 +63,7 @@ namespace KampungRun
                 {
                     giver.hasMission = true;
                     giver.onTalk = _ => Offer(m);
+                    NextMission = m; NextGiver = giver;
                 }
             }
             if (race != null)
@@ -65,6 +73,7 @@ namespace KampungRun
                 {
                     rg.hasMission = !GameState.Data.raceDone[GameState.Level];
                     rg.onTalk = _ => Offer(race);
+                    if (NextGiver == null && rg.hasMission) { NextMission = race; NextGiver = rg; }
                 }
             }
         }
@@ -89,6 +98,7 @@ namespace KampungRun
             _cpPos = _startPos;
             _cpRot = _startRot;
             foreach (var n in npcs.Values) n.hasMission = false;
+            NextMission = null; NextGiver = null;
             HUD.I.BigMessage(m.title, fromStep > 0 ? "CUBA LAGI" : m.isRace ? "PERLUMBAAN" : "MISI BARU");
             ProcAudio.Play2D(ProcAudio.Fanfare, 0.5f, 0.9f);
             if (!string.IsNullOrEmpty(m.startCar) && !PlayerController.I.Driving)
@@ -125,7 +135,9 @@ namespace KampungRun
 
         void Update()
         {
-            if (!Active || GameManager.I == null || !GameManager.I.Playing) return;
+            if (GameManager.I == null || !GameManager.I.Playing) return;
+            TrackNext();
+            if (!Active) return;
             var o = Step;
             if (o == null) return;
             float dt = Time.deltaTime;
@@ -146,6 +158,23 @@ namespace KampungRun
                 _targetBeacon.transform.position = t.Value + Vector3.up * 30f;
             }
             else if (_targetBeacon) _targetBeacon.SetActive(false);
+        }
+
+        /// <summary>A green beam over the next mission's giver while you're away from them.</summary>
+        void TrackNext()
+        {
+            var g = Active ? null : NextGiver;
+            var p = PlayerController.I;
+            bool on = g != null && p != null && g.gameObject.activeInHierarchy && (g.transform.position - p.Focus).sqrMagnitude > 15f * 15f;
+            if (on && _giverBeacon == null)
+            {
+                _giverBeacon = MakeBeacon(g.transform.position, 1.3f);
+                _giverBeacon.name = "NextMissionBeacon";
+                _giverBeacon.GetComponent<MeshRenderer>().sharedMaterial = LatMaterials.Beam(new Color(0.45f, 1f, 0.55f, 0.5f));
+            }
+            if (_giverBeacon == null) return;
+            _giverBeacon.SetActive(on);
+            if (on) _giverBeacon.transform.position = g.transform.position + Vector3.up * 30f;
         }
 
         void Complete()
