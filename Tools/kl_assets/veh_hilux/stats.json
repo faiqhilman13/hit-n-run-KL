@@ -1,8 +1,8 @@
 {
  "asset": "veh_hilux",
- "triangles": 23984,
+ "triangles": 25724,
  "lod1_body_triangles": null,
- "lod1_triangles": 3083,
+ "lod1_triangles": 3101,
  "lod0_body_triangles": 3946,
  "materials": 1,
  "parts": [

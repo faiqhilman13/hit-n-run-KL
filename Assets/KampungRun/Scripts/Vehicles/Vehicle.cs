@@ -54,7 +54,9 @@ namespace KampungRun
         Vector3[] _wheelRest = new Vector3[4];
         Quaternion[] _wheelRot = new Quaternion[4];
         float _wheelRadius = 0.38f;
-        float _spin;
+        float _spinRate;                      // how fast the wheels turn (degrees a second), from the last physics step
+        float _visSpin;                       // the turn drawn: the true one, held under the strobe limit (LateUpdate)
+        readonly float[] _wheelSteer = new float[4];
         float _upsideDownTime;
         float _smokeTimer;
         float _k, _c;
@@ -105,6 +107,7 @@ namespace KampungRun
             }
 
             SetupTwoWheeler();
+            SetupBlur();
             // Hit & Run cars (and the kapcai) bring a Body part: animate it, the doors, lamps and props
             if (ModelFactory.Find(gameObject, "Body") != null && (ModelFactory.Find(gameObject, "Seat_Driver") != null ||
                                                                    ModelFactory.Find(gameObject, "Seat_Rider") != null))
@@ -182,11 +185,6 @@ namespace KampungRun
         void UpdateTwoWheelerVisuals(float dt, float forwardSpeed)
         {
             if (!TwoWheeler) return;
-            var lean = _leanRoot ? _leanRoot.rotation * Quaternion.Inverse(_leanRest) : transform.rotation;
-            var steer = Quaternion.Euler(0, SteerVisual * 28f, 0);
-            if (_steering) _steering.rotation = lean * steer * _steerRest;
-            _frontWheel.rotation = lean * steer * Quaternion.Euler(_spin, 0, 0) * _fwRest;
-            _rearWheel.rotation = lean * Quaternion.Euler(_spin, 0, 0) * _rwRest;
             // lean into the turn (more at speed), with a little overshoot as you flick side to side
             float targetLean = -SteerVisual * Mathf.Clamp01(Mathf.Abs(forwardSpeed) / 10f) * 30f;
             _leanV += ((targetLean - _lean) * 55f - _leanV * 9f) * dt;
@@ -345,10 +343,11 @@ namespace KampungRun
                 Body.angularVelocity = av + up * (newYaw - yawNow);
 
                 Body.AddForce(-n * Mathf.Min(Mathf.Abs(fs) * 0.2f, 3.5f), ForceMode.Acceleration); // downforce (capped)
-                _spin += fs * dt / Mathf.Max(0.1f, _wheelRadius) * Mathf.Rad2Deg;
+                _spinRate = fs / Mathf.Max(0.1f, _wheelRadius) * Mathf.Rad2Deg;
             }
             else
             {
+                _spinRate *= 0.99f;                                  // wheels in the air keep turning, slowing
                 // airborne: gently level out so jumps land on the wheels
                 Vector3 axis = Vector3.Cross(up, Vector3.up);
                 Body.AddTorque(axis * 6f, ForceMode.Acceleration);
@@ -411,8 +410,108 @@ namespace KampungRun
             float drop = hitDist - _wheelRadius - suspensionRest * 0.5f;
             Vector3 local = _wheelRest[i] - Vector3.up * Mathf.Clamp(drop, -0.2f, 0.25f);
             w.position = transform.TransformPoint(local);
-            float steerAngle = i < 2 ? SteerVisual * 30f : 0f;
-            w.rotation = transform.rotation * Quaternion.Euler(0, steerAngle, 0) * Quaternion.Euler(_spin, 0, 0) * _wheelRot[i];
+            _wheelSteer[i] = i < 2 ? SteerVisual * 30f : 0f;
+        }
+
+        // ---------------------------------------------------------------- wheels drawn turning
+        /// <summary>The most a wheel is drawn turning in one frame. Past half a 5-spoke rim's 72-degree repeat a
+        /// spinning wheel looks stopped or turning backwards (the wagon-wheel effect), so the drawn spin is held
+        /// under that, and from about here up the blur disc fades in over the rim.</summary>
+        const float MaxSpinStep = 24f;
+        static Material _blurMat;
+        static Mesh _blurQuad;
+        Renderer[] _blur = new Renderer[0];
+        MaterialPropertyBlock _blurProps;
+        static readonly int BlurId = Shader.PropertyToID("_Blur"), ColorId = Shader.PropertyToID("_Color"), HubId = Shader.PropertyToID("_Hub");
+
+        void LateUpdate()
+        {
+            float dt = Time.deltaTime;
+            if (dt <= 0f || !Body) return;
+            float step = Asleep ? 0f : _spinRate * dt;
+            _visSpin = Mathf.Repeat(_visSpin + Mathf.Clamp(step, -MaxSpinStep, MaxSpinStep), 360f);
+            var spin = Quaternion.Euler(_visSpin, 0, 0);
+            if (TwoWheeler)
+            {
+                var lean = _leanRoot ? _leanRoot.rotation * Quaternion.Inverse(_leanRest) : transform.rotation;
+                var steer = Quaternion.Euler(0, SteerVisual * 28f, 0);
+                if (_steering) _steering.rotation = lean * steer * _steerRest;
+                _frontWheel.rotation = lean * steer * spin * _fwRest;
+                _rearWheel.rotation = lean * spin * _rwRest;
+            }
+            else
+                for (int i = 0; i < 4; i++)
+                    if (_wheels[i]) _wheels[i].rotation = transform.rotation * Quaternion.Euler(0, _wheelSteer[i], 0) * spin * _wheelRot[i];
+            float blur = Mathf.InverseLerp(MaxSpinStep * 0.5f, MaxSpinStep * 1.2f, Mathf.Abs(step));
+            foreach (var r in _blur)
+            {
+                if (!r) continue;
+                r.enabled = blur > 0.01f;
+                if (!r.enabled) continue;
+                r.GetPropertyBlock(_blurProps);
+                _blurProps.SetFloat(BlurId, blur);
+                r.SetPropertyBlock(_blurProps);
+            }
+        }
+
+        /// <summary>A blur disc on each wheel: over the outside of a car's rim, through the middle of a bike's
+        /// spokes. Parented to the wheel, square to its axle, so it steers with it and its speed arcs turn with it.</summary>
+        void SetupBlur()
+        {
+            if (_blurMat == null) _blurMat = Resources.Load<Material>("WheelBlur");
+            if (_blurMat == null) return;
+            if (_blurQuad == null)
+            {
+                _blurQuad = new Mesh { name = "WheelBlurQuad" };
+                _blurQuad.SetVertices(new[] { new Vector3(-1, -1, 0), new Vector3(1, -1, 0), new Vector3(1, 1, 0), new Vector3(-1, 1, 0) });
+                _blurQuad.SetUVs(0, new[] { new Vector2(0, 0), new Vector2(1, 0), new Vector2(1, 1), new Vector2(0, 1) });
+                _blurQuad.SetTriangles(new[] { 0, 2, 1, 0, 3, 2 }, 0);
+                _blurQuad.RecalculateBounds();
+            }
+            _blurProps = new MaterialPropertyBlock();
+            var list = new System.Collections.Generic.List<Renderer>();
+            if (TwoWheeler)
+            {
+                foreach (var w in new[] { _frontWheel, _rearWheel })
+                    list.Add(BlurDisc(w, w.position, _wheelRadius * 0.84f, new Color(0.86f, 0.88f, 0.92f), 0.14f));
+            }
+            else
+                for (int i = 0; i < 4; i++)
+                {
+                    var w = _wheels[i];
+                    var mf = w ? w.GetComponent<MeshFilter>() : null;
+                    if (!mf || !mf.sharedMesh) continue;
+                    // the tyre's outer face: half its width along the axle, out from its middle on this side
+                    var b = mf.sharedMesh.bounds;
+                    var ax = w.InverseTransformDirection(transform.right);
+                    var axn = ax.normalized;
+                    float half = Mathf.Abs(axn.x) * b.extents.x + Mathf.Abs(axn.y) * b.extents.y + Mathf.Abs(axn.z) * b.extents.z;
+                    float side = Mathf.Sign(_wheelRest[i].x);
+                    var face = w.TransformPoint(b.center + axn * side * half * 0.92f);
+                    list.Add(BlurDisc(w, face, _wheelRadius * 0.68f, new Color(0.74f, 0.76f, 0.8f), 0.28f));
+                }
+            _blur = list.ToArray();
+        }
+
+        Renderer BlurDisc(Transform wheel, Vector3 at, float radius, Color col, float hub)
+        {
+            var go = new GameObject("WheelBlur");
+            go.transform.SetParent(wheel, false);
+            go.transform.SetPositionAndRotation(at, Quaternion.LookRotation(transform.right, transform.up));
+            float s = wheel.lossyScale.x;
+            go.transform.localScale = Vector3.one * radius / Mathf.Max(1e-5f, Mathf.Abs(s));
+            go.AddComponent<MeshFilter>().sharedMesh = _blurQuad;
+            var r = go.AddComponent<MeshRenderer>();
+            r.sharedMaterial = _blurMat;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            r.enabled = false;
+            var mpb = new MaterialPropertyBlock();
+            mpb.SetColor(ColorId, col);
+            mpb.SetFloat(HubId, hub);
+            mpb.SetFloat(BlurId, 0f);
+            r.SetPropertyBlock(mpb);
+            return r;
         }
 
         public void Damage(float amount)

@@ -579,7 +579,7 @@ def open_up(bm, keep, interior=None, interior_fn=None):
 
 
 # ============================================================================== wheels
-def tyre(m, c, r, w, side, ri, seg=24, blocks=False):
+def tyre(m, c, r, w, side, ri, seg=24, blocks=False, letters=True, both=False):
     """Fat cartoon tyre at hub c (axis X): ballooning sidewalls, a soft round shoulder, a flat tread. The
     outer radius stays exactly r (the game reads the wheel radius from the wheel mesh). blocks: chunky tread
     blocks painted round the shoulders (off-road)."""
@@ -597,6 +597,31 @@ def tyre(m, c, r, w, side, ri, seg=24, blocks=False):
             return "rim_dark"
         return "tyre"
     revolve(m, c, prof, col, seg=seg, side=side)
+    if letters and K.LOD_DETAIL >= 1:
+        sidewall_letters(m, c, r, w, side, ri)
+        if both:
+            sidewall_letters(m, c, r, w, -side, ri)
+
+
+# a made-up tyre brand in blocky raised letters: (tangential width, radial height) per glyph, 0 = a gap
+_GLYPHS = [(0.8, 1.0), (0.5, 0.55), (0.8, 1.0), (0, 0), (0.8, 1.0), (0.8, 0.7), (0.5, 1.0), (0.8, 1.0)]
+
+
+def sidewall_letters(m, c, r, w, side, ri):
+    """Raised light-grey lettering round the outer sidewall, in two arcs on opposite sides of the tyre, so the
+    wheel visibly turns (a plain black tyre looks the same however fast it spins)."""
+    c = Vector(c)
+    rm = ri + (r - ri) * 0.5                       # the sidewall's fattest line
+    x = c.x + side * (w / 2 + 0.01)
+    gh = (r - ri) * 0.36
+    step = 0.034 / rm                               # glyph pitch in radians
+    for base in (0.0, math.pi):
+        a = base - step * (len(_GLYPHS) - 1) / 2
+        for gw, gr in _GLYPHS:
+            if gw > 0:
+                p = Vector((x, c.y + rm * math.cos(a), c.z + rm * math.sin(a)))
+                m.box(p, (0.008, 0.026 * gw, gh * gr), "tyre_hub", rot=(a + math.pi / 2, 0, 0))
+            a += step
 
 
 def rim(m, c, r, w, side, ri, style="alloy", spokes=5, paint="car_paint", seg=20):
@@ -607,10 +632,14 @@ def rim(m, c, r, w, side, ri, style="alloy", spokes=5, paint="car_paint", seg=20
     face = w / 2 - 0.018
     dark = style in ("offroad", "alloy_dark")
     rimc = "rim_dark" if dark else "rim_silver"
+    spokec = "metal" if dark else rimc             # (dark rims still need spokes you can see turning on a black tyre)
     # the dark well behind the spokes (closed, so you never see through the wheel) and the rim lip
     disc(m, c, ri * 0.98, "well_black", side, axial=face - 0.06, seg=seg)
     revolve(m, c, [(ri * 0.99, face - 0.06), (ri * 0.99, face - 0.01), (ri * 1.0, face + 0.002), (ri * 0.88, face + 0.006)],
             lambda i: ["rim_dark", rimc, rimc][min(i, 2)], seg=seg, side=side, closed=False)
+    # the tyre valve on the lip: one small thing off-centre
+    a_v = 2.2
+    m.cyl(c + X * (face + 0.004) + Vector((0, math.cos(a_v), math.sin(a_v))) * ri * 0.93, 0.009, 0.007, 0.03, "chrome", seg=6, rot=AX)
     if style in ("steel", "steel_paint"):
         # pressed steel dish with four bold slots, then the cap
         revolve(m, c, [(ri * 0.88, face + 0.004), (ri * 0.8, face - 0.004), (ri * 0.55, face + 0.004), (ri * 0.38, face + 0.012)],
@@ -630,9 +659,10 @@ def rim(m, c, r, w, side, ri, style="alloy", spokes=5, paint="car_paint", seg=20
             disc(m, c, ri * 0.2, "chrome", side, axial=face + 0.052, seg=12)
             disc(m, c, ri * 0.1, "rim_dark", side, axial=face + 0.0525, seg=8)
         return
-    # cast alloy: a few chunky, dished spokes and a big centre cap
+    # cast alloy: a few chunky, dished spokes and a big centre cap, the brake disc showing between them
     n = spokes if spokes <= 6 else 6
     hub_r = ri * 0.3
+    revolve(m, c, [(ri * 0.8, face - 0.05), (hub_r * 1.05, face - 0.05)], lambda i: "metal_dark", seg=seg, side=side, closed=False)
     for k in range(n):
         a = k / n * math.tau + 0.3
         d = Vector((0, math.cos(a), math.sin(a)))
@@ -640,9 +670,15 @@ def rim(m, c, r, w, side, ri, style="alloy", spokes=5, paint="car_paint", seg=20
         w0, w1 = (ri * 0.22, ri * 0.15) if style != "offroad" else (ri * 0.28, ri * 0.22)
         p0 = c + X * (face + 0.016) + d * hub_r * 0.8
         p1 = c + X * (face - 0.004) + d * ri * 0.92
-        _slab(m, [p0 - tside * w0, p0 + tside * w0, p1 + tside * w1, p1 - tside * w1], X * -0.022, rimc, side)
-    m.cyl(c + X * (face + 0.012), hub_r, hub_r * 0.9, 0.036, rimc, seg=14, rot=AX)
+        _slab(m, [p0 - tside * w0, p0 + tside * w0, p1 + tside * w1, p1 - tside * w1], X * -0.022, spokec, side)
+    m.cyl(c + X * (face + 0.012), hub_r, hub_r * 0.9, 0.036, spokec, seg=14, rot=AX)
     disc(m, c, hub_r * 0.62, "chrome", side, axial=face + 0.031, seg=12)
+    # lug nuts round the cap, between the spokes
+    nn = n if n in (4, 5, 6) else 5
+    for k in range(nn):
+        a = (k + 0.5) / nn * math.tau + 0.3
+        d = Vector((0, math.cos(a), math.sin(a)))
+        m.cyl(c + X * (face + 0.034) + d * hub_r * 0.8, 0.014, 0.011, 0.014, "chrome", seg=6, rot=AX)
 
 
 def _slab(m, corners, depth, color, side):
@@ -1227,7 +1263,7 @@ def lod_standin(parts, core, fine, s):
                        ("Wheel_RL", s.track / 2, s.ry), ("Wheel_RR", -s.track / 2, s.ry)):
         wm = K.Mesher(1.0)
         low_wheel(wm, (x, y, s.wr), s.wr, s.ww, 1 if x > 0 else -1,
-                  rim="rim_dark" if s.wheel_style in ("offroad", "alloy_dark") else "rim_silver")
+                  rim="metal" if s.wheel_style in ("offroad", "alloy_dark") else "rim_silver")
         out.append((name, wm, (x, y, s.wr), None))
     return out
 
@@ -2691,21 +2727,27 @@ def kapcai():
         c = Vector(c)
         tm = K.Mesher(1.0)
         ri = r * 0.8
-        tyre(tm, c, r, w, 1, ri, seg=22)
+        tyre(tm, c, r, w, 1, ri, seg=22, both=True)
         parts.append((name, tm, tuple(c), parent))
         m = K.Mesher(1.0)
-        revolve(m, c, [(ri, -w * 0.38), (ri * 0.98, w * 0.38)], lambda i: "rim_silver", seg=22, side=1, closed=False,
-                double=True)
-        m.cyl(c, 0.075, 0.075, w * 0.9, "disc_steel", seg=14, rot=AX)                          # drum brake hub
+        # the rim: a silver band with a raised lip each side and a dark well down the middle
+        revolve(m, c, [(ri * 1.02, -w * 0.42), (ri * 0.95, -w * 0.4), (ri * 0.93, -w * 0.12), (ri * 0.9, 0.0),
+                       (ri * 0.93, w * 0.12), (ri * 0.95, w * 0.4), (ri * 1.02, w * 0.42)],
+                lambda i: "rim_dark" if i in (2, 3) else "rim_silver", seg=22, side=1, closed=False, double=True)
+        m.cyl(c, 0.095, 0.095, w * 0.9, "disc_steel", seg=14, rot=AX)                          # drum brake hub
         for sgn in (1, -1):
-            disc_on(m, c + Vector((sgn * w * 0.45 + sgn * 0.001, 0, 0)), (sgn, 0, 0), 0.05, "metal_dark", seg=10)
+            disc_on(m, c + Vector((sgn * w * 0.45 + sgn * 0.001, 0, 0)), (sgn, 0, 0), 0.07, "metal", seg=12)
+            disc_on(m, c + Vector((sgn * w * 0.45 + sgn * 0.003, 0, 0)), (sgn, 0, 0), 0.03, "metal_dark", seg=8)
         n = max(8, int(18 * K.LOD_DETAIL))
         for k in range(n):
             a = k / n * math.tau
-            sx = 0.03 if k % 2 else -0.03
-            p0 = c + Vector((sx, 0.07 * math.cos(a + 0.4), 0.07 * math.sin(a + 0.4)))
-            p1 = c + Vector((sx * 0.3, ri * 0.98 * math.cos(a), ri * 0.98 * math.sin(a)))
-            m.tube(p0, p1, 0.0035, 0.0035, "chrome", seg=4)
+            sx = 0.035 if k % 2 else -0.035
+            p0 = c + Vector((sx, 0.09 * math.cos(a + 0.4), 0.09 * math.sin(a + 0.4)))
+            p1 = c + Vector((sx * 0.3, ri * 0.91 * math.cos(a), ri * 0.91 * math.sin(a)))
+            m.tube(p0, p1, 0.0055, 0.0055, "chrome", seg=4)
+        a_v = 1.0
+        m.cyl(c + Vector((0, ri * 0.88 * math.cos(a_v), ri * 0.88 * math.sin(a_v))),
+              0.008, 0.008, 0.035, "chrome", seg=6, rot=(a_v + math.pi / 2, 0, 0))                # the valve
         parts.append(("Rim_" + name[0], m, tuple(c), name))
 
     spoke_wheel("FrontWheel", (0, fz, wr), wr, ww, "Steering")
